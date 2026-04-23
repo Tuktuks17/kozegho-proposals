@@ -69,9 +69,13 @@ export default defineConfig({
   ],
   define: {
     global: 'globalThis',
+    'process.env': {},
   },
   resolve: {
-    alias: { '@': path.resolve(__dirname, './src') }
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      buffer: 'buffer/',
+    }
   },
   optimizeDeps: {
     exclude: ['pdfjs-dist']
