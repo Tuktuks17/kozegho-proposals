@@ -79,11 +79,5 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: ['pdfjs-dist'],
-    include: ['@react-pdf/renderer'],
-  },
-  build: {
-    commonjsOptions: {
-      include: [/@react-pdf\/renderer/, /node_modules/],
-    },
   },
 })

@@ -3,7 +3,7 @@ import { FileDown, FileText, CheckCircle, Loader2, X } from 'lucide-react'
 import type { PersistedProposal } from '@/types/proposal'
 import type { Customer } from '@/types/database'
 import { exportWord } from '@/services/exportWord'
-import { exportPdf } from '@/services/exportPdf'
+import { exportProposalToPdf } from '@/services/exportPdf'
 import { fetchDatasheetBytes, logoUrl } from '@/services/datasheets'
 
 type Props = {
@@ -40,7 +40,7 @@ export function ExportModal({ proposal, customer, onClose }: Props) {
   const handlePdfExport = async () => {
     setPdfState('loading')
     try {
-      await exportPdf(proposal, customer)
+      await exportProposalToPdf(proposal, customer)
       setPdfState('done')
     } catch {
       setPdfState('error')
