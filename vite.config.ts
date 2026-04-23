@@ -1,10 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import path from 'node:path'
 
 export default defineConfig({
   plugins: [
+    nodePolyfills({
+      include: ['buffer', 'process'],
+      globals: { Buffer: true, process: true },
+    }),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -67,10 +72,6 @@ export default defineConfig({
       devOptions: { enabled: false }
     })
   ],
-  define: {
-    global: 'globalThis',
-    'process.env': {},
-  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
