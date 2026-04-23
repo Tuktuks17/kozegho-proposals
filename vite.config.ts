@@ -67,6 +67,9 @@ export default defineConfig({
       devOptions: { enabled: false }
     })
   ],
+  define: {
+    global: 'globalThis',
+  },
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') }
   },
