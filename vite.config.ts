@@ -74,10 +74,15 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      buffer: 'buffer/',
     }
   },
   optimizeDeps: {
-    exclude: ['pdfjs-dist']
-  }
+    exclude: ['pdfjs-dist'],
+    include: ['@react-pdf/renderer'],
+  },
+  build: {
+    commonjsOptions: {
+      include: [/@react-pdf\/renderer/, /node_modules/],
+    },
+  },
 })
