@@ -40,8 +40,7 @@ export function ExportModal({ proposal, customer, onClose }: Props) {
   const handlePdfExport = async () => {
     setPdfState('loading')
     try {
-      const logoBytes = await getLogoBytes()
-      await exportPdf(proposal, customer, logoBytes)
+      await exportPdf(proposal, customer)
       setPdfState('done')
     } catch {
       setPdfState('error')

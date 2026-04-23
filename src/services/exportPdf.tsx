@@ -6,7 +6,7 @@ import type { PersistedProposal, ProposalItem } from '@/types/proposal'
 import type { Customer } from '@/types/database'
 import { PROPOSAL_LABELS } from '@/i18n/proposalLabels'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { fetchDatasheetBytes } from './datasheets'
+import { fetchDatasheetBytes, logoUrl } from './datasheets'
 
 Font.register({
   family: 'Calibri',
@@ -57,10 +57,19 @@ const s = StyleSheet.create({
   footerText: { fontSize: 8, color: GREY_TEXT }
 })
 
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
 type PdfDocProps = {
   proposal: PersistedProposal
   customer: Customer
-  logoBytes: ArrayBuffer | null
+  logoDataUrl: string | null
 }
 
 function ItemRow({ item, idx }: { item: ProposalItem; idx: number }) {
@@ -87,38 +96,29 @@ function ItemRow({ item, idx }: { item: ProposalItem; idx: number }) {
   )
 }
 
-function ProposalPdfDoc({ proposal, customer, logoBytes }: PdfDocProps) {
+function ProposalPdfDoc({ proposal, customer, logoDataUrl }: PdfDocProps) {
   const labels = PROPOSAL_LABELS[proposal.language]
-  const logoSrc = logoBytes
-    ? `data:image/png;base64,${Buffer.from(logoBytes).toString('base64')}`
-    : undefined
 
   return (
     <Document title={`${proposal.reference} — ${labels.commercialProposal}`}>
       <Page size="A4" style={s.page}>
-        {/* Logo */}
-        {logoSrc && <Image src={logoSrc} style={s.logo} />}
+        {logoDataUrl && <Image src={logoDataUrl} style={s.logo} />}
 
-        {/* Title */}
         <Text style={s.title}>{labels.commercialProposal}</Text>
 
-        {/* Meta */}
         <View style={s.metaRow}><Text style={s.metaLabel}>{labels.reference}</Text><Text style={s.metaValue}>{proposal.reference}</Text></View>
         <View style={s.metaRow}><Text style={s.metaLabel}>{labels.date}</Text><Text style={s.metaValue}>{formatDate(proposal.created_at)}</Text></View>
         <View style={s.metaRow}><Text style={s.metaLabel}>{labels.validUntil}</Text><Text style={s.metaValue}>{formatDate(proposal.validity_date)}</Text></View>
 
-        {/* Client */}
         <Text style={s.sectionTitle}>{labels.client}</Text>
         <View style={s.metaRow}><Text style={s.metaLabel}>{labels.company}</Text><Text style={s.metaValue}>{customer.company}</Text></View>
         <View style={s.metaRow}><Text style={s.metaLabel}>{labels.clientContact}</Text><Text style={s.metaValue}>{customer.name}</Text></View>
         <View style={s.metaRow}><Text style={s.metaLabel}>{labels.email}</Text><Text style={s.metaValue}>{customer.email}</Text></View>
         <View style={s.metaRow}><Text style={s.metaLabel}>{labels.country}</Text><Text style={s.metaValue}>{customer.country}</Text></View>
 
-        {/* Subject */}
         <Text style={s.sectionTitle}>{labels.subject}</Text>
         <Text style={{ marginBottom: 8 }}>{proposal.subject}</Text>
 
-        {/* Introduction */}
         {proposal.introduction ? (
           <>
             <Text style={s.sectionTitle}>{labels.introduction}</Text>
@@ -126,7 +126,6 @@ function ProposalPdfDoc({ proposal, customer, logoBytes }: PdfDocProps) {
           </>
         ) : null}
 
-        {/* Products */}
         <Text style={s.sectionTitle}>{labels.description}</Text>
         <View style={s.tableHeader}>
           <Text style={[s.tableHeaderCell, s.descCol]}>{labels.description}</Text>
@@ -146,7 +145,6 @@ function ProposalPdfDoc({ proposal, customer, logoBytes }: PdfDocProps) {
           <Text style={s.totalValue}>{formatCurrency(proposal.total)}</Text>
         </View>
 
-        {/* Terms */}
         <View style={s.termsSection}>
           <Text style={s.sectionTitle}>{labels.termsAndConditions}</Text>
           {proposal.delivery_weeks != null && (
@@ -181,7 +179,6 @@ function ProposalPdfDoc({ proposal, customer, logoBytes }: PdfDocProps) {
           <Text><Text style={{ fontWeight: 700 }}>{labels.preparedBy}: </Text>{proposal.salesperson_name}</Text>
         </View>
 
-        {/* Footer */}
         <View style={s.footer} fixed>
           <Text style={s.footerText}>Kozegho · {proposal.reference}</Text>
           <Text style={s.footerText} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
@@ -191,13 +188,21 @@ function ProposalPdfDoc({ proposal, customer, logoBytes }: PdfDocProps) {
   )
 }
 
-export async function exportPdf(
-  proposal: PersistedProposal,
-  customer: Customer,
-  logoBytes: ArrayBuffer | null
-) {
+export async function exportPdf(proposal: PersistedProposal, customer: Customer) {
+  // Fetch logo as blob → data URL using native FileReader (avoids Buffer dependency)
+  let logoDataUrl: string | null = null
+  try {
+    const resp = await fetch(logoUrl())
+    if (resp.ok) {
+      const blob = await resp.blob()
+      logoDataUrl = await blobToDataUrl(blob)
+    }
+  } catch {
+    logoDataUrl = null
+  }
+
   const docBlob = await pdf(
-    <ProposalPdfDoc proposal={proposal} customer={customer} logoBytes={logoBytes} />
+    <ProposalPdfDoc proposal={proposal} customer={customer} logoDataUrl={logoDataUrl} />
   ).toBlob()
 
   // Collect datasheet PDFs
@@ -213,7 +218,7 @@ export async function exportPdf(
     return
   }
 
-  // Merge PDFs using pdf-lib (lazy import to keep bundle lean)
+  // Merge with datasheets using pdf-lib (lazy import)
   const { PDFDocument } = await import('pdf-lib')
   const merged = await PDFDocument.create()
 
