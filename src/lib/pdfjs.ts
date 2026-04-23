@@ -26,22 +26,40 @@ export async function pdfToArrayBuffer(url: string): Promise<ArrayBuffer | null>
 }
 
 // Render each page of a PDF to a PNG data URL at the given scale.
+// Returns empty array on failure — never throws.
 export async function rasterisePdf(bytes: ArrayBuffer, scale = 1.5): Promise<string[]> {
-  const pdfjs = await getPdfLib()
-  const loadingTask = pdfjs.getDocument({ data: new Uint8Array(bytes) })
-  const pdfDoc = await loadingTask.promise
-  const pngs: string[] = []
+  try {
+    const pdfjs = await getPdfLib()
+    const loadingTask = pdfjs.getDocument({ data: new Uint8Array(bytes) })
+    const pdfDoc = await loadingTask.promise
+    const pngs: string[] = []
 
-  for (let i = 1; i <= pdfDoc.numPages; i++) {
-    const page = await pdfDoc.getPage(i)
-    const viewport = page.getViewport({ scale })
-    const canvas = document.createElement('canvas')
-    canvas.width = viewport.width
-    canvas.height = viewport.height
-    const ctx = canvas.getContext('2d')!
-    await page.render({ canvasContext: ctx as unknown as CanvasRenderingContext2D, viewport }).promise
-    pngs.push(canvas.toDataURL('image/png'))
+    for (let i = 1; i <= pdfDoc.numPages; i++) {
+      try {
+        const page = await pdfDoc.getPage(i)
+        const viewport = page.getViewport({ scale })
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.floor(viewport.width)
+        canvas.height = Math.floor(viewport.height)
+        const ctx = canvas.getContext('2d')
+        if (!ctx) continue
+        await page.render({
+          canvasContext: ctx as unknown as CanvasRenderingContext2D,
+          viewport,
+        }).promise
+        // Verify canvas has actual content before converting
+        const dataUrl = canvas.toDataURL('image/png')
+        if (dataUrl && dataUrl.length > 1000) {
+          pngs.push(dataUrl)
+        }
+      } catch (e) {
+        console.warn(`Skipping PDF page ${i}:`, e)
+      }
+    }
+
+    return pngs
+  } catch (e) {
+    console.warn('rasterisePdf failed entirely:', e)
+    return []
   }
-
-  return pngs
 }
