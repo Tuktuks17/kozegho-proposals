@@ -9,11 +9,38 @@ export type Profile = {
 
 export type Customer = {
   id: string
-  name: string
-  company: string
+  name: string     // contacto (pessoa)
+  company: string  // empresa
   email: string
   country: string
   created_by: string
+  created_at: string
+}
+
+// In-memory types used by ProposalPDF for rendering — not DB tables
+export type ProposalLine = {
+  id: string
+  proposal_id: string
+  product_id: string | null
+  product_name: string
+  description: string | null
+  quantity: number
+  unit_price: number
+  discount_percent: number | null
+  line_total: number
+  sort_order: number | null
+  datasheet_url: string | null
+  unit?: string | null
+  base_price_eur?: number | null
+  created_at: string
+}
+
+export type ProposalLineOption = {
+  id: string
+  proposal_line_id: string
+  option_code: string
+  option_label: string
+  price_eur: number | null
   created_at: string
 }
 
@@ -22,27 +49,22 @@ export type Database = {
     Tables: {
       profiles: {
         Row: Profile
-        Insert: { id: string; full_name: string; email: string }
+        Insert: { id: string; full_name?: string; email?: string }
         Update: { full_name?: string; email?: string }
       }
       customers: {
         Row: Customer
-        Insert: { name: string; company: string; email: string; country: string; created_by: string }
-        Update: { name?: string; company?: string; email?: string; country?: string }
+        Insert: { name?: string | null; company: string; email: string; country?: string | null; created_by: string }
+        Update: Partial<Pick<Customer, 'name' | 'company' | 'email' | 'country'>>
       }
       proposals: {
         Row: PersistedProposal
-        Insert: Omit<PersistedProposal, 'id' | 'created_at' | 'updated_at'>
+        Insert: Omit<PersistedProposal, 'id' | 'created_at' | 'updated_at' | 'email_sent_at' | 'last_email_to' | 'last_email_subject'>
         Update: Partial<Omit<PersistedProposal, 'id' | 'created_at' | 'created_by'>>
       }
     }
     Views: Record<string, never>
-    Functions: {
-      count_proposals_on_date: {
-        Args: { p_date: string }
-        Returns: number
-      }
-    }
+    Functions: Record<string, never>
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }

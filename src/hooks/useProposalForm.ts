@@ -9,6 +9,7 @@ export function defaultFormState(): ProposalFormState {
   const lang: ProposalLanguage = 'EN'
   const labels = PROPOSAL_LABELS[lang]
   return {
+    salesperson_name: '',
     subject: '',
     validity_date: addDays(todayISO(), 30),
     language: lang,
@@ -25,12 +26,17 @@ export function defaultFormState(): ProposalFormState {
 }
 
 export function useProposalForm(initialState?: ProposalFormState) {
-  const [form, setForm] = useState<ProposalFormState>(initialState ?? defaultFormState())
+  const [form, setForm] = useState<ProposalFormState>(() => {
+    const defaults = defaultFormState()
+    if (!initialState) return defaults
+    // Spread defaults first so new fields (e.g. salesperson_name) are always defined,
+    // even when loading an old draft that predates the field.
+    return { ...defaults, ...initialState, salesperson_name: '' }
+  })
 
   const setField = <K extends keyof ProposalFormState>(key: K, value: ProposalFormState[K]) => {
     setForm((prev) => {
       const next = { ...prev, [key]: value }
-      // when language changes, reset default terms
       if (key === 'language') {
         const lang = value as ProposalLanguage
         const labels = PROPOSAL_LABELS[lang]
@@ -52,7 +58,6 @@ export function useProposalForm(initialState?: ProposalFormState) {
       items: prev.items.map((item) => {
         if (item.id !== id) return item
         const updated = { ...item, ...patch }
-        // recalculate line total
         const base = updated.unit_price * updated.quantity
         updated.line_total = base * (1 - updated.discount_percent / 100)
         return updated

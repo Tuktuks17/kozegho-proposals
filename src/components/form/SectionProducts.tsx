@@ -34,6 +34,15 @@ export function SectionProducts({ items, language, onAddItem, onRemoveItem, subt
                   <span>Unit: {formatCurrency(item.unit_price)}</span>
                   {item.discount_percent > 0 && <span className="text-orange-500">-{item.discount_percent}%</span>}
                 </div>
+                <div className="mt-1">
+                  {item.datasheet_url ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-kozegho-green bg-kozegho-green-light px-1.5 py-0.5 rounded">
+                      📄 {item.datasheet_url.split('/').pop()}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-kozegho-grey-text opacity-50">Datasheet: N/A</span>
+                  )}
+                </div>
               </div>
               <div className="text-right shrink-0">
                 <p className="text-sm font-bold text-kozegho-dark">{formatCurrency(item.line_total)}</p>

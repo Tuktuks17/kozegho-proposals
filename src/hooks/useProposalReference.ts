@@ -2,19 +2,25 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { buildReference } from '@/lib/referenceFormat'
 
-export function useProposalReference() {
-  const [reference, setReference] = useState<string>('')
+export function useProposalReference(salespersonName: string, userId: string) {
+  const [dailyCount, setDailyCount] = useState<number | null>(null)
 
+  // Count ALL proposals created today by this user (regardless of reference format)
   useEffect(() => {
+    if (!userId) return
     const today = new Date()
-    const dateStr = today.toISOString().slice(0, 10)
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(supabase.rpc as any)('count_proposals_on_date', { p_date: dateStr })
-      .then(({ data }: { data: number | null }) => {
-        setReference(buildReference(today, data ?? 0))
-      })
-  }, [])
+    supabase
+      .from('proposals')
+      .select('id', { count: 'exact', head: true })
+      .eq('created_by', userId)
+      .gte('created_at', startOfDay.toISOString())
+      .lt('created_at', endOfDay.toISOString())
+      .then(({ count }) => setDailyCount(count ?? 0))
+  }, [userId])
 
-  return reference
+  if (dailyCount === null) return ''
+  return buildReference(new Date(), dailyCount, salespersonName)
 }

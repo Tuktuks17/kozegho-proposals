@@ -6,13 +6,18 @@ const KEY = (userId: string) => `kp:draft:${userId}`
 
 export function saveDraft(userId: string, state: ProposalFormState) {
   try {
-    localStorage.setItem(KEY(userId), JSON.stringify(state))
+    // Never persist salesperson_name — the field must always be entered manually
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { salesperson_name: _stripped, ...draftState } = state
+    localStorage.setItem(KEY(userId), JSON.stringify(draftState))
   } catch { /* storage full — ignore */ }
 }
 
 export function loadDraft(userId: string): ProposalFormState | null {
   try {
     const raw = localStorage.getItem(KEY(userId))
+    // salesperson_name is intentionally absent from saved drafts;
+    // useProposalForm will always override it to '' on load
     return raw ? (JSON.parse(raw) as ProposalFormState) : null
   } catch {
     return null

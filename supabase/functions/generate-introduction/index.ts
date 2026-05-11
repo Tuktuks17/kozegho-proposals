@@ -47,7 +47,7 @@ The introduction must: 1) Thank ${body.companyName} for the opportunity. 2) Refe
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 400 }
+        generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
       })
     })
 

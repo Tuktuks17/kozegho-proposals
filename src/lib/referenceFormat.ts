@@ -1,8 +1,10 @@
-// Format: KP-YYYYMMDD-NNN  (NNN = daily sequence, zero-padded to 3 digits)
-export function buildReference(date: Date, dailyCount: number): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  const seq = String(dailyCount + 1).padStart(3, '0')
-  return `KP-${y}${m}${d}-${seq}`
+// Format: MMDD{SeqLetter}{SurnameInitial}K/YY  e.g. 0510AGK/26
+export function buildReference(date: Date, dailyCount: number, salespersonName: string): string {
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  const letter = String.fromCharCode(65 + Math.min(dailyCount, 25)) // A–Z
+  const parts = salespersonName.trim().split(/\s+/)
+  const initial = (parts[parts.length - 1]?.[0] ?? 'X').toUpperCase() // last name
+  const yy = String(date.getFullYear()).slice(-2)
+  return `${mm}${dd}${letter}${initial}K/${yy}`
 }

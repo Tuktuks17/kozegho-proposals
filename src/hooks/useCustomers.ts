@@ -20,12 +20,12 @@ export function useCustomers() {
   }, [])
 
   const upsert = useCallback(async (
-    customer: Omit<Customer, 'id' | 'created_at' | 'created_by'>,
+    draft: { name: string | null; company: string; email: string; country: string | null },
     userId: string
   ): Promise<Customer | null> => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase.from('customers') as any)
-      .insert({ ...customer, created_by: userId })
+      .insert({ name: draft.name || null, company: draft.company, email: draft.email, country: draft.country || null, created_by: userId })
       .select()
       .single()
     return (data as Customer | null)

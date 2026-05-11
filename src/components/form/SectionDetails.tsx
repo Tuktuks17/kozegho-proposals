@@ -20,6 +20,7 @@ export function SectionDetails({ form, reference, onSetField }: Props) {
     <section className="bg-white rounded-lg border border-border shadow-card p-5 flex flex-col gap-4">
       <h2 className="text-base font-display font-semibold text-kozegho-dark">Proposal Details</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold text-kozegho-grey-text uppercase tracking-wide">Reference</label>
           <input
@@ -27,6 +28,7 @@ export function SectionDetails({ form, reference, onSetField }: Props) {
             className="rounded-md border border-border bg-kozegho-grey px-3 py-2 text-sm text-kozegho-grey-text"
           />
         </div>
+
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold text-kozegho-grey-text uppercase tracking-wide">Language</label>
           <select
@@ -37,6 +39,21 @@ export function SectionDetails({ form, reference, onSetField }: Props) {
             {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
           </select>
         </div>
+
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <label className="text-xs font-semibold text-kozegho-grey-text uppercase tracking-wide">
+            Sales Representative *
+          </label>
+          <input
+            type="text"
+            autoComplete="off"
+            value={form.salesperson_name}
+            onChange={(e) => onSetField('salesperson_name', e.target.value)}
+            placeholder="e.g. Eng. Miguel Silva"
+            className="rounded-md border border-border bg-input px-3 py-2 text-sm text-kozegho-dark focus:outline-none focus:ring-2 focus:ring-kozegho-green"
+          />
+        </div>
+
         <div className="flex flex-col gap-1.5 sm:col-span-2">
           <label className="text-xs font-semibold text-kozegho-grey-text uppercase tracking-wide">Subject *</label>
           <input
@@ -47,6 +64,7 @@ export function SectionDetails({ form, reference, onSetField }: Props) {
             className="rounded-md border border-border bg-input px-3 py-2 text-sm text-kozegho-dark focus:outline-none focus:ring-2 focus:ring-kozegho-green"
           />
         </div>
+
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold text-kozegho-grey-text uppercase tracking-wide">Valid Until *</label>
           <input
@@ -56,6 +74,7 @@ export function SectionDetails({ form, reference, onSetField }: Props) {
             className="rounded-md border border-border bg-input px-3 py-2 text-sm text-kozegho-dark focus:outline-none focus:ring-2 focus:ring-kozegho-green"
           />
         </div>
+
       </div>
     </section>
   )

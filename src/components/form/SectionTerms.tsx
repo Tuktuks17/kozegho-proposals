@@ -26,9 +26,7 @@ export function SectionTerms({ form, onSetField }: Props) {
             {(['standard', 'ocean'] as PackagingType[]).map((type) => (
               <label key={type} className="flex items-center gap-2 cursor-pointer">
                 <input
-                  type="radio"
-                  name="packaging"
-                  value={type}
+                  type="radio" name="packaging" value={type}
                   checked={form.packaging_type === type}
                   onChange={() => onSetField('packaging_type', type)}
                   className="accent-kozegho-green w-4 h-4"
@@ -45,7 +43,7 @@ export function SectionTerms({ form, onSetField }: Props) {
             </label>
             <input
               type="text"
-              value={form[field]}
+              value={form[field] ?? ''}
               onChange={(e) => onSetField(field, e.target.value)}
               className="rounded-md border border-border bg-input px-3 py-2 text-sm text-kozegho-dark focus:outline-none focus:ring-2 focus:ring-kozegho-green"
             />

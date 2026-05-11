@@ -44,8 +44,6 @@ function noBorders() {
 
 function itemRows(item: ProposalItem) {
   const rows: TableRow[] = []
-
-  // Main item row
   rows.push(new TableRow({
     children: [
       cell(item.description || item.product_name, { width: 45 }),
@@ -55,8 +53,6 @@ function itemRows(item: ProposalItem) {
       cell(formatCurrency(item.line_total), { align: AlignmentType.RIGHT, width: 15, bold: true })
     ]
   }))
-
-  // Option sub-rows
   for (const opt of item.options) {
     rows.push(new TableRow({
       children: [
@@ -68,7 +64,6 @@ function itemRows(item: ProposalItem) {
       ]
     }))
   }
-
   return rows
 }
 
@@ -77,19 +72,14 @@ export async function exportWord(
   customer: Customer,
   logoBytes: ArrayBuffer | null
 ) {
-  const labels = PROPOSAL_LABELS[proposal.language]
+  const labels = PROPOSAL_LABELS[proposal.language as keyof typeof PROPOSAL_LABELS] ?? PROPOSAL_LABELS.EN
 
-  // ── Header image ──────────────────────────────────────────────────────────
   const logoImage = logoBytes
     ? new ImageRun({ data: logoBytes, transformation: { width: 150, height: 50 }, type: 'png' })
     : undefined
 
-  // ── Cover section ─────────────────────────────────────────────────────────
   const coverSection: Paragraph[] = [
-    new Paragraph({
-      children: logoImage ? [logoImage] : [],
-      spacing: { after: 400 }
-    }),
+    new Paragraph({ children: logoImage ? [logoImage] : [], spacing: { after: 400 } }),
     new Paragraph({
       heading: HeadingLevel.HEADING_1,
       children: [new TextRun({ text: labels.commercialProposal, color: GREEN, font: 'Calibri', size: 52, bold: true })]
@@ -116,31 +106,17 @@ export async function exportWord(
     })
   ]
 
-  // ── Client info table ──────────────────────────────────────────────────────
   const clientTable = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     borders: noBorders(),
     rows: [
-      new TableRow({ children: [
-        cell(labels.company, { bold: true, width: 25 }),
-        cell(customer.company, { width: 75 })
-      ]}),
-      new TableRow({ children: [
-        cell(labels.clientContact, { bold: true, width: 25 }),
-        cell(customer.name, { width: 75 })
-      ]}),
-      new TableRow({ children: [
-        cell(labels.email, { bold: true, width: 25 }),
-        cell(customer.email, { width: 75 })
-      ]}),
-      new TableRow({ children: [
-        cell(labels.country, { bold: true, width: 25 }),
-        cell(customer.country, { width: 75 })
-      ]})
+      new TableRow({ children: [cell(labels.company, { bold: true, width: 25 }), cell(customer.company, { width: 75 })] }),
+      new TableRow({ children: [cell(labels.clientContact, { bold: true, width: 25 }), cell(customer.name || '—', { width: 75 })] }),
+      new TableRow({ children: [cell(labels.email, { bold: true, width: 25 }), cell(customer.email, { width: 75 })] }),
+      new TableRow({ children: [cell(labels.country, { bold: true, width: 25 }), cell(customer.country, { width: 75 })] })
     ]
   })
 
-  // ── Subject & intro ────────────────────────────────────────────────────────
   const subjectSection: Paragraph[] = [
     new Paragraph({ spacing: { before: 400 }, children: [
       new TextRun({ text: `${labels.subject}: `, bold: true, font: 'Calibri', size: 22 }),
@@ -151,38 +127,28 @@ export async function exportWord(
     ]})
   ]
 
-  // ── Products table ─────────────────────────────────────────────────────────
   const productRows = proposal.items.flatMap((item) => itemRows(item))
   const productTable = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     rows: [
       new TableRow({ tableHeader: true, children: [
-        headerCell(labels.description, 45),
-        headerCell(labels.qtyShort, 8),
-        headerCell(labels.unitPrice, 15),
-        headerCell(labels.discount, 10),
-        headerCell(labels.total, 15)
+        headerCell(labels.description, 45), headerCell(labels.qtyShort, 8),
+        headerCell(labels.unitPrice, 15), headerCell(labels.discount, 10), headerCell(labels.total, 15)
       ]}),
       ...productRows,
-      // Subtotal row
       new TableRow({ children: [
-        cell('', { width: 45 }),
-        cell('', { width: 8 }),
-        cell('', { width: 15 }),
+        cell('', { width: 45 }), cell('', { width: 8 }), cell('', { width: 15 }),
         cell(labels.subtotal, { bold: true, align: AlignmentType.RIGHT, width: 10 }),
         cell(formatCurrency(proposal.subtotal), { bold: true, align: AlignmentType.RIGHT, width: 15 })
       ]}),
       new TableRow({ children: [
-        cell('', { width: 45 }),
-        cell('', { width: 8 }),
-        cell('', { width: 15 }),
+        cell('', { width: 45 }), cell('', { width: 8 }), cell('', { width: 15 }),
         cell(labels.total, { bold: true, align: AlignmentType.RIGHT, width: 10 }),
         cell(formatCurrency(proposal.total), { bold: true, align: AlignmentType.RIGHT, width: 15 })
       ]})
     ]
   })
 
-  // ── Terms section ──────────────────────────────────────────────────────────
   const termsSection: Paragraph[] = [
     new Paragraph({ spacing: { before: 400 }, heading: HeadingLevel.HEADING_2,
       children: [new TextRun({ text: labels.termsAndConditions, color: GREEN, font: 'Calibri', size: 28, bold: true })]
@@ -204,15 +170,15 @@ export async function exportWord(
     ]}),
     new Paragraph({ children: [
       new TextRun({ text: `${labels.deliveryTerms}: `, bold: true, font: 'Calibri', size: 22 }),
-      new TextRun({ text: proposal.delivery_terms, font: 'Calibri', size: 22 })
+      new TextRun({ text: proposal.delivery_terms ?? '', font: 'Calibri', size: 22 })
     ]}),
     new Paragraph({ children: [
       new TextRun({ text: `${labels.paymentTerms}: `, bold: true, font: 'Calibri', size: 22 }),
-      new TextRun({ text: proposal.payment_terms, font: 'Calibri', size: 22 })
+      new TextRun({ text: proposal.payment_terms ?? '', font: 'Calibri', size: 22 })
     ]}),
     new Paragraph({ children: [
       new TextRun({ text: `${labels.warranty}: `, bold: true, font: 'Calibri', size: 22 }),
-      new TextRun({ text: proposal.warranty, font: 'Calibri', size: 22 })
+      new TextRun({ text: proposal.warranty ?? '', font: 'Calibri', size: 22 })
     ]})
   )
 
@@ -223,68 +189,37 @@ export async function exportWord(
     }))
   }
 
-  termsSection.push(new Paragraph({
-    spacing: { before: 200 },
-    children: [new TextRun({ text: labels.vatNote, italics: true, font: 'Calibri', size: 20, color: '777777' })]
-  }))
-
-  termsSection.push(new Paragraph({
-    spacing: { before: 400 },
-    children: [
+  termsSection.push(
+    new Paragraph({ spacing: { before: 200 },
+      children: [new TextRun({ text: labels.vatNote, italics: true, font: 'Calibri', size: 20, color: '777777' })]
+    }),
+    new Paragraph({ spacing: { before: 400 }, children: [
       new TextRun({ text: `${labels.preparedBy}: `, bold: true, font: 'Calibri', size: 22 }),
       new TextRun({ text: proposal.salesperson_name, font: 'Calibri', size: 22 })
-    ]
-  }))
+    ]})
+  )
 
-  // ── Assemble document ──────────────────────────────────────────────────────
   const doc = new Document({
     sections: [{
       properties: { page: { margin: { top: 1000, bottom: 1000, left: 1200, right: 1200 } } },
-      headers: {
-        default: new Header({ children: [new Paragraph({ children: [] })] })
-      },
-      footers: {
-        default: new Footer({ children: [
-          new Paragraph({
-            alignment: AlignmentType.RIGHT,
-            children: [
-              new TextRun({ children: [PageNumber.CURRENT], font: 'Calibri', size: 18, color: '999999' }),
-              new TextRun({ text: ' / ', font: 'Calibri', size: 18, color: '999999' }),
-              new TextRun({ children: [PageNumber.TOTAL_PAGES], font: 'Calibri', size: 18, color: '999999' })
-            ]
-          })
-        ]})
-      },
-      children: [
-        ...coverSection,
-        clientTable,
-        ...subjectSection,
-        productTable,
-        ...termsSection
-      ]
+      headers: { default: new Header({ children: [new Paragraph({ children: [] })] }) },
+      footers: { default: new Footer({ children: [
+        new Paragraph({
+          alignment: AlignmentType.RIGHT,
+          children: [
+            new TextRun({ children: [PageNumber.CURRENT], font: 'Calibri', size: 18, color: '999999' }),
+            new TextRun({ text: ' / ', font: 'Calibri', size: 18, color: '999999' }),
+            new TextRun({ children: [PageNumber.TOTAL_PAGES], font: 'Calibri', size: 18, color: '999999' })
+          ]
+        })
+      ]})},
+      children: [...coverSection, clientTable, ...subjectSection, productTable, ...termsSection]
     }],
-    numbering: {
-      config: [{
-        reference: 'default',
-        levels: [{ level: 0, format: NumberFormat.DECIMAL, text: '%1.', alignment: AlignmentType.LEFT }]
-      }]
-    }
+    numbering: { config: [{ reference: 'default', levels: [{ level: 0, format: NumberFormat.DECIMAL, text: '%1.', alignment: AlignmentType.LEFT }] }] }
   })
 
-  // ── Collect datasheets ─────────────────────────────────────────────────────
-  const datasheetSections = []
   for (const item of proposal.items) {
-    if (!item.datasheet_url) continue
-    const bytes = await fetchDatasheetBytes(item.datasheet_url)
-    if (!bytes) continue
-    // Embed as a note that datasheets are appended
-    datasheetSections.push(item.product_name)
-  }
-
-  if (datasheetSections.length > 0) {
-    // Note: full PDF embedding in docx requires an external tool (e.g. LibreOffice merge).
-    // We add a note listing the datasheets that were attached.
-    // The PDF export path does the actual merging.
+    if (item.datasheet_url) await fetchDatasheetBytes(item.datasheet_url)
   }
 
   const buffer = await Packer.toBlob(doc)

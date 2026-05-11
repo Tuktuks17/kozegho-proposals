@@ -28,16 +28,14 @@ export function SectionClient({ form, userId, onSetField, onCustomerCreated }: P
     onSetField('customer_id', c.id)
     setQuery(c.company)
     setMode('search')
+    onCustomerCreated(c)  // propagate existing customer to ProposalForm state
   }
 
   const createCustomer = async () => {
     const d = form.customer_draft
-    if (!d.name || !d.company || !d.email || !d.country) return
-    const c = await upsert(d, userId)
-    if (c) {
-      onCustomerCreated(c)
-      selectCustomer(c)
-    }
+    if (!d.company || !d.email || !d.country) return
+    const c = await upsert({ name: d.name || null, company: d.company, email: d.email, country: d.country || null }, userId)
+    if (c) { onCustomerCreated(c); selectCustomer(c) }
   }
 
   const draft = form.customer_draft
@@ -50,19 +48,13 @@ export function SectionClient({ form, userId, onSetField, onCustomerCreated }: P
       <div className="flex items-center justify-between">
         <h2 className="text-base font-display font-semibold text-kozegho-dark">Client</h2>
         <div className="flex gap-2">
-          <button
-            onClick={() => setMode('search')}
-            className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${mode === 'search' ? 'bg-kozegho-green text-white border-kozegho-green' : 'border-border text-kozegho-dark hover:bg-kozegho-grey'}`}
-          >
-            <Search className="w-3 h-3" />
-            Find existing
+          <button onClick={() => setMode('search')}
+            className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${mode === 'search' ? 'bg-kozegho-green text-white border-kozegho-green' : 'border-border text-kozegho-dark hover:bg-kozegho-grey'}`}>
+            <Search className="w-3 h-3" /> Find existing
           </button>
-          <button
-            onClick={() => setMode('new')}
-            className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${mode === 'new' ? 'bg-kozegho-green text-white border-kozegho-green' : 'border-border text-kozegho-dark hover:bg-kozegho-grey'}`}
-          >
-            <UserPlus className="w-3 h-3" />
-            New client
+          <button onClick={() => setMode('new')}
+            className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${mode === 'new' ? 'bg-kozegho-green text-white border-kozegho-green' : 'border-border text-kozegho-dark hover:bg-kozegho-grey'}`}>
+            <UserPlus className="w-3 h-3" /> New client
           </button>
         </div>
       </div>
@@ -71,24 +63,18 @@ export function SectionClient({ form, userId, onSetField, onCustomerCreated }: P
         <div className="flex flex-col gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-kozegho-grey-text" />
-            <input
-              type="text" value={query}
-              onChange={(e) => setQuery(e.target.value)}
+            <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by company name..."
-              className="w-full rounded-md border border-border bg-input pl-9 pr-3 py-2 text-sm text-kozegho-dark focus:outline-none focus:ring-2 focus:ring-kozegho-green"
-            />
+              className="w-full rounded-md border border-border bg-input pl-9 pr-3 py-2 text-sm text-kozegho-dark focus:outline-none focus:ring-2 focus:ring-kozegho-green" />
           </div>
           {loading && <p className="text-xs text-kozegho-grey-text">Searching...</p>}
           {results.length > 0 && !selectedCustomer && (
             <div className="border border-border rounded-md overflow-hidden">
               {results.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => selectCustomer(c)}
-                  className="w-full text-left px-3 py-2.5 hover:bg-kozegho-grey border-b border-border last:border-0 transition-colors"
-                >
+                <button key={c.id} onClick={() => selectCustomer(c)}
+                  className="w-full text-left px-3 py-2.5 hover:bg-kozegho-grey border-b border-border last:border-0 transition-colors">
                   <p className="text-sm font-medium text-kozegho-dark">{c.company}</p>
-                  <p className="text-xs text-kozegho-grey-text">{c.name} · {c.email}</p>
+                  <p className="text-xs text-kozegho-grey-text">{c.name || '—'} · {c.email}</p>
                 </button>
               ))}
             </div>
@@ -97,14 +83,10 @@ export function SectionClient({ form, userId, onSetField, onCustomerCreated }: P
             <div className="bg-kozegho-green-light rounded-md p-3 flex items-start justify-between">
               <div>
                 <p className="text-sm font-semibold text-kozegho-dark">{selectedCustomer.company}</p>
-                <p className="text-xs text-kozegho-grey-text">{selectedCustomer.name} · {selectedCustomer.email} · {selectedCustomer.country}</p>
+                <p className="text-xs text-kozegho-grey-text">{selectedCustomer.name || '—'} · {selectedCustomer.email} · {selectedCustomer.country}</p>
               </div>
-              <button
-                onClick={() => { setSelectedCustomer(null); onSetField('customer_id', null); setQuery('') }}
-                className="text-xs text-kozegho-grey-text hover:text-kozegho-dark ml-3 shrink-0"
-              >
-                Change
-              </button>
+              <button onClick={() => { setSelectedCustomer(null); onSetField('customer_id', null); setQuery('') }}
+                className="text-xs text-kozegho-grey-text hover:text-kozegho-dark ml-3 shrink-0">Change</button>
             </div>
           )}
         </div>
@@ -112,36 +94,32 @@ export function SectionClient({ form, userId, onSetField, onCustomerCreated }: P
 
       {mode === 'new' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {(['company', 'name', 'email'] as const).map((field) => (
-            <div key={field} className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-kozegho-grey-text uppercase tracking-wide">
-                {field === 'name' ? 'Contact name' : field.charAt(0).toUpperCase() + field.slice(1)} *
-              </label>
-              <input
-                type={field === 'email' ? 'email' : 'text'}
-                value={draft[field]}
-                onChange={(e) => setDraftField(field, e.target.value)}
-                className="rounded-md border border-border bg-input px-3 py-2 text-sm text-kozegho-dark focus:outline-none focus:ring-2 focus:ring-kozegho-green"
-              />
-            </div>
-          ))}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-kozegho-grey-text uppercase tracking-wide">Company *</label>
+            <input type="text" value={draft.company} onChange={(e) => setDraftField('company', e.target.value)}
+              className="rounded-md border border-border bg-input px-3 py-2 text-sm text-kozegho-dark focus:outline-none focus:ring-2 focus:ring-kozegho-green" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-kozegho-grey-text uppercase tracking-wide">Contact name</label>
+            <input type="text" value={draft.name} onChange={(e) => setDraftField('name', e.target.value)}
+              className="rounded-md border border-border bg-input px-3 py-2 text-sm text-kozegho-dark focus:outline-none focus:ring-2 focus:ring-kozegho-green" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-kozegho-grey-text uppercase tracking-wide">Email *</label>
+            <input type="email" value={draft.email} onChange={(e) => setDraftField('email', e.target.value)}
+              className="rounded-md border border-border bg-input px-3 py-2 text-sm text-kozegho-dark focus:outline-none focus:ring-2 focus:ring-kozegho-green" />
+          </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-kozegho-grey-text uppercase tracking-wide">Country *</label>
-            <select
-              value={draft.country}
-              onChange={(e) => setDraftField('country', e.target.value)}
-              className="rounded-md border border-border bg-input px-3 py-2 text-sm text-kozegho-dark focus:outline-none focus:ring-2 focus:ring-kozegho-green"
-            >
+            <select value={draft.country} onChange={(e) => setDraftField('country', e.target.value)}
+              className="rounded-md border border-border bg-input px-3 py-2 text-sm text-kozegho-dark focus:outline-none focus:ring-2 focus:ring-kozegho-green">
               <option value="">Select country…</option>
               {COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
             </select>
           </div>
           <div className="sm:col-span-2">
-            <button
-              onClick={createCustomer}
-              disabled={!draft.name || !draft.company || !draft.email || !draft.country}
-              className="w-full rounded-md bg-kozegho-green py-2.5 text-sm font-semibold text-white hover:bg-kozegho-green-dark transition-colors disabled:opacity-50"
-            >
+            <button onClick={createCustomer} disabled={!draft.company || !draft.email || !draft.country}
+              className="w-full rounded-md bg-kozegho-green py-2.5 text-sm font-semibold text-white hover:bg-kozegho-green-dark transition-colors disabled:opacity-50">
               Save & use this client
             </button>
           </div>

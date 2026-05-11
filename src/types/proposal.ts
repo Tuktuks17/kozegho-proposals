@@ -19,6 +19,7 @@ export type ProposalItem = {
 export type PackagingType = 'standard' | 'ocean'
 
 export type ProposalFormState = {
+  salesperson_name: string
   subject: string
   validity_date: string
   language: ProposalLanguage
@@ -38,20 +39,23 @@ export type PersistedProposal = {
   reference: string
   customer_id: string
   salesperson_name: string
-  language: ProposalLanguage
+  language: string
   subject: string
-  introduction: string
+  introduction: string | null
   items: ProposalItem[]
   subtotal: number
   total: number
-  validity_date: string
+  validity_date: string | null
   delivery_weeks: number | null
-  packaging_type: PackagingType
-  delivery_terms: string
-  payment_terms: string
-  warranty: string
-  additional_notes: string
+  packaging_type: PackagingType | null
+  delivery_terms: string | null
+  payment_terms: string | null
+  warranty: string | null
+  additional_notes: string | null
   status: 'draft' | 'exported'
+  email_sent_at?: string | null
+  last_email_to?: string | null
+  last_email_subject?: string | null
   created_by: string
   created_at: string
   updated_at: string
