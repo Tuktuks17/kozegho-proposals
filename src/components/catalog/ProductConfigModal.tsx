@@ -47,7 +47,7 @@ export function ProductConfigModal({ family, language, onConfirm, onClose }: Pro
       ? `${selectedVariant.name} (${selectedVariant.priceNote})`
       : selectedVariant.name
 
-    const datasheetUrl = family.hasDatasheet ? resolveDatasheetUrl(selectedVariant.id, language) : null
+    const datasheetUrl = family.hasDatasheet ? resolveDatasheetUrl(family.id, language) : null
 
     const item: ProposalItem = {
       id: uuidv4(),

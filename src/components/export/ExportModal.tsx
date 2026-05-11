@@ -180,7 +180,7 @@ export function ExportModal({ proposal, customer, onClose }: Props) {
             <DlIcon state={wordState} icon={FileDown} />
             <div>
               <p className="text-sm font-semibold text-kozegho-dark">Download Word (.docx)</p>
-              <p className="text-xs text-kozegho-grey-text">Documento editável com todos os detalhes</p>
+              <p className="text-xs text-kozegho-grey-text">Editable document with all proposal details</p>
             </div>
           </button>
 
@@ -189,7 +189,7 @@ export function ExportModal({ proposal, customer, onClose }: Props) {
             <DlIcon state={pdfState} icon={FileText} />
             <div>
               <p className="text-sm font-semibold text-kozegho-dark">Download PDF</p>
-              <p className="text-xs text-kozegho-grey-text">PDF Kozegho para arquivo local</p>
+              <p className="text-xs text-kozegho-grey-text">Kozegho branded PDF for local archive</p>
             </div>
           </button>
         </div>
@@ -247,7 +247,7 @@ export function ExportModal({ proposal, customer, onClose }: Props) {
               </div>
 
               <div>
-                <p className="text-xs font-semibold text-kozegho-grey-text uppercase tracking-wide mb-1">Corpo do email</p>
+                <p className="text-xs font-semibold text-kozegho-grey-text uppercase tracking-wide mb-1">Email body</p>
                 <p className="text-xs text-kozegho-dark">Full proposal (products table, terms, signature)</p>
               </div>
 
@@ -275,7 +275,7 @@ export function ExportModal({ proposal, customer, onClose }: Props) {
                 </button>
                 <button onClick={() => { setSendState('idle'); setSendError(null) }}
                   className="rounded-md border border-border bg-white px-4 py-2 text-sm text-kozegho-dark hover:bg-kozegho-grey transition-colors">
-                  Cancelar
+                  Cancel
                 </button>
               </div>
             </div>

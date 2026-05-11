@@ -20,7 +20,7 @@ type Props = {
 
 export function ProposalForm({ profile, initialState, onSuccess }: Props) {
   const { form, setField, addItem, removeItem, subtotal } = useProposalForm(initialState)
-  const reference = useProposalReference(form.salesperson_name || 'X', profile.id)
+  const reference = useProposalReference(profile.full_name, profile.id)
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [introduction, setIntroduction] = useState('')
   const [saving, setSaving] = useState(false)
@@ -34,7 +34,6 @@ export function ProposalForm({ profile, initialState, onSuccess }: Props) {
     if (!reference || reference.trim() === '') {
       errs.push('Reference not yet generated. Please wait a moment and try again.')
     }
-    if (!form.salesperson_name.trim()) errs.push('Please enter the sales representative name')
     if (!form.subject.trim()) errs.push('Subject is required')
     if (!form.validity_date) errs.push('Validity date is required')
     if (!form.customer_id && !form.customer_draft.company) errs.push('Client is required')
@@ -76,7 +75,7 @@ export function ProposalForm({ profile, initialState, onSuccess }: Props) {
         .insert({
           reference: reference || null,
           customer_id: customerId,
-          salesperson_name: form.salesperson_name,
+          salesperson_name: profile.full_name,
           language: form.language,
           subject: form.subject,
           introduction,
@@ -119,7 +118,7 @@ export function ProposalForm({ profile, initialState, onSuccess }: Props) {
         <SectionGenerate
           form={form}
           customer={customer}
-          salespersonName={form.salesperson_name}
+          salespersonName={profile.full_name}
           introduction={introduction}
           onIntroductionChange={setIntroduction}
         />

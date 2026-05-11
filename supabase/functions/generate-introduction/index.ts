@@ -40,6 +40,7 @@ with the body. Do not add a signature.
 ${LANGUAGE_INSTRUCTION[body.language]}
 Context: Client: ${body.companyName} (${body.clientCountry}). Products: ${body.products.join(', ')}. Salesperson: ${body.salespersonName}.
 The introduction must: 1) Thank ${body.companyName} for the opportunity. 2) Reference the specific products. 3) Briefly mention Kozegho's expertise in water treatment. 4) Express availability for follow-up.
+Write exactly 3 to 4 complete sentences. Each sentence must end with a full stop. Do not truncate mid-sentence.
     `.trim()
 
     const resp = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
@@ -47,7 +48,7 @@ The introduction must: 1) Thank ${body.companyName} for the opportunity. 2) Refe
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
+        generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }
       })
     })
 
