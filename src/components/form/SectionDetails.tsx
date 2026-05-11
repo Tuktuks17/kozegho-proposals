@@ -47,8 +47,8 @@ export function SectionDetails({ form, reference, onSetField }: Props) {
           <input
             key="salesperson-field"
             type="text"
-            id={`salesperson-${Date.now()}`}
-            name={`salesperson-${Math.random()}`}
+            id="salesperson-rep-field"
+            name="salesperson-rep-x7k2"
             autoComplete="one-time-code"
             data-form-type="other"
             value={form.salesperson_name}
