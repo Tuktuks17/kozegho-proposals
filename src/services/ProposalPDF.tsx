@@ -1,4 +1,3 @@
-import React from 'react'
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer'
 import type { PersistedProposal } from '@/types/proposal'
 import type { Customer, ProposalLine, ProposalLineOption } from '@/types/database'
@@ -180,7 +179,7 @@ export type ProposalPDFProps = {
 
 export function ProposalPDFDocument({
   proposal,
-  customer,
+  customer: _customer,
   lines,
   lineOptions,
   language,
