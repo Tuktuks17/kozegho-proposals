@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "save": "bash scripts/save.sh",
-    "save:msg": "bash scripts/save.sh"
+    "save:msg": "bash scripts/save.sh",
+    "pull": "bash scripts/pull.sh",
+    "start": "bash scripts/pull.sh && vite"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

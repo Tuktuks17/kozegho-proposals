@@ -45,8 +45,12 @@ export function SectionDetails({ form, reference, onSetField }: Props) {
             Sales Representative *
           </label>
           <input
+            key="salesperson-field"
             type="text"
-            autoComplete="off"
+            id={`salesperson-${Date.now()}`}
+            name={`salesperson-${Math.random()}`}
+            autoComplete="one-time-code"
+            data-form-type="other"
             value={form.salesperson_name}
             onChange={(e) => onSetField('salesperson_name', e.target.value)}
             placeholder="e.g. Eng. Miguel Silva"

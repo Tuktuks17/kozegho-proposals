@@ -31,6 +31,9 @@ export function ProposalForm({ profile, initialState, onSuccess }: Props) {
 
   const validate = (): string[] => {
     const errs: string[] = []
+    if (!reference || reference.trim() === '') {
+      errs.push('Reference not yet generated. Please wait a moment and try again.')
+    }
     if (!form.salesperson_name.trim()) errs.push('Please enter the sales representative name')
     if (!form.subject.trim()) errs.push('Subject is required')
     if (!form.validity_date) errs.push('Validity date is required')
@@ -130,7 +133,7 @@ export function ProposalForm({ profile, initialState, onSuccess }: Props) {
           </div>
         )}
 
-        <button onClick={handleSubmit} disabled={saving}
+        <button onClick={handleSubmit} disabled={saving || !reference}
           className="w-full rounded-md bg-kozegho-green py-3 text-base font-semibold text-white hover:bg-kozegho-green-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           {saving ? 'Saving…' : 'Generate Proposal'}
         </button>
