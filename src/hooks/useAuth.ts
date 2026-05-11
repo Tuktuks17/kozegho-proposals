@@ -28,7 +28,12 @@ export function useAuth() {
       options: { redirectTo: window.location.origin }
     })
 
-  const signOut = () => supabase.auth.signOut()
+  const signOut = () => {
+    // Clear session name so the modal appears again on next login
+    sessionStorage.removeItem('kp:name-confirmed')
+    sessionStorage.removeItem('kp:session-name')
+    return supabase.auth.signOut()
+  }
 
   return { session, user, loading, signInWithGoogle, signOut }
 }
