@@ -106,6 +106,10 @@ export function ExportModal({ proposal, customer, onClose }: Props) {
     setSendError(null)
 
     try {
+      // Get sender email for reply-to (so client replies go to the salesperson)
+      const { data: { session } } = await supabase.auth.getSession()
+      const senderEmail = session?.user?.email ?? ''
+
       const { data, error } = await supabase.functions.invoke('send-proposal', {
         body: {
           proposalNumber: proposal.reference,
@@ -138,6 +142,7 @@ export function ExportModal({ proposal, customer, onClose }: Props) {
           commercialName: proposal.salesperson_name,
           datasheetPaths,
           proposalId: proposal.id,
+          senderEmail,
         },
       })
 

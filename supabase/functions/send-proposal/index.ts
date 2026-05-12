@@ -47,6 +47,7 @@ type Payload = {
   commercialName: string
   datasheetPaths: DatasheetPath[]
   proposalId: string
+  senderEmail?: string
 }
 
 // ── Labels ────────────────────────────────────────────────────────────────────
@@ -309,6 +310,7 @@ Deno.serve(async (req) => {
       to: [payload.clientEmail],
       subject: emailSubject,
       html: emailHtml,
+      ...(payload.senderEmail ? { reply_to: [payload.senderEmail] } : {}),
       ...(attachments.length > 0 ? { attachments } : {}),
     })
 
