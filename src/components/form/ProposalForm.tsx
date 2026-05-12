@@ -20,7 +20,7 @@ type Props = {
 
 export function ProposalForm({ profile, initialState, onSuccess }: Props) {
   const { form, setField, addItem, removeItem, subtotal } = useProposalForm(initialState)
-  const reference = useProposalReference(profile.full_name, profile.id)
+  const { reference, refresh: refreshReference } = useProposalReference(profile.full_name, profile.id)
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [introduction, setIntroduction] = useState('')
   const [saving, setSaving] = useState(false)
@@ -99,11 +99,17 @@ export function ProposalForm({ profile, initialState, onSuccess }: Props) {
       clearDraft(profile.id)
       setExportProposal(proposalRow as PersistedProposal)
     } catch (e) {
-      // Show the real error — not [object Object]
-      const message = e instanceof Error
+      const raw = e instanceof Error
         ? e.message
         : (typeof e === 'object' && e !== null ? JSON.stringify(e) : String(e))
-      setErrors([message])
+
+      if (raw.includes('duplicate key') && raw.includes('proposals_reference_key')) {
+        // Reference collision: refresh the counter so the next attempt gets a new letter
+        await refreshReference()
+        setErrors(['Reference already used today. Please wait a moment and try again.'])
+      } else {
+        setErrors([raw])
+      }
     } finally {
       setSaving(false)
     }

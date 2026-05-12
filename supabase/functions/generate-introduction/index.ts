@@ -19,16 +19,24 @@ const LANGUAGE_INSTRUCTION: Record<Payload['language'], string> = {
   EN: 'Reply in professional British English.'
 }
 
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
-      }
-    })
+    return new Response(null, { headers: CORS })
   }
+
+  if (!GEMINI_API_KEY) {
+    return new Response(
+      JSON.stringify({ error: 'GEMINI_API_KEY not configured on this Edge Function' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...CORS } }
+    )
+  }
+
   try {
     const body = (await req.json()) as Payload
     const prompt = `
@@ -56,19 +64,19 @@ Write exactly 3 to 4 complete sentences. Each sentence must end with a full stop
       const err = await resp.text()
       return new Response(JSON.stringify({ error: 'gemini_error', detail: err }), {
         status: 502,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        headers: { 'Content-Type': 'application/json', ...CORS }
       })
     }
 
     const data = await resp.json()
     const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? ''
     return new Response(JSON.stringify({ introduction: text }), {
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      headers: { 'Content-Type': 'application/json', ...CORS }
     })
   } catch (e) {
     return new Response(JSON.stringify({ error: 'bad_request', detail: String(e) }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      headers: { 'Content-Type': 'application/json', ...CORS }
     })
   }
 })
