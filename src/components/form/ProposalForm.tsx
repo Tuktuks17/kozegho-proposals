@@ -72,6 +72,8 @@ export function ProposalForm({ profile, initialState, onSuccess }: Props) {
   }
 
   const isDuplicateRef = (e: unknown) => {
+    // PostgrestError from Supabase JS is NOT an Error instance — check .code directly
+    if (e && typeof e === 'object' && 'code' in e && (e as { code: string }).code === '23505') return true
     const msg = e instanceof Error ? e.message : JSON.stringify(e)
     return msg.includes('duplicate key') && msg.includes('proposals_reference_key')
   }

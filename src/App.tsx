@@ -8,10 +8,14 @@ import { AppShell } from '@/components/layout/AppShell'
 import { OfflineIndicator } from '@/components/layout/OfflineIndicator'
 import { InstallBanner } from '@/components/layout/InstallBanner'
 import { ProposalPage } from '@/components/form/ProposalPage'
+import { ProposalHistory } from '@/components/history/ProposalHistory'
+
+type View = 'form' | 'history'
 
 export default function App() {
   const { session, user, loading, signInWithGoogle, signOut } = useAuth()
   const { profile, updateName } = useProfile(user)
+  const [view, setView] = useState<View>('form')
 
   // Confirmed name persists within the browser session (cleared on tab close / signOut)
   const [nameConfirmed, setNameConfirmed] = useState<boolean>(
@@ -68,8 +72,11 @@ export default function App() {
 
   return (
     <>
-      <AppShell userName={displayName} onSignOut={signOut}>
-        <ProposalPage profile={effectiveProfile} />
+      <AppShell userName={displayName} onSignOut={signOut} view={view} onViewChange={setView}>
+        {view === 'form'
+          ? <ProposalPage profile={effectiveProfile} />
+          : <ProposalHistory profile={effectiveProfile} />
+        }
       </AppShell>
       <OfflineIndicator />
       <InstallBanner />
