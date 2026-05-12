@@ -189,7 +189,10 @@ export function buildEmailBody(language: string, params: EmailParams): string {
       ${params.datasheetCount > 0 ? `
       <!-- Attachments note -->
       <div style="margin-bottom:20px;font-size:13px;color:#555;">
-        📎 ${params.datasheetCount} datasheet${params.datasheetCount > 1 ? 's' : ''} attached
+        📎 ${language.toUpperCase() === 'PT'
+          ? `${params.datasheetCount} ficha${params.datasheetCount > 1 ? 's' : ''} técnica${params.datasheetCount > 1 ? 's' : ''} anexada${params.datasheetCount > 1 ? 's' : ''}`
+          : `${params.datasheetCount} datasheet${params.datasheetCount > 1 ? 's' : ''} attached`
+        }
       </div>` : ''}
 
       <!-- Signature -->

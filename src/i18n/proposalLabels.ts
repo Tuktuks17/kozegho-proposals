@@ -65,7 +65,7 @@ export const PROPOSAL_LABELS: Record<ProposalLanguage, DocumentLabels> = {
     deliveryTime: 'Prazo de Entrega',
     weeks: 'semanas',
     packaging: 'Embalagem',
-    packagingStandard: 'Embalagem Standard',
+    packagingStandard: 'Embalagem Padrão',
     packagingOcean: 'Embalagem Marítima',
     deliveryTerms: 'Condições de Entrega',
     paymentTerms: 'Condições de Pagamento',

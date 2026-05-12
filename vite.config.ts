@@ -13,7 +13,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'logo-kozegho.png'],
+      includeAssets: ['favicon.svg', 'icons/*.png'],
       manifest: {
         name: 'Kozegho Proposals',
         short_name: 'KP',
