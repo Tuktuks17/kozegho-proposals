@@ -6,7 +6,8 @@ import { exportWord } from '@/services/exportWord'
 import { generateProposalPdf } from '@/services/generateProposalPdf'
 import { fetchDatasheetBytes, logoUrl } from '@/services/datasheets'
 import { supabase } from '@/lib/supabase'
-import { buildEmailSubject } from '@/utils/emailTemplates'
+import { buildEmailSubject, buildEmailBody } from '@/utils/emailTemplates'
+import { sendProposalEmail } from '@/services/sendEmail'
 
 type Props = {
   proposal: PersistedProposal
@@ -106,49 +107,27 @@ export function ExportModal({ proposal, customer, onClose }: Props) {
     setSendError(null)
 
     try {
-      // Get sender email for reply-to (so client replies go to the salesperson)
-      const { data: { session } } = await supabase.auth.getSession()
-      const senderEmail = session?.user?.email ?? ''
-
-      const { data, error } = await supabase.functions.invoke('send-proposal', {
-        body: {
-          proposalNumber: proposal.reference,
-          subject: proposal.subject,
-          createdAt: proposal.created_at,
-          validityDate: proposal.validity_date,
-          deliveryWeeks: proposal.delivery_weeks,
-          packagingType: proposal.packaging_type,
-          deliveryTerms: proposal.delivery_terms,
-          paymentTerms: proposal.payment_terms,
-          warranty: proposal.warranty,
-          additionalNotes: proposal.additional_notes,
-          introduction: proposal.introduction,
-          subtotal: proposal.subtotal,
-          total: proposal.total,
-          language: proposal.language.toLowerCase(),
-          items: proposal.items.map((item) => ({
-            product_name: item.product_name,
-            description: item.description,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            discount_percent: item.discount_percent,
-            line_total: item.line_total,
-            options: item.options.map((o) => ({ label: o.label, price: o.price })),
-          })),
-          clientEmail: recipientEmail.trim(),
-          clientName,
-          clientCompany: customer.company,
-          clientCountry: customer.country,
-          commercialName: proposal.salesperson_name,
-          datasheetPaths,
-          proposalId: proposal.id,
-          senderEmail,
-        },
+      const subject = emailSubject
+      const htmlBody = buildEmailBody(proposal.language, {
+        clientName,
+        clientCompany: customer.company ?? '',
+        proposalNumber: proposal.reference,
+        subject: proposal.subject ?? '',
+        commercialName: proposal.salesperson_name ?? '',
+        datasheetCount: datasheetPaths.length,
       })
+      const attachments = datasheetPaths.map((d) => ({
+        filename: `${d.productName}_Datasheet_${proposal.language.toUpperCase()}.pdf`,
+        path: d.path,
+      }))
 
-      if (error || data?.success === false) {
-        throw new Error(data?.error ?? error?.message ?? 'Envio falhou')
-      }
+      await sendProposalEmail(recipientEmail.trim(), subject, htmlBody, attachments)
+
+      // Record sent timestamp in DB
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('proposals') as any)
+        .update({ email_sent_at: new Date().toISOString() })
+        .eq('id', proposal.id)
 
       setSentAt(new Date().toISOString())
       setSendState('sent')
