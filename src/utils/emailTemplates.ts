@@ -63,7 +63,7 @@ function itemsTable(items: ProposalItem[], language: string): string {
     const optsList = item.options.length > 0
       ? `<ul style="margin:4px 0 0 0;padding:0 0 0 16px;font-size:12px;color:#555;">${item.options.map(o => `<li>${o.label}${o.price > 0 ? ` (+${fmtMoney(o.price, language)} €)` : ''}</li>`).join('')}</ul>`
       : '<span style="color:#aaa;font-size:12px;">—</span>'
-    const desc = item.description
+    const desc = (item.description && item.description !== item.product_name)
       ? `<div style="font-weight:700;color:${DARK};font-size:13px;">${item.product_name}</div><div style="color:#666;font-size:12px;margin-top:2px;">${item.description}</div>`
       : `<div style="font-weight:700;color:${DARK};font-size:13px;">${item.product_name}</div>`
     const td = (content: string, align = 'left') =>
@@ -139,8 +139,7 @@ export function buildEmailBody(language: string, params: EmailParams): string {
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td style="vertical-align:middle;">
-            <img src="${LOGO_URL}" alt="Kozegho" height="48" style="display:block;height:48px;max-height:48px;" />
-            <div style="color:rgba(255,255,255,0.85);font-size:11px;margin-top:4px;letter-spacing:0.5px;">Kozegho dosing systems</div>
+            <img src="${LOGO_URL}" alt="Kozegho" height="72" style="display:block;height:72px;max-height:72px;" />
           </td>
           <td style="vertical-align:middle;text-align:right;">
             <div style="color:#fff;font-size:12px;opacity:0.85;">${lbl.reference}</div>
@@ -195,8 +194,6 @@ export function buildEmailBody(language: string, params: EmailParams): string {
       <!-- Signature -->
       <div style="border-top:1px solid ${BORDER};padding-top:16px;margin-top:8px;">
         <div style="font-size:14px;font-weight:600;color:${DARK};">${params.commercialName}</div>
-        <div style="font-size:13px;color:#666;">Kozegho, Lda.</div>
-        <a href="https://www.kozegho.com" style="font-size:13px;color:${GREEN};text-decoration:none;">www.kozegho.com</a>
       </div>
 
     </td>

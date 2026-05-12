@@ -56,7 +56,7 @@ const s = StyleSheet.create({
     marginBottom: 6,
   },
   headerLeft: { flexDirection: 'column', gap: 2 },
-  logo: { width: 130, height: 44, objectFit: 'contain' },
+  logo: { width: 165, height: 56, objectFit: 'contain' },
   logoFallback: { fontSize: 20, fontFamily: 'Helvetica-Bold', color: GREEN },
   tagline: { fontSize: 7.5, color: '#888888', marginTop: 2 },
   headerRight: { flexDirection: 'column', alignItems: 'flex-end', paddingTop: 4 },
@@ -206,10 +206,7 @@ export function ProposalPDFDocument({
             {logoDataUrl ? (
               <Image src={logoDataUrl} style={s.logo} />
             ) : (
-              <>
-                <Text style={s.logoFallback}>Kozegho</Text>
-                <Text style={s.tagline}>Kozegho dosing systems</Text>
-              </>
+              <Text style={s.logoFallback}>Kozegho</Text>
             )}
           </View>
           <View style={s.headerRight}>
