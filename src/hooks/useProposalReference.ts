@@ -12,13 +12,18 @@ export function useProposalReference(salespersonName: string, userId: string) {
     const dd = String(today.getDate()).padStart(2, '0')
     const prefix = `${mm}${dd}`
 
-    // Count ALL proposals today across all users — seq letter is a global daily counter
+    // SECURITY DEFINER function bypasses RLS — counts ALL proposals today
+    // (not just the current user's) so the seq letter is globally unique per day
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { count } = await (supabase.from('proposals') as any)
-      .select('id', { count: 'exact', head: true })
-      .like('reference', `${prefix}%K/%`)
+    const { data, error } = await (supabase.rpc as any)
+      ('get_daily_proposal_count', { date_prefix: prefix })
 
-    const newCount = count ?? 0
+    if (error) {
+      console.error('Failed to fetch daily count:', error)
+      return 0
+    }
+
+    const newCount = (data as number) ?? 0
     setDailyCount(newCount)
     return newCount
   }, [userId])

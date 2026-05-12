@@ -112,9 +112,8 @@ export function ProposalForm({ profile, initialState, onSuccess }: Props) {
         proposalRow = await insertProposal(reference, customerId)
       } catch (e) {
         if (!isDuplicateRef(e)) throw e
-        // Reference collision — refresh counter and retry once with the new reference
+        // Reference collision — refresh counter and retry once with fresh count
         const newCount = await refreshReference()
-        await new Promise(r => setTimeout(r, 300))
         const retryRef = buildReference(new Date(), newCount, profile.full_name)
         try {
           proposalRow = await insertProposal(retryRef, customerId)
