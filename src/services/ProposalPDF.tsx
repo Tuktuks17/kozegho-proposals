@@ -250,8 +250,10 @@ export function ProposalPDFDocument({
           {/* Data rows */}
           {lines.map((line, i) => {
             const opts = lineOptions.filter((o) => o.proposal_line_id === line.id)
+            const optsTotal = opts.reduce((s, o) => s + (o.price_eur ?? 0), 0)
             const optionsText = opts.map((o) => o.option_label).join(' + ')
-            const lineValue = line.line_total + opts.reduce((s, o) => s + (o.price_eur ?? 0), 0)
+            const lineValue = line.line_total + optsTotal
+            const baseUnitPrice = line.unit_price - optsTotal
             const isAlt = i % 2 === 1
 
             return (
@@ -270,7 +272,7 @@ export function ProposalPDFDocument({
                   {line.quantity}
                 </Text>
                 <Text style={[s.td, s.cPrice, { textAlign: 'right' }]}>
-                  {fmtCurrency(line.unit_price, language)}
+                  {fmtCurrency(baseUnitPrice, language)}
                 </Text>
                 <Text style={[s.td, s.cOptions, { fontSize: 8, color: '#555555' }]}>
                   {optionsText || '—'}
@@ -290,7 +292,7 @@ export function ProposalPDFDocument({
                 { flex: 75, textAlign: 'right', textTransform: 'uppercase' },
               ]}
             >
-              {L.total} (Excl. IVA)
+              {language === 'PT' ? `${L.total} (sem IVA)` : L.total}
             </Text>
             <Text style={[s.tdBold, s.cValue, { textAlign: 'right' }]}>
               {fmtCurrency(total, language)}

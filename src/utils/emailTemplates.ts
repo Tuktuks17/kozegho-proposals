@@ -68,10 +68,11 @@ function itemsTable(items: ProposalItem[], language: string): string {
       : `<div style="font-weight:700;color:${DARK};font-size:13px;">${item.product_name}</div>`
     const td = (content: string, align = 'left') =>
       `<td style="padding:10px 12px;border-bottom:1px solid ${BORDER};vertical-align:top;text-align:${align};background:${bg};">${content}</td>`
+    const basePrice = item.unit_price - item.options.reduce((s, o) => s + o.price, 0)
     return `<tr>
       ${td(desc)}
       ${td(`<span style="font-size:13px;">${item.quantity}</span>`, 'center')}
-      ${td(`<span style="font-size:13px;">${fmtMoney(item.unit_price, language)}</span>`, 'right')}
+      ${td(`<span style="font-size:13px;">${fmtMoney(basePrice, language)}</span>`, 'right')}
       ${td(optsList)}
       ${td(`<span style="font-size:13px;font-weight:600;">${fmtMoney(item.line_total, language)}</span>`, 'right')}
     </tr>`
@@ -84,7 +85,7 @@ function itemsTable(items: ProposalItem[], language: string): string {
         ${rows}
         <tr>
           <td colspan="4" style="padding:12px;text-align:right;font-weight:700;font-size:14px;color:${DARK};background:${GREY_BG};border-top:2px solid ${GREEN};">
-            ${lbl.total.toUpperCase()} (${lbl.vatNote})
+            ${language.toUpperCase() === 'PT' ? `${lbl.total.toUpperCase()} (sem IVA)` : lbl.total.toUpperCase()}
           </td>
           <td style="padding:12px;text-align:right;font-weight:700;font-size:15px;color:${GREEN};background:${GREY_BG};border-top:2px solid ${GREEN};">
             ${fmtMoney(items.reduce((s, i) => s + i.line_total, 0), language)} €
