@@ -5,6 +5,36 @@ type Attachment = {
   path: string // path inside 'datasheets' bucket
 }
 
+// Safely converts any Blob (including PDFs) to base64 string.
+// Processes in chunks to avoid call-stack overflow on large files.
+async function blobToBase64(blob: Blob): Promise<string> {
+  const arrayBuffer = await blob.arrayBuffer()
+  const uint8Array = new Uint8Array(arrayBuffer)
+  let binary = ''
+  const chunkSize = 8192
+  for (let i = 0; i < uint8Array.length; i += chunkSize) {
+    const chunk = uint8Array.subarray(i, i + chunkSize)
+    binary += String.fromCharCode(...chunk)
+  }
+  return btoa(binary)
+}
+
+// Encodes a UTF-8 string (may contain accented chars) to base64url for Gmail API.
+function toBase64Url(str: string): string {
+  const encoder = new TextEncoder()
+  const bytes = encoder.encode(str)
+  let binary = ''
+  const chunkSize = 8192
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize)
+    binary += String.fromCharCode(...chunk)
+  }
+  return btoa(binary)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
+}
+
 export async function sendProposalEmail(
   to: string,
   subject: string,
@@ -25,14 +55,15 @@ export async function sendProposalEmail(
       console.warn(`Skipping attachment ${att.filename}: ${error?.message}`)
       continue
     }
-    const arrayBuffer = await data.arrayBuffer()
-    const bytes = new Uint8Array(arrayBuffer)
-    let binary = ''
-    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i])
-    attachmentParts.push({ filename: att.filename, base64: btoa(binary) })
+    const base64 = await blobToBase64(data)
+    attachmentParts.push({ filename: att.filename, base64 })
   }
 
-  // Build MIME multipart/mixed
+  // Base64-encode the HTML body so the MIME string stays ASCII-safe
+  // (Portuguese accented chars would break btoa on the full MIME)
+  const htmlBase64 = await blobToBase64(new Blob([htmlBody], { type: 'text/html; charset=utf-8' }))
+
+  // Build MIME multipart/mixed — all parts are base64, so only ASCII in the MIME string
   const boundary = `kozegho_${Date.now()}_${Math.random().toString(36).slice(2)}`
   const lines: string[] = []
 
@@ -42,12 +73,14 @@ export async function sendProposalEmail(
   lines.push(`Content-Type: multipart/mixed; boundary="${boundary}"`)
   lines.push('')
 
-  // HTML body part
+  // HTML body part (base64 encoded)
   lines.push(`--${boundary}`)
   lines.push(`Content-Type: text/html; charset=utf-8`)
-  lines.push(`Content-Transfer-Encoding: quoted-printable`)
+  lines.push(`Content-Transfer-Encoding: base64`)
   lines.push('')
-  lines.push(htmlBody)
+  for (let i = 0; i < htmlBase64.length; i += 76) {
+    lines.push(htmlBase64.slice(i, i + 76))
+  }
   lines.push('')
 
   // Attachment parts
@@ -57,7 +90,6 @@ export async function sendProposalEmail(
     lines.push(`Content-Disposition: attachment; filename="${att.filename}"`)
     lines.push(`Content-Transfer-Encoding: base64`)
     lines.push('')
-    // Split base64 into 76-char lines per RFC 2045
     for (let i = 0; i < att.base64.length; i += 76) {
       lines.push(att.base64.slice(i, i + 76))
     }
@@ -66,12 +98,9 @@ export async function sendProposalEmail(
 
   lines.push(`--${boundary}--`)
 
+  // rawMime is now pure ASCII — toBase64Url uses TextEncoder as extra safety
   const rawMime = lines.join('\r\n')
-  // Encode as base64url
-  const base64url = btoa(rawMime)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '')
+  const raw = toBase64Url(rawMime)
 
   const response = await fetch(
     'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
@@ -81,7 +110,7 @@ export async function sendProposalEmail(
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ raw: base64url }),
+      body: JSON.stringify({ raw }),
     }
   )
 
