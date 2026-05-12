@@ -115,6 +115,18 @@ export function ExportModal({ proposal, customer, onClose }: Props) {
         subject: proposal.subject ?? '',
         commercialName: proposal.salesperson_name ?? '',
         datasheetCount: datasheetPaths.length,
+        introduction: proposal.introduction,
+        items: proposal.items,
+        subtotal: proposal.subtotal,
+        total: proposal.total,
+        validUntil: proposal.validity_date,
+        deliveryWeeks: proposal.delivery_weeks,
+        packagingType: proposal.packaging_type,
+        deliveryTerms: proposal.delivery_terms,
+        paymentTerms: proposal.payment_terms,
+        warranty: proposal.warranty,
+        additionalNotes: proposal.additional_notes,
+        createdAt: proposal.created_at,
       })
       const attachments = datasheetPaths.map((d) => ({
         filename: `${d.productName}_Datasheet_${proposal.language.toUpperCase()}.pdf`,

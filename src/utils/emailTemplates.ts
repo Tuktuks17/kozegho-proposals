@@ -1,3 +1,6 @@
+import type { ProposalItem, PackagingType } from '@/types/proposal'
+import { PROPOSAL_LABELS } from '@/i18n/proposalLabels'
+
 type EmailParams = {
   clientName: string
   clientCompany: string
@@ -5,81 +8,212 @@ type EmailParams = {
   subject: string
   commercialName: string
   datasheetCount: number
+  introduction?: string | null
+  items?: ProposalItem[]
+  subtotal?: number
+  total?: number
+  validUntil?: string | null
+  deliveryWeeks?: number | null
+  packagingType?: PackagingType | null
+  deliveryTerms?: string | null
+  paymentTerms?: string | null
+  warranty?: string | null
+  additionalNotes?: string | null
+  createdAt?: string
 }
 
-type Template = (p: EmailParams) => string
-
-const BASE_STYLE = `
-  font-family: Arial, sans-serif; font-size: 14px; color: #333;
-  max-width: 600px; margin: 0 auto; line-height: 1.6;
-`
 const GREEN = '#7AB648'
+const DARK = '#1C2B1C'
+const GREY_BG = '#F5F5F5'
+const BORDER = '#E0E0E0'
+const LOGO_URL = 'https://yrlnvtiuonrjkvdoievj.supabase.co/storage/v1/object/public/logos/kozegho-logo.png'
 
-function wrap(body: string, commercialName: string): string {
-  return `
-<div style="${BASE_STYLE}">
-  <div style="border-bottom: 3px solid ${GREEN}; padding-bottom: 12px; margin-bottom: 20px;">
-    <span style="font-size: 22px; font-weight: bold; color: ${GREEN};">Kozegho</span>
-  </div>
-  ${body}
-  <div style="border-top: 1px solid #eee; margin-top: 24px; padding-top: 16px; font-size: 12px; color: #888;">
-    ${commercialName} · Kozegho, Lda.<br/>
-    <a href="https://www.kozegho.com" style="color: ${GREEN};">www.kozegho.com</a>
-  </div>
-</div>`
+function fmtDate(iso: string | null | undefined, language: string): string {
+  if (!iso) return ''
+  try {
+    const locale = language === 'PT' ? 'pt-PT' : language === 'DE' ? 'de-DE' : language === 'FR' ? 'fr-FR' : language === 'ES' ? 'es-ES' : 'en-GB'
+    return new Date(iso).toLocaleDateString(locale, { day: '2-digit', month: 'long', year: 'numeric' })
+  } catch {
+    return iso
+  }
 }
 
-const TEMPLATES: Record<string, Template> = {
-  PT: ({ clientName, proposalNumber, subject, commercialName, datasheetCount }) =>
-    wrap(`
-      <p>Exmo(a). Sr(a). <strong>${clientName}</strong>,</p>
-      <p>Conforme combinado, enviamos em anexo a nossa proposta comercial <strong>${proposalNumber}</strong> referente a <em>${subject}</em>.</p>
-      ${datasheetCount > 0 ? `<p>Junto seguem igualmente as fichas técnicas dos equipamentos propostos para sua referência.</p>` : ''}
-      <p>Ficamos ao dispor para qualquer esclarecimento ou para agendar uma reunião de acompanhamento.</p>
-      <p>Com os melhores cumprimentos,</p>
-    `, commercialName),
+function fmtMoney(value: number | undefined, language: string): string {
+  if (value == null) return ''
+  const locale = language === 'PT' || language === 'ES' || language === 'FR' ? 'pt-PT' : language === 'DE' ? 'de-DE' : 'en-GB'
+  return new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
+}
 
-  EN: ({ clientName, proposalNumber, subject, commercialName, datasheetCount }) =>
-    wrap(`
-      <p>Dear <strong>${clientName}</strong>,</p>
-      <p>Please find attached our commercial proposal <strong>${proposalNumber}</strong> regarding <em>${subject}</em>.</p>
-      ${datasheetCount > 0 ? `<p>We have also enclosed the technical datasheets for the proposed equipment for your reference.</p>` : ''}
-      <p>Please do not hesitate to contact us should you have any questions or wish to arrange a follow-up meeting.</p>
-      <p>Kind regards,</p>
-    `, commercialName),
+function packagingLabel(type: PackagingType | null | undefined, language: string): string {
+  const lbl = PROPOSAL_LABELS[language as keyof typeof PROPOSAL_LABELS] ?? PROPOSAL_LABELS.EN
+  if (!type) return lbl.packagingStandard
+  return type === 'ocean' ? lbl.packagingOcean : lbl.packagingStandard
+}
 
-  FR: ({ clientName, proposalNumber, subject, commercialName, datasheetCount }) =>
-    wrap(`
-      <p>Madame, Monsieur <strong>${clientName}</strong>,</p>
-      <p>Veuillez trouver ci-joint notre proposition commerciale <strong>${proposalNumber}</strong> concernant <em>${subject}</em>.</p>
-      ${datasheetCount > 0 ? `<p>Nous vous transmettons également les fiches techniques des équipements proposés pour votre référence.</p>` : ''}
-      <p>Nous restons à votre entière disposition pour tout renseignement complémentaire.</p>
-      <p>Cordialement,</p>
-    `, commercialName),
+function itemsTable(items: ProposalItem[], language: string): string {
+  const lbl = PROPOSAL_LABELS[language as keyof typeof PROPOSAL_LABELS] ?? PROPOSAL_LABELS.EN
+  const headerCells = [lbl.description, lbl.qtyShort, `${lbl.unitPrice} (€)`, lbl.options, `${lbl.total} (€)`]
+  const header = `
+    <tr>
+      ${headerCells.map(c => `<th style="background:${GREEN};color:#fff;padding:10px 12px;text-align:left;font-size:13px;font-weight:600;border:none;">${c}</th>`).join('')}
+    </tr>`
 
-  ES: ({ clientName, proposalNumber, subject, commercialName, datasheetCount }) =>
-    wrap(`
-      <p>Estimado/a <strong>${clientName}</strong>,</p>
-      <p>Conforme lo acordado, le enviamos adjunta nuestra propuesta comercial <strong>${proposalNumber}</strong> relativa a <em>${subject}</em>.</p>
-      ${datasheetCount > 0 ? `<p>Adjuntamos igualmente las fichas técnicas de los equipos propuestos para su referencia.</p>` : ''}
-      <p>Quedamos a su disposición para cualquier aclaración o para concertar una reunión de seguimiento.</p>
-      <p>Atentamente,</p>
-    `, commercialName),
+  const rows = items.map((item, i) => {
+    const bg = i % 2 === 0 ? '#fff' : '#FAFAFA'
+    const optsList = item.options.length > 0
+      ? `<ul style="margin:4px 0 0 0;padding:0 0 0 16px;font-size:12px;color:#555;">${item.options.map(o => `<li>${o.label}${o.price > 0 ? ` (+${fmtMoney(o.price, language)} €)` : ''}</li>`).join('')}</ul>`
+      : '<span style="color:#aaa;font-size:12px;">—</span>'
+    const desc = item.description
+      ? `<div style="font-weight:700;color:${DARK};font-size:13px;">${item.product_name}</div><div style="color:#666;font-size:12px;margin-top:2px;">${item.description}</div>`
+      : `<div style="font-weight:700;color:${DARK};font-size:13px;">${item.product_name}</div>`
+    const td = (content: string, align = 'left') =>
+      `<td style="padding:10px 12px;border-bottom:1px solid ${BORDER};vertical-align:top;text-align:${align};background:${bg};">${content}</td>`
+    return `<tr>
+      ${td(desc)}
+      ${td(`<span style="font-size:13px;">${item.quantity}</span>`, 'center')}
+      ${td(`<span style="font-size:13px;">${fmtMoney(item.unit_price, language)}</span>`, 'right')}
+      ${td(optsList)}
+      ${td(`<span style="font-size:13px;font-weight:600;">${fmtMoney(item.line_total, language)}</span>`, 'right')}
+    </tr>`
+  }).join('')
 
-  DE: ({ clientName, proposalNumber, subject, commercialName, datasheetCount }) =>
-    wrap(`
-      <p>Sehr geehrte(r) <strong>${clientName}</strong>,</p>
-      <p>Wie besprochen übersenden wir Ihnen anbei unser Angebot <strong>${proposalNumber}</strong> bezüglich <em>${subject}</em>.</p>
-      ${datasheetCount > 0 ? `<p>Die technischen Datenblätter der angebotenen Geräte finden Sie ebenfalls im Anhang.</p>` : ''}
-      <p>Für Rückfragen stehen wir Ihnen jederzeit gerne zur Verfügung.</p>
-      <p>Mit freundlichen Grüßen,</p>
-    `, commercialName),
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid ${BORDER};border-radius:4px;overflow:hidden;">
+      <thead>${header}</thead>
+      <tbody>
+        ${rows}
+        <tr>
+          <td colspan="4" style="padding:12px;text-align:right;font-weight:700;font-size:14px;color:${DARK};background:${GREY_BG};border-top:2px solid ${GREEN};">
+            ${lbl.total.toUpperCase()} (${lbl.vatNote})
+          </td>
+          <td style="padding:12px;text-align:right;font-weight:700;font-size:15px;color:${GREEN};background:${GREY_BG};border-top:2px solid ${GREEN};">
+            ${fmtMoney(items.reduce((s, i) => s + i.line_total, 0), language)} €
+          </td>
+        </tr>
+      </tbody>
+    </table>`
+}
+
+function termsGrid(params: EmailParams, language: string): string {
+  const lbl = PROPOSAL_LABELS[language as keyof typeof PROPOSAL_LABELS] ?? PROPOSAL_LABELS.EN
+  const cell = (icon: string, label: string, value: string) => `
+    <td style="width:50%;padding:10px 12px;vertical-align:top;">
+      <div style="font-size:12px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${icon} ${label}</div>
+      <div style="font-size:13px;color:${DARK};">${value || '—'}</div>
+    </td>`
+  const rows = [
+    [cell('📅', lbl.validUntil, fmtDate(params.validUntil, language)),
+     cell('📦', lbl.packaging, packagingLabel(params.packagingType, language))],
+    [cell('🕐', lbl.deliveryTime, params.deliveryWeeks ? `${params.deliveryWeeks} ${lbl.weeks}` : '—'),
+     cell('💶', lbl.paymentTerms, params.paymentTerms || lbl.defaultPaymentTerms)],
+    [cell('📍', lbl.deliveryTerms, params.deliveryTerms || lbl.defaultDeliveryTerms),
+     cell('🛡️', lbl.warranty, params.warranty || lbl.defaultWarranty)],
+  ]
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid ${BORDER};border-radius:4px;overflow:hidden;background:#fff;">
+      ${rows.map(([a, b]) => `<tr style="border-bottom:1px solid ${BORDER};">${a}${b}</tr>`).join('')}
+    </table>`
 }
 
 export function buildEmailBody(language: string, params: EmailParams): string {
-  const lang = language.toUpperCase()
-  const template = TEMPLATES[lang] ?? TEMPLATES.PT
-  return template(params)
+  const lang = language.toUpperCase() as keyof typeof PROPOSAL_LABELS
+  const lbl = PROPOSAL_LABELS[lang] ?? PROPOSAL_LABELS.EN
+  const dateStr = fmtDate(params.createdAt ?? new Date().toISOString(), language)
+
+  const intro = params.introduction?.trim()
+    || lbl.fallbackIntroduction
+
+  const hasItems = params.items && params.items.length > 0
+
+  return `<!DOCTYPE html>
+<html lang="${lang.toLowerCase()}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${params.subject}</title></head>
+<body style="margin:0;padding:0;background:#f0f0f0;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f0f0;padding:24px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+
+  <!-- HEADER -->
+  <tr>
+    <td style="background:${GREEN};padding:20px 28px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="vertical-align:middle;">
+            <img src="${LOGO_URL}" alt="Kozegho" height="48" style="display:block;height:48px;max-height:48px;" />
+            <div style="color:rgba(255,255,255,0.85);font-size:11px;margin-top:4px;letter-spacing:0.5px;">Kozegho dosing systems</div>
+          </td>
+          <td style="vertical-align:middle;text-align:right;">
+            <div style="color:#fff;font-size:12px;opacity:0.85;">${lbl.reference}</div>
+            <div style="color:#fff;font-size:15px;font-weight:700;margin-top:2px;">${params.proposalNumber}</div>
+            <div style="color:rgba(255,255,255,0.75);font-size:12px;margin-top:6px;">${dateStr}</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- SUBJECT BAR -->
+  <tr>
+    <td style="background:${GREY_BG};padding:14px 28px;border-bottom:2px solid ${GREEN};">
+      <div style="font-size:16px;font-weight:700;color:${DARK};">${params.subject}</div>
+    </td>
+  </tr>
+
+  <!-- BODY -->
+  <tr>
+    <td style="padding:24px 28px;">
+
+      <!-- Introduction -->
+      <p style="margin:0 0 20px 0;font-size:14px;color:#333;line-height:1.7;font-style:italic;border-left:3px solid ${GREEN};padding-left:12px;">${intro}</p>
+
+      ${hasItems ? `
+      <!-- Products Table -->
+      <div style="margin-bottom:20px;">
+        ${itemsTable(params.items!, language)}
+      </div>` : ''}
+
+      ${(params.validUntil || params.deliveryWeeks || params.paymentTerms || params.deliveryTerms || params.warranty || params.packagingType) ? `
+      <!-- Terms -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:13px;font-weight:700;color:${DARK};margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">${lbl.termsAndConditions}</div>
+        ${termsGrid(params, language)}
+      </div>` : ''}
+
+      ${params.additionalNotes ? `
+      <!-- Additional Notes -->
+      <div style="margin-bottom:20px;background:${GREY_BG};border-radius:4px;padding:12px 16px;">
+        <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:4px;">${lbl.additionalNotes}</div>
+        <div style="font-size:13px;color:#333;">${params.additionalNotes}</div>
+      </div>` : ''}
+
+      ${params.datasheetCount > 0 ? `
+      <!-- Attachments note -->
+      <div style="margin-bottom:20px;font-size:13px;color:#555;">
+        📎 ${params.datasheetCount} datasheet${params.datasheetCount > 1 ? 's' : ''} attached
+      </div>` : ''}
+
+      <!-- Signature -->
+      <div style="border-top:1px solid ${BORDER};padding-top:16px;margin-top:8px;">
+        <div style="font-size:14px;font-weight:600;color:${DARK};">${params.commercialName}</div>
+        <div style="font-size:13px;color:#666;">Kozegho, Lda.</div>
+        <a href="https://www.kozegho.com" style="font-size:13px;color:${GREEN};text-decoration:none;">www.kozegho.com</a>
+      </div>
+
+    </td>
+  </tr>
+
+  <!-- FOOTER -->
+  <tr>
+    <td style="background:${GREEN};padding:14px 28px;text-align:center;">
+      <span style="color:#fff;font-size:12px;">Kozegho, Lda. &nbsp;|&nbsp; www.kozegho.com &nbsp;|&nbsp; kozegho@kozegho.com</span>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`
 }
 
 export const EMAIL_SUBJECTS: Record<string, string> = {

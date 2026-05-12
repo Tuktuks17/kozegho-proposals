@@ -5,6 +5,19 @@ type Attachment = {
   path: string // path inside 'datasheets' bucket
 }
 
+// RFC 2047 encoded-word for non-ASCII MIME headers (Subject, filenames with accents)
+function encodeMimeHeader(value: string): string {
+  if (/^[\x20-\x7E]*$/.test(value)) return value
+  const encoder = new TextEncoder()
+  const bytes = encoder.encode(value)
+  let binary = ''
+  const chunk = 8192
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk))
+  }
+  return `=?UTF-8?B?${btoa(binary)}?=`
+}
+
 // Safely converts any Blob (including PDFs) to base64 string.
 // Processes in chunks to avoid call-stack overflow on large files.
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -69,7 +82,7 @@ export async function sendProposalEmail(
 
   lines.push(`MIME-Version: 1.0`)
   lines.push(`To: ${to}`)
-  lines.push(`Subject: ${subject}`)
+  lines.push(`Subject: ${encodeMimeHeader(subject)}`)
   lines.push(`Content-Type: multipart/mixed; boundary="${boundary}"`)
   lines.push('')
 
