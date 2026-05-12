@@ -1,4 +1,4 @@
-export type ProposalLanguage = 'PT' | 'DE' | 'ES' | 'FR' | 'EN'
+export type ProposalLanguage = 'PT' | 'ES' | 'FR' | 'EN'
 export type DatasheetLanguage = 'PT' | 'GB' | 'FR' | 'ES' | 'DE'
 export type ProductCategory =
   | 'Polymer Preparation' | 'Dilution Systems' | 'Mixers'

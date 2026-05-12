@@ -9,7 +9,6 @@ type Props = {
 
 const LANGUAGES: { code: ProposalLanguage; label: string }[] = [
   { code: 'PT', label: 'Portuguese' },
-  { code: 'DE', label: 'German' },
   { code: 'ES', label: 'Spanish' },
   { code: 'FR', label: 'French' },
   { code: 'EN', label: 'English' }

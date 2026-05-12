@@ -4,13 +4,12 @@ const BASE = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/data
 
 type LangFolder = 'PT' | 'GB' | 'ES' | 'FR'
 
-// Maps proposal language to bucket folder (DE falls back to GB — no DE folder exists)
+// Maps proposal language to bucket folder
 const LANG_FOLDER: Record<ProposalLanguage, LangFolder> = {
   PT: 'PT',
   EN: 'GB',
   ES: 'ES',
   FR: 'FR',
-  DE: 'GB',
 }
 
 // Language-specific filename prefix used in each folder
