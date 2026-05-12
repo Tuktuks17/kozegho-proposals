@@ -55,7 +55,7 @@ export async function sendProposalEmail(
   attachments: Attachment[]
 ): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession()
-  const accessToken = session?.provider_token
+  const accessToken = session?.provider_token || sessionStorage.getItem('kp:gmail_token')
   if (!accessToken) {
     throw new Error('Gmail token not available. Please sign out and sign in again.')
   }

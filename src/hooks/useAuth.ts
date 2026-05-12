@@ -14,7 +14,13 @@ export function useAuth() {
       setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === 'SIGNED_IN' && s?.provider_token) {
+        sessionStorage.setItem('kp:gmail_token', s.provider_token)
+      }
+      if (event === 'SIGNED_OUT') {
+        sessionStorage.removeItem('kp:gmail_token')
+      }
       setSession(s)
       setUser(s?.user ?? null)
     })
@@ -32,9 +38,9 @@ export function useAuth() {
     })
 
   const signOut = () => {
-    // Clear session name so the modal appears again on next login
     sessionStorage.removeItem('kp:name-confirmed')
     sessionStorage.removeItem('kp:session-name')
+    sessionStorage.removeItem('kp:gmail_token')
     return supabase.auth.signOut()
   }
 
