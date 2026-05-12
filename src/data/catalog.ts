@@ -71,7 +71,7 @@ export const CATALOG: ProductFamily[] = [
   },
   {
     id: 'PD', name: 'In Line Dilution Panels', series: 'PD Series',
-    category: 'Polymer Preparation', hasDatasheet: false, datasheetLanguages: [],
+    category: 'Polymer Preparation', hasDatasheet: true, datasheetLanguages: ALL,
     variants: [
       { id: 'PD_2000',  name: 'PD 2000',  price: 1910 },
       { id: 'PD_4000',  name: 'PD 4000',  price: 2030 },
@@ -193,7 +193,7 @@ export const CATALOG: ProductFamily[] = [
   // ── CHLORINE DIOXIDE ─────────────────────────────────────────────────────
   {
     id: 'KDC', name: 'Chlorine Dioxide Generation Systems (DICLOX)', series: 'KDC Series',
-    category: 'Chlorine Dioxide', hasDatasheet: false, datasheetLanguages: [],
+    category: 'Chlorine Dioxide', hasDatasheet: true, datasheetLanguages: ALL,
     variants: [
       { id: 'KDC_80',  name: 'KDC 80',  price: 6620 },
       { id: 'KDC_160', name: 'KDC 160', price: 6620 },
@@ -211,7 +211,7 @@ export const CATALOG: ProductFamily[] = [
   // ── CONTROLLERS ──────────────────────────────────────────────────────────
   {
     id: 'KSENSE', name: 'Water Quality Controllers', series: 'Ksense Series',
-    category: 'Controllers', hasDatasheet: false, datasheetLanguages: [], note: VERIFY,
+    category: 'Controllers', hasDatasheet: true, datasheetLanguages: ALL, note: VERIFY,
     variants: [
       { id: 'KSENSE_PH',       name: 'Ksense pH',              price: 1350 },
       { id: 'KSENSE_ORP',      name: 'Ksense ORP',             price: 1450 },
@@ -226,7 +226,7 @@ export const CATALOG: ProductFamily[] = [
   // ── METERING PUMPS ───────────────────────────────────────────────────────
   {
     id: 'CNP', name: 'Solenoid Metering Pumps (Entry)', series: 'CNP Series',
-    category: 'Metering Pumps', hasDatasheet: false, datasheetLanguages: [], note: VERIFY,
+    category: 'Metering Pumps', hasDatasheet: true, datasheetLanguages: ALL, note: VERIFY,
     variants: [
       { id: 'CNP_2_5',  name: 'CNP 2/5',  price: 410 },
       { id: 'CNP_5_5',  name: 'CNP 5/5',  price: 410 },
@@ -239,7 +239,7 @@ export const CATALOG: ProductFamily[] = [
   },
   {
     id: 'BETA_4', name: 'Beta 4 Solenoid Metering Pumps', series: 'Beta 4 Series',
-    category: 'Metering Pumps', hasDatasheet: false, datasheetLanguages: [], note: VERIFY,
+    category: 'Metering Pumps', hasDatasheet: true, datasheetLanguages: ALL, note: VERIFY,
     variants: [
       { id: 'BETA_4_0220', name: 'Beta 4 0220', price: 920 },
       { id: 'BETA_4_0420', name: 'Beta 4 0420', price: 925 },
@@ -253,7 +253,7 @@ export const CATALOG: ProductFamily[] = [
   },
   {
     id: 'BETA_5', name: 'Beta 5 Solenoid Metering Pumps', series: 'Beta 5 Series',
-    category: 'Metering Pumps', hasDatasheet: false, datasheetLanguages: [], note: VERIFY,
+    category: 'Metering Pumps', hasDatasheet: true, datasheetLanguages: ALL, note: VERIFY,
     variants: [
       { id: 'BETA_5_0708', name: 'Beta 5 0708', price: 1280 },
       { id: 'BETA_5_1004', name: 'Beta 5 1004', price: 1380 },
@@ -280,7 +280,7 @@ export const CATALOG: ProductFamily[] = [
   },
   {
     id: 'VAM', name: 'VAM Motor-driven Metering Pumps', series: 'VAM Series',
-    category: 'Metering Pumps', hasDatasheet: false, datasheetLanguages: [], note: VERIFY,
+    category: 'Metering Pumps', hasDatasheet: true, datasheetLanguages: ALL, note: VERIFY,
     variants: [
       { id: 'VAM_20_PP',   name: 'VAM 20', price: 1130, priceNote: 'PP'   },
       { id: 'VAM_20_PVC',  name: 'VAM 20', price: 1170, priceNote: 'PVC'  },
@@ -293,7 +293,7 @@ export const CATALOG: ProductFamily[] = [
   },
   {
     id: 'SIGMA', name: 'Sigma Diaphragm Metering Pumps', series: 'Sigma Series',
-    category: 'Metering Pumps', hasDatasheet: false, datasheetLanguages: [], note: VERIFY,
+    category: 'Metering Pumps', hasDatasheet: true, datasheetLanguages: ALL, note: VERIFY,
     variants: [
       { id: 'S1_BA', name: 'S1Ba', price: 1810 },
       { id: 'S1_CB', name: 'S1Cb', price: 2250 },
@@ -307,7 +307,7 @@ export const CATALOG: ProductFamily[] = [
   // ── TANKS ────────────────────────────────────────────────────────────────
   {
     id: 'TCP', name: 'Cylindrical Polyethylene Tanks', series: 'TCP Series',
-    category: 'Tanks', hasDatasheet: false, datasheetLanguages: [], note: VERIFY,
+    category: 'Tanks', hasDatasheet: true, datasheetLanguages: ALL, note: VERIFY,
     variants: [
       { id: 'TCP_100',   name: 'TCP 100',   price: 1100  },
       { id: 'TCP_250',   name: 'TCP 250',   price: 1400  },
@@ -326,7 +326,7 @@ export const CATALOG: ProductFamily[] = [
   },
   {
     id: 'TCI', name: 'Cylindrical Insulated Tanks', series: 'TCI Series',
-    category: 'Tanks', hasDatasheet: false, datasheetLanguages: [], note: VERIFY,
+    category: 'Tanks', hasDatasheet: true, datasheetLanguages: ALL, note: VERIFY,
     variants: [
       { id: 'TCI_250',   name: 'TCI 250',   price: 1390  },
       { id: 'TCI_500',   name: 'TCI 500',   price: 1900  },
@@ -340,7 +340,7 @@ export const CATALOG: ProductFamily[] = [
   },
   {
     id: 'TCC', name: 'Conical Bottom Tanks', series: 'TCC Series',
-    category: 'Tanks', hasDatasheet: false, datasheetLanguages: [], note: VERIFY,
+    category: 'Tanks', hasDatasheet: true, datasheetLanguages: ALL, note: VERIFY,
     variants: [
       { id: 'TCC_100',  name: 'TCC 100',  price: 1250 },
       { id: 'TCC_250',  name: 'TCC 250',  price: 1750 },
@@ -353,7 +353,7 @@ export const CATALOG: ProductFamily[] = [
   },
   {
     id: 'TPP', name: 'Parallelepiped Polyethylene Tanks', series: 'TPP Series',
-    category: 'Tanks', hasDatasheet: false, datasheetLanguages: [], note: VERIFY,
+    category: 'Tanks', hasDatasheet: true, datasheetLanguages: ALL, note: VERIFY,
     variants: [
       { id: 'TPP_50',   name: 'TPP 50',   price: 370  },
       { id: 'TPP_100',  name: 'TPP 100',  price: 540  },
@@ -366,7 +366,7 @@ export const CATALOG: ProductFamily[] = [
   },
   {
     id: 'DEP', name: 'Retention / Drip Pans', series: 'DEP Series',
-    category: 'Tanks', hasDatasheet: false, datasheetLanguages: [], note: VERIFY,
+    category: 'Tanks', hasDatasheet: true, datasheetLanguages: ALL, note: VERIFY,
     variants: [
       { id: 'DEP_S',  name: 'DEP S',  price: 120 },
       { id: 'DEP_M',  name: 'DEP M',  price: 260 },

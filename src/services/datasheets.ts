@@ -55,11 +55,21 @@ const FAMILY_BASES: Record<string, FileBase> = {
   DSM:     { PT: 'DS-M-171018_2', GB: 'DSM-1710188_2', ES: 'DSM-171018_2', FR: 'DSM-171018_2' },
   FD:      'FD-170922_2',
   FMP:     'FMP-171019_2',
-  CNP:     'CNP-150705_5',
+  // ES uses a different revision date for CNP
+  CNP:     { PT: 'CNP-150705_5', GB: 'CNP-150705_5', ES: 'CNP-170705_5', FR: 'CNP-150705_5' },
   DEP:     'DEP-170712_2',
   DICLOX:  'DICLOX-170622_3',
   AMP:     'AMP-171023_2',
   RBT:     'RBT-171019_2',
+  // SIGMA family maps to S1 datasheet (covers S1/S2/S3 range); FR uses GB fallback
+  SIGMA:   { PT: 'S1-150806_5', GB: 'S1-150608_5', ES: 'S1-150608_5' },
+  // KDC (DICLOX) — confirmed in PT/GB/ES/FR folders
+  KDC:     'KDC-170622_3',
+  // KSENSE — only GB and ES in bucket; PT/FR use GB fallback
+  KSENSE:  { GB: 'KSENSE-150608_5', ES: 'KSENSE-150608_5' },
+  // Beta 4 and Beta 5 share the same BETA datasheet across all languages
+  BETA_4:  'BETA-171003_2',
+  BETA_5:  'BETA-171003_2',
 }
 
 export function resolveDatasheetUrl(
