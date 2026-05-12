@@ -4,6 +4,7 @@ import type { Profile, Customer } from '@/types/database'
 import { useProposalForm } from '@/hooks/useProposalForm'
 import { useProposalReference } from '@/hooks/useProposalReference'
 import { useAutosaveDraft, clearDraft } from '@/hooks/useDraft'
+import { buildReference } from '@/lib/referenceFormat'
 import { supabase } from '@/lib/supabase'
 import { SectionDetails } from './SectionDetails'
 import { SectionClient } from './SectionClient'
@@ -41,6 +42,40 @@ export function ProposalForm({ profile, initialState, onSuccess }: Props) {
     return errs
   }
 
+  const insertProposal = async (ref: string, customerId: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase.from('proposals') as any)
+      .insert({
+        reference: ref || null,
+        customer_id: customerId,
+        salesperson_name: profile.full_name,
+        language: form.language,
+        subject: form.subject,
+        introduction,
+        items: form.items,
+        subtotal,
+        total: subtotal,
+        validity_date: form.validity_date,
+        delivery_weeks: form.delivery_weeks,
+        packaging_type: form.packaging_type,
+        delivery_terms: form.delivery_terms,
+        payment_terms: form.payment_terms,
+        warranty: form.warranty,
+        additional_notes: form.additional_notes,
+        status: 'draft',
+        created_by: profile.id
+      })
+      .select()
+      .single()
+    if (error) throw error
+    return data as PersistedProposal
+  }
+
+  const isDuplicateRef = (e: unknown) => {
+    const msg = e instanceof Error ? e.message : JSON.stringify(e)
+    return msg.includes('duplicate key') && msg.includes('proposals_reference_key')
+  }
+
   const handleSubmit = async () => {
     const errs = validate()
     if (errs.length > 0) { setErrors(errs); return }
@@ -70,46 +105,32 @@ export function ProposalForm({ profile, initialState, onSuccess }: Props) {
 
       if (!customerId || !resolvedCustomer) throw new Error('Client not found')
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: proposalRow, error: propError } = await (supabase.from('proposals') as any)
-        .insert({
-          reference: reference || null,
-          customer_id: customerId,
-          salesperson_name: profile.full_name,
-          language: form.language,
-          subject: form.subject,
-          introduction,
-          items: form.items,
-          subtotal,
-          total: subtotal,
-          validity_date: form.validity_date,
-          delivery_weeks: form.delivery_weeks,
-          packaging_type: form.packaging_type,
-          delivery_terms: form.delivery_terms,
-          payment_terms: form.payment_terms,
-          warranty: form.warranty,
-          additional_notes: form.additional_notes,
-          status: 'draft',
-          created_by: profile.id
-        })
-        .select()
-        .single()
-      if (propError) throw propError
+      let proposalRow: PersistedProposal
+      try {
+        proposalRow = await insertProposal(reference, customerId)
+      } catch (e) {
+        if (!isDuplicateRef(e)) throw e
+        // Reference collision — refresh counter and retry once with the new reference
+        const newCount = await refreshReference()
+        await new Promise(r => setTimeout(r, 300))
+        const retryRef = buildReference(new Date(), newCount, profile.full_name)
+        try {
+          proposalRow = await insertProposal(retryRef, customerId)
+        } catch (e2) {
+          if (isDuplicateRef(e2)) {
+            throw new Error('Could not generate a unique reference. Please try again.')
+          }
+          throw e2
+        }
+      }
 
       clearDraft(profile.id)
-      setExportProposal(proposalRow as PersistedProposal)
+      setExportProposal(proposalRow)
     } catch (e) {
       const raw = e instanceof Error
         ? e.message
         : (typeof e === 'object' && e !== null ? JSON.stringify(e) : String(e))
-
-      if (raw.includes('duplicate key') && raw.includes('proposals_reference_key')) {
-        // Reference collision: refresh the counter so the next attempt gets a new letter
-        await refreshReference()
-        setErrors(['Reference already used today. Please wait a moment and try again.'])
-      } else {
-        setErrors([raw])
-      }
+      setErrors([raw])
     } finally {
       setSaving(false)
     }
