@@ -87,8 +87,8 @@ function itemsTable(items: ProposalItem[], language: string): string {
           <td colspan="4" style="padding:12px;text-align:right;font-weight:700;font-size:14px;color:${DARK};background:${GREY_BG};border-top:2px solid ${GREEN};">
             ${language.toUpperCase() === 'PT' ? `${lbl.total.toUpperCase()} (sem IVA)` : lbl.total.toUpperCase()}
           </td>
-          <td style="padding:12px;text-align:right;font-weight:700;font-size:15px;color:${GREEN};background:${GREY_BG};border-top:2px solid ${GREEN};">
-            ${fmtMoney(items.reduce((s, i) => s + i.line_total, 0), language)} €
+          <td style="padding:12px;text-align:right;font-weight:700;font-size:15px;color:${GREEN};background:${GREY_BG};border-top:2px solid ${GREEN};white-space:nowrap;min-width:100px;">
+            ${fmtMoney(items.reduce((s, i) => s + i.line_total, 0), language)}&nbsp;€
           </td>
         </tr>
       </tbody>

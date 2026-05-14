@@ -85,7 +85,7 @@ export async function sendProposalEmail(
 
   lines.push(`MIME-Version: 1.0`)
   lines.push(`To: ${to}`)
-  const fromField = senderName ? `${senderName} <${senderEmail}>` : senderEmail
+  const fromField = senderName ? `${encodeMimeHeader(senderName)} <${senderEmail}>` : senderEmail
   lines.push(`From: ${fromField}`)
   lines.push(`Subject: ${encodeMimeHeader(subject)}`)
   lines.push(`Content-Type: multipart/mixed; boundary="${boundary}"`)
