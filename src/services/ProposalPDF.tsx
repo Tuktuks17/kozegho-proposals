@@ -289,13 +289,13 @@ export function ProposalPDFDocument({
             <Text
               style={[
                 s.tdBold,
-                { flex: 75, textAlign: 'right', textTransform: 'uppercase' },
+                { flex: 68, textAlign: 'right', textTransform: 'uppercase' },
               ]}
             >
               {language === 'PT' ? `${L.total} (sem IVA)` : L.total}
             </Text>
-            <Text style={[s.tdBold, s.cValue, { textAlign: 'right' }]}>
-              {fmtCurrency(total, language)}
+            <Text style={[s.tdBold, { flex: 24, textAlign: 'right', paddingVertical: 5, paddingHorizontal: 5, fontSize: 8.5 }]}>
+              {fmtCurrency(total, language)} €
             </Text>
           </View>
         </View>

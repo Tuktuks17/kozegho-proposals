@@ -60,6 +60,9 @@ export async function sendProposalEmail(
     throw new Error('Gmail token not available. Please sign out and sign in again.')
   }
 
+  const senderName = (session?.user?.user_metadata?.full_name as string | undefined) || ''
+  const senderEmail = session?.user?.email || ''
+
   // Download all attachments from Supabase Storage
   const attachmentParts: Array<{ filename: string; base64: string }> = []
   for (const att of attachments) {
@@ -82,6 +85,8 @@ export async function sendProposalEmail(
 
   lines.push(`MIME-Version: 1.0`)
   lines.push(`To: ${to}`)
+  const fromField = senderName ? `${senderName} <${senderEmail}>` : senderEmail
+  lines.push(`From: ${fromField}`)
   lines.push(`Subject: ${encodeMimeHeader(subject)}`)
   lines.push(`Content-Type: multipart/mixed; boundary="${boundary}"`)
   lines.push('')
