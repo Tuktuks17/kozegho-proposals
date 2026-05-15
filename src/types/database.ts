@@ -1,5 +1,20 @@
 import type { PersistedProposal } from './proposal'
 
+export type InteractionType = 'note' | 'call' | 'meeting' | 'whatsapp' | 'visit' | 'other'
+
+export type Interaction = {
+  id: string
+  customer_id: string
+  created_by: string
+  type: InteractionType
+  content: string
+  occurred_at: string
+  ai_summary: string | null
+  ai_sentiment: number | null
+  ai_actions: unknown[]
+  created_at: string
+}
+
 export type Profile = {
   id: string
   full_name: string
@@ -61,6 +76,20 @@ export type Database = {
         Row: PersistedProposal
         Insert: Omit<PersistedProposal, 'id' | 'created_at' | 'updated_at' | 'email_sent_at' | 'last_email_to' | 'last_email_subject'>
         Update: Partial<Omit<PersistedProposal, 'id' | 'created_at' | 'created_by'>>
+      }
+      interactions: {
+        Row: Interaction
+        Insert: {
+          customer_id: string
+          created_by: string
+          type: InteractionType
+          content: string
+          occurred_at?: string
+          ai_summary?: string | null
+          ai_sentiment?: number | null
+          ai_actions?: unknown[]
+        }
+        Update: Partial<Pick<Interaction, 'type' | 'content' | 'occurred_at' | 'ai_summary' | 'ai_sentiment' | 'ai_actions'>>
       }
     }
     Views: Record<string, never>
