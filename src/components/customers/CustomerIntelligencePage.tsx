@@ -32,20 +32,20 @@ function computeTemperature(lastDate: string | null): CustomerMetrics['temperatu
 
 function temperatureLabel(t: CustomerMetrics['temperature']) {
   switch (t) {
-    case 'hot':  return { emoji: '🔥', label: 'Quente', color: '#ef4444' }
-    case 'warm': return { emoji: '🟡', label: 'Morno',  color: '#f59e0b' }
-    case 'cold': return { emoji: '❄️', label: 'Frio',   color: '#60a5fa' }
-    default:     return { emoji: '—',  label: 'Sem actividade', color: '#9ca3af' }
+    case 'hot':  return { emoji: '🔥', label: 'Hot',         color: '#ef4444' }
+    case 'warm': return { emoji: '🟡', label: 'Warm',        color: '#f59e0b' }
+    case 'cold': return { emoji: '❄️', label: 'Cold',        color: '#60a5fa' }
+    default:     return { emoji: '—',  label: 'No activity', color: '#9ca3af' }
   }
 }
 
 function fmtMoney(n: number) {
-  return new Intl.NumberFormat('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)
+  return new Intl.NumberFormat('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)
 }
 
 function fmtDate(iso: string | null) {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 function Spinner() {
@@ -92,7 +92,7 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
           className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Voltar</span>
+          <span>Back</span>
         </button>
         <div className="w-px h-4 bg-gray-200" />
         <div className="flex-1 min-w-0">
@@ -128,23 +128,23 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
 
         {/* Metrics */}
         <div>
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Métricas</h3>
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Metrics</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <MetricBox
-              label="Receita Total"
+              label="Total Revenue"
               value={`${fmtMoney(customer.totalRevenue)} €`}
             />
             <MetricBox
-              label="Propostas"
+              label="Proposals"
               value={String(customer.proposalCount)}
-              sub={`${customer.exportedCount} exportadas`}
+              sub={`${customer.exportedCount} exported`}
             />
             <MetricBox
-              label="Taxa Conversão"
+              label="Conversion Rate"
               value={`${convRate}%`}
             />
             <MetricBox
-              label="Última Proposta"
+              label="Last Proposal"
               value={fmtDate(customer.lastProposalDate)}
             />
           </div>
@@ -154,17 +154,17 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
         <div>
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Timeline</h3>
           <PlaceholderSection
-            title="Interações"
-            message="Sem interações registadas."
+            title="Interactions"
+            message="No interactions recorded yet."
           />
         </div>
 
         {/* Tasks placeholder */}
         <div>
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Tarefas</h3>
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Tasks</h3>
           <PlaceholderSection
-            title="Tarefas"
-            message="Sem tarefas activas."
+            title="Tasks"
+            message="No tasks for this customer."
           />
         </div>
 
@@ -172,8 +172,8 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
         <div>
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">AI Intelligence</h3>
           <PlaceholderSection
-            title="Análise AI"
-            message="A implementar em próxima iteração."
+            title="AI Analysis"
+            message="AI analysis will appear here in the next iteration."
           />
         </div>
       </div>
@@ -212,28 +212,28 @@ function CustomerCard({ customer, onClick }: { customer: CustomerWithMetrics; on
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-1 text-gray-400">
             <TrendingUp className="w-3 h-3" />
-            <span>Receita</span>
+            <span>Revenue</span>
           </div>
           <span className="font-semibold text-gray-700">{fmtMoney(customer.totalRevenue)} €</span>
         </div>
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-1 text-gray-400">
             <FileText className="w-3 h-3" />
-            <span>Propostas</span>
+            <span>Proposals</span>
           </div>
           <span className="font-semibold text-gray-700">{customer.proposalCount}</span>
         </div>
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-1 text-gray-400">
             <CheckCircle className="w-3 h-3" />
-            <span>Exportadas</span>
+            <span>Exported</span>
           </div>
           <span className="font-semibold text-gray-700">{customer.exportedCount}</span>
         </div>
       </div>
 
       <div className="mt-3 text-xs text-gray-400">
-        Última proposta: {fmtDate(customer.lastProposalDate)}
+        Last proposal: {fmtDate(customer.lastProposalDate)}
       </div>
     </button>
   )
@@ -259,7 +259,7 @@ export function CustomerIntelligencePage() {
       ])
 
       if (custRes.error) {
-        setError(`Erro ao carregar clientes: ${custRes.error.message}`)
+        setError(`Failed to load customers: ${custRes.error.message}`)
         setLoading(false)
         return
       }
@@ -334,7 +334,7 @@ export function CustomerIntelligencePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Customers</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Inteligência de clientes e relações comerciais</p>
+          <p className="text-sm text-gray-500 mt-0.5">Customer intelligence and commercial relationships</p>
         </div>
         {!loading && (
           <div className="flex items-center gap-3 text-sm">
@@ -352,7 +352,7 @@ export function CustomerIntelligencePage() {
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Pesquisar por nome ou empresa…"
+          placeholder="Search by name or company..."
           className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#7AB648] focus:border-transparent placeholder:text-gray-400"
         />
       </div>
@@ -369,9 +369,9 @@ export function CustomerIntelligencePage() {
       {!loading && !error && filtered.length === 0 && (
         <div className="text-center py-16 text-gray-400">
           {search ? (
-            <p className="text-sm">Nenhum cliente encontrado para "{search}".</p>
+            <p className="text-sm">No results found for &ldquo;{search}&rdquo;.</p>
           ) : (
-            <p className="text-sm">Ainda não existem clientes. Cria a primeira proposta para registar um cliente.</p>
+            <p className="text-sm">No customers yet. Create your first proposal to add a customer.</p>
           )}
         </div>
       )}
