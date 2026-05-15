@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo, type FormEvent } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Customer, Interaction, Task, TaskPriority, TaskStatus } from '@/types/database'
+import type { PersistedProposal } from '@/types/proposal'
 import { useInteractions } from '@/hooks/useInteractions'
 import { useTasks } from '@/hooks/useTasks'
 import { useGmailThreads } from '@/hooks/useGmailThreads'
+import { useCustomerProposals, type ProposalOutcome } from '@/hooks/useCustomerProposals'
 import { Search, ArrowLeft, Building2, Mail, Globe, TrendingUp, FileText, CheckCircle, Check } from 'lucide-react'
 
 type ProposalSummary = {
@@ -51,6 +53,16 @@ function fmtDate(iso: string | null) {
   return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+function fmtDateTime(rfc: string | null) {
+  if (!rfc) return '—'
+  try {
+    const d = new Date(rfc)
+    if (isNaN(d.getTime())) return rfc
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
+           ', ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  } catch { return rfc }
+}
+
 function priorityClasses(p: TaskPriority): string {
   if (p === 'urgent') return 'border-gray-400 text-gray-600'
   if (p === 'high')   return 'border-gray-300 text-gray-500'
@@ -91,7 +103,22 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
 
   const { interactions, loading: intLoading, error: intError, addInteraction } = useInteractions(customer.id)
   const { tasks, loading: taskLoading, error: taskError, addTask, updateTaskStatus } = useTasks(customer.id)
+  const { proposals, loading: propLoading, error: propError, updateOutcome } = useCustomerProposals(customer.id)
   const { threads, loading: emailLoading, error: emailError, noToken } = useGmailThreads(customer.email)
+
+  const [userEmail, setUserEmail] = useState('')
+  const [updatingOutcomes, setUpdatingOutcomes] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setUserEmail(data.session?.user.email ?? ''))
+  }, [])
+
+  const handleOutcomeUpdate = async (proposal: PersistedProposal, outcome: ProposalOutcome) => {
+    if (outcome === (proposal.outcome ?? 'open')) return
+    setUpdatingOutcomes(s => new Set(s).add(proposal.id))
+    await updateOutcome(proposal.id, outcome)
+    setUpdatingOutcomes(s => { const n = new Set(s); n.delete(proposal.id); return n })
+  }
 
   const [showForm, setShowForm] = useState(false)
   const [formType, setFormType] = useState<Interaction['type']>('note')
@@ -452,6 +479,70 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
           )}
         </div>
 
+        {/* Proposals */}
+        <div>
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Proposals</h3>
+
+          {propLoading && (
+            <div className="flex items-center justify-center py-6">
+              <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: `${GREEN} transparent transparent transparent` }} />
+            </div>
+          )}
+
+          {!propLoading && propError && (
+            <p className="text-xs text-gray-600 bg-gray-100 border border-gray-300 px-3 py-2 rounded">
+              Failed to load proposals: {propError}
+            </p>
+          )}
+
+          {!propLoading && !propError && proposals.length === 0 && (
+            <p className="text-sm text-gray-400 text-center py-4">No proposals for this customer.</p>
+          )}
+
+          {!propLoading && !propError && proposals.length > 0 && (
+            <div className="divide-y divide-gray-100">
+              {proposals.map(proposal => {
+                const currentOutcome: ProposalOutcome = (proposal.outcome as ProposalOutcome) ?? 'open'
+                const isUpdating = updatingOutcomes.has(proposal.id)
+                return (
+                  <div key={proposal.id} className="py-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-sm font-medium text-gray-800">{proposal.reference}</span>
+                          <span className="text-sm font-medium text-gray-800 shrink-0">{fmtMoney(proposal.total)} €</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500 truncate">{proposal.subject}</span>
+                          <span className="text-xs text-gray-400 shrink-0">{fmtDate(proposal.created_at)}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {(['open', 'accepted', 'rejected'] as ProposalOutcome[]).map(opt => (
+                          <button
+                            key={opt}
+                            disabled={isUpdating}
+                            onClick={() => handleOutcomeUpdate(proposal, opt)}
+                            className={`text-xs px-2 py-0.5 rounded border transition-colors disabled:opacity-50 capitalize ${
+                              currentOutcome === opt
+                                ? opt === 'accepted'
+                                  ? 'border-kozegho-green text-kozegho-green font-medium'
+                                  : 'border-gray-400 text-gray-600 font-medium'
+                                : 'border-gray-200 text-gray-400 hover:border-gray-300'
+                            }`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
         {/* Email History */}
         <div>
           <div className="mb-3">
@@ -483,25 +574,33 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
 
           {!noToken && !emailLoading && !emailError && threads.length > 0 && (
             <div className="divide-y divide-gray-100">
-              {threads.map(thread => (
-                <div key={thread.threadId} className="py-3">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <span className="text-sm text-gray-800 font-medium truncate flex-1">{thread.subject}</span>
-                    {thread.messageCount > 1 && (
-                      <span className="text-xs border border-gray-200 text-gray-400 px-2 py-0.5 rounded shrink-0 whitespace-nowrap">
-                        {thread.messageCount} messages
-                      </span>
+              {threads.map(thread => {
+                const isSent = userEmail && thread.from.includes(userEmail)
+                return (
+                  <div key={thread.threadId} className="py-3">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className={`text-xs shrink-0 ${isSent ? 'text-gray-400' : 'text-kozegho-green font-medium'}`}>
+                          {isSent ? 'Sent' : 'Received'}
+                        </span>
+                        <span className="text-sm text-gray-800 font-medium truncate">{thread.subject}</span>
+                      </div>
+                      {thread.messageCount > 1 && (
+                        <span className="text-xs border border-gray-200 text-gray-400 px-2 py-0.5 rounded shrink-0 whitespace-nowrap">
+                          {thread.messageCount} messages
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs text-gray-500 truncate">{thread.from}</span>
+                      <span className="text-xs text-gray-400 shrink-0">{fmtDateTime(thread.date)}</span>
+                    </div>
+                    {thread.snippet && (
+                      <p className="text-xs text-gray-400 italic line-clamp-2">{thread.snippet}</p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs text-gray-500 truncate">{thread.from}</span>
-                    <span className="text-xs text-gray-400 shrink-0">{fmtDate(thread.date)}</span>
-                  </div>
-                  {thread.snippet && (
-                    <p className="text-xs text-gray-400 italic line-clamp-2">{thread.snippet}</p>
-                  )}
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

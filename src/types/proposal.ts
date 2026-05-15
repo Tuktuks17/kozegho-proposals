@@ -53,6 +53,7 @@ export type PersistedProposal = {
   warranty: string | null
   additional_notes: string | null
   status: 'draft' | 'exported'
+  outcome?: 'accepted' | 'rejected' | 'open' | null
   email_sent_at?: string | null
   last_email_to?: string | null
   last_email_subject?: string | null

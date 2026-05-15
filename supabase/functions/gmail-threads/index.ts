@@ -26,6 +26,24 @@ function getHeader(headers: GmailHeader[], name: string): string {
   return headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value ?? ''
 }
 
+// Decode RFC 2047 MIME encoded-words (=?charset?B?...?= or =?charset?Q?...?=)
+// so that accented names like "Afonso Gonçalves" are not returned as raw bytes.
+function decodeMimeWords(str: string): string {
+  return str.replace(/=\?([^?]+)\?([BbQq])\?([^?]*)\?=/g, (_, charset, encoding, text) => {
+    try {
+      if (encoding.toUpperCase() === 'B') {
+        const bytes = Uint8Array.from(atob(text), c => c.charCodeAt(0))
+        return new TextDecoder(charset).decode(bytes)
+      } else {
+        // Q-encoding: underscore = space, =XX = hex byte
+        const qText = text.replace(/_/g, ' ').replace(/=([0-9A-Fa-f]{2})/g, (_: string, h: string) => String.fromCharCode(parseInt(h, 16)))
+        const bytes = Uint8Array.from(qText, c => c.charCodeAt(0))
+        return new TextDecoder(charset).decode(bytes)
+      }
+    } catch { return text }
+  })
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: CORS })
@@ -97,8 +115,8 @@ Deno.serve(async (req) => {
       const hdrs = lastMsg.payload?.headers ?? []
       return {
         threadId: t.id,
-        subject: getHeader(hdrs, 'Subject') || '(no subject)',
-        from: getHeader(hdrs, 'From'),
+        subject: decodeMimeWords(getHeader(hdrs, 'Subject') || '(no subject)'),
+        from: decodeMimeWords(getHeader(hdrs, 'From')),
         date: getHeader(hdrs, 'Date'),
         messageCount: messages.length,
         snippet: td.snippet ?? '',
