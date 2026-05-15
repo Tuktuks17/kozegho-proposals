@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo, type FormEvent } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { Customer, Interaction, Task, TaskPriority, TaskStatus } from '@/types/database'
+import type { Customer, Interaction, Task, TaskPriority, TaskStatus, RelationshipScore } from '@/types/database'
 import type { PersistedProposal } from '@/types/proposal'
 import { useInteractions } from '@/hooks/useInteractions'
 import { useTasks } from '@/hooks/useTasks'
 import { useGmailThreads } from '@/hooks/useGmailThreads'
 import { useCustomerProposals, type ProposalOutcome } from '@/hooks/useCustomerProposals'
+import { useRelationshipScore } from '@/hooks/useRelationshipScore'
 import { Search, ArrowLeft, Building2, Mail, Globe, TrendingUp, FileText, CheckCircle, Check } from 'lucide-react'
 
 type ProposalSummary = {
@@ -105,6 +106,7 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
   const { tasks, loading: taskLoading, error: taskError, addTask, updateTaskStatus } = useTasks(customer.id)
   const { proposals, loading: propLoading, error: propError, updateOutcome } = useCustomerProposals(customer.id)
   const { threads, loading: emailLoading, error: emailError, noToken } = useGmailThreads(customer.email)
+  const { score: aiScore, loading: aiLoading, analyzing, error: aiError, analyzeRelationship } = useRelationshipScore(customer.id)
 
   const [userEmail, setUserEmail] = useState('')
   const [updatingOutcomes, setUpdatingOutcomes] = useState<Set<string>>(new Set())
@@ -604,7 +606,120 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
             </div>
           )}
         </div>
+
+        {/* AI Intelligence */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">AI Intelligence</h3>
+            <button
+              disabled={analyzing}
+              onClick={() => analyzeRelationship({ customer, proposals, interactions, emailCount: threads.length })}
+              className="text-xs border border-kozegho-green text-kozegho-green bg-white px-2.5 py-1 rounded hover:bg-kozegho-green-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {analyzing ? 'Analysing...' : 'Analyse'}
+            </button>
+          </div>
+
+          {aiLoading && !analyzing && (
+            <div className="flex items-center justify-center py-6">
+              <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: `${GREEN} transparent transparent transparent` }} />
+            </div>
+          )}
+
+          {analyzing && (
+            <div className="flex items-center gap-2 py-4 justify-center">
+              <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: `${GREEN} transparent transparent transparent` }} />
+              <span className="text-sm text-gray-400">Analysing relationship...</span>
+            </div>
+          )}
+
+          {!aiLoading && !analyzing && aiError && (
+            <p className="text-xs text-gray-600 bg-gray-100 border border-gray-300 px-3 py-2 rounded">{aiError}</p>
+          )}
+
+          {!aiLoading && !analyzing && !aiError && !aiScore && (
+            <p className="text-sm text-gray-400 text-center py-4">
+              No analysis yet. Click Analyse to generate insights.
+            </p>
+          )}
+
+          {!analyzing && aiScore && (
+            <AiScoreCard score={aiScore} />
+          )}
+        </div>
+
       </div>
+    </div>
+  )
+}
+
+// ─── AI Score Card ────────────────────────────────────────────────────────────
+
+function AiScoreCard({ score }: { score: RelationshipScore }) {
+  const barColor =
+    score.score >= 70 ? 'bg-kozegho-green' :
+    score.score >= 40 ? 'bg-gray-400' :
+    'bg-gray-300'
+
+  const tempBadge = score.temperature === 'hot'
+    ? 'border-kozegho-green text-kozegho-green'
+    : score.temperature === 'warm'
+    ? 'border-gray-400 text-gray-500'
+    : 'border-gray-300 text-gray-400'
+
+  return (
+    <div className="space-y-4">
+      {/* Score + bar */}
+      <div>
+        <div className="flex items-end gap-2 mb-2">
+          <span className="text-3xl font-bold text-gray-800 leading-none">{score.score}</span>
+          <span className="text-base text-gray-400 mb-0.5">/100</span>
+          <span className={`text-xs font-bold px-2.5 py-0.5 rounded border uppercase tracking-wide ml-2 ${tempBadge}`}>
+            {score.temperature}
+          </span>
+        </div>
+        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+          <div className={`h-1.5 rounded-full transition-all ${barColor}`} style={{ width: `${score.score}%` }} />
+        </div>
+      </div>
+
+      {/* Analysis */}
+      <div className="border-t border-gray-100 pt-3">
+        <p className="text-sm text-gray-700 leading-relaxed">{score.analysis}</p>
+        <p className="text-xs text-gray-400 mt-2">Last analysed: {new Date(score.last_analyzed).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + new Date(score.last_analyzed).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</p>
+      </div>
+
+      {/* Opportunity */}
+      {score.opportunity && (
+        <div className="border-t border-gray-100 pt-3">
+          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Opportunity</div>
+          <p className="text-sm text-gray-700">{score.opportunity}</p>
+        </div>
+      )}
+
+      {/* Suggestions */}
+      {score.suggestions.length > 0 && (
+        <div className="border-t border-gray-100 pt-3">
+          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Suggested actions</div>
+          <ol className="space-y-1">
+            {score.suggestions.map((s, i) => (
+              <li key={i} className="text-sm text-gray-700">{i + 1}. {s}</li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {/* Risk flags */}
+      {score.risk_flags.length > 0 && (
+        <div className="border-t border-gray-100 pt-3">
+          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Risks</div>
+          <ul className="space-y-1">
+            {score.risk_flags.map((r, i) => (
+              <li key={i} className="text-sm text-gray-500">— {r}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }

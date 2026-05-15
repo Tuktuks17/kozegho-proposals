@@ -2,6 +2,17 @@ import type { PersistedProposal } from './proposal'
 
 export type InteractionType = 'note' | 'call' | 'meeting' | 'whatsapp' | 'visit' | 'other'
 
+export type RelationshipScore = {
+  customer_id: string
+  score: number
+  temperature: 'hot' | 'warm' | 'cold'
+  analysis: string
+  opportunity: string | null
+  suggestions: string[]
+  risk_flags: string[]
+  last_analyzed: string
+}
+
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
 export type TaskStatus = 'open' | 'done' | 'cancelled'
 
