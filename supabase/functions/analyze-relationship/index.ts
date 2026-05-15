@@ -78,10 +78,16 @@ Deno.serve(async (req) => {
     )
   }
 
-  const { customerId, customerName, proposals, interactions, emailCount } = body
+  const { customerId, customerName, emailCount } = body
+  // Guard: ensure proposals and interactions are arrays even if the caller sends null/undefined
+  const proposals: ProposalInput[] = Array.isArray(body.proposals) ? body.proposals : []
+  const interactions: InteractionInput[] = Array.isArray(body.interactions) ? body.interactions : []
+  const emailCnt: number = typeof emailCount === 'number' ? emailCount : 0
+
+  console.log('[analyze-relationship] customer:', customerName, '| proposals:', proposals.length, '| interactions:', interactions.length, '| emails:', emailCnt)
 
   // Insufficient data — return a baseline result without calling Gemini
-  if (proposals.length === 0 && interactions.length === 0 && emailCount === 0) {
+  if (proposals.length === 0 && interactions.length === 0 && emailCnt === 0) {
     const fallback: AnalysisResult = {
       score: 0,
       temperature: 'cold',
@@ -117,7 +123,7 @@ Analyse the commercial relationship with this customer and respond ONLY in valid
 Customer: ${customerName}
 Proposals sent: ${proposals.length} (total value: €${totalValue.toFixed(2)}), outcomes: ${accepted} accepted / ${rejected} rejected / ${openCount} open
 Interactions logged: ${interactions.length} (types: ${interactionTypes})
-Emails exchanged: ${emailCount}
+Emails exchanged: ${emailCnt}
 Most recent activity: ${lastDate}
 
 Respond with exactly this JSON structure (no other text before or after):
@@ -141,6 +147,7 @@ Respond with exactly this JSON structure (no other text before or after):
 
   if (!resp.ok) {
     const detail = await resp.text()
+    console.log('[analyze-relationship] Gemini error', resp.status, detail)
     return new Response(JSON.stringify({ error: 'gemini_error', detail }), {
       status: 502,
       headers: { 'Content-Type': 'application/json', ...CORS },
@@ -160,6 +167,7 @@ Respond with exactly this JSON structure (no other text before or after):
     if (!Array.isArray(result.risk_flags)) result.risk_flags = []
     result.opportunity = result.opportunity ?? null
   } catch {
+    console.log('[analyze-relationship] JSON parse failed. Raw:', rawText.slice(0, 200))
     return new Response(
       JSON.stringify({ error: 'Failed to parse AI response. Try again.', raw: rawText }),
       { status: 502, headers: { 'Content-Type': 'application/json', ...CORS } }

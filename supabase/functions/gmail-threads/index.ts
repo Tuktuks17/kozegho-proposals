@@ -60,6 +60,7 @@ Deno.serve(async (req) => {
   }
 
   const gmailToken = body.gmailToken?.trim()
+  console.log('[gmail-threads] customerEmail:', body.customerEmail, '| token present:', !!gmailToken)
   if (!gmailToken) {
     return new Response(
       JSON.stringify({ error: 'gmailToken is required in the request body' }),
@@ -88,10 +89,20 @@ Deno.serve(async (req) => {
       { status: 401, headers: { 'Content-Type': 'application/json', ...CORS } }
     )
   }
+  if (listResp.status === 403) {
+    // Token lacks gmail.readonly scope — user must sign out and sign in to grant read access.
+    const detail = await listResp.text()
+    console.log('[gmail-threads] 403 from Gmail API:', detail)
+    return new Response(
+      JSON.stringify({ error: 'Gmail read access not granted. Sign out and sign in again, then accept the email read permission.' }),
+      { status: 403, headers: { 'Content-Type': 'application/json', ...CORS } }
+    )
+  }
   if (!listResp.ok) {
     const detail = await listResp.text()
+    console.log('[gmail-threads] Gmail API error', listResp.status, detail)
     return new Response(
-      JSON.stringify({ error: 'Gmail API error', detail }),
+      JSON.stringify({ error: `Gmail API error ${listResp.status}`, detail }),
       { status: listResp.status, headers: { 'Content-Type': 'application/json', ...CORS } }
     )
   }

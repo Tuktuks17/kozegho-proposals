@@ -38,10 +38,16 @@ export function useGmailThreads(customerEmail: string) {
           body: { customerEmail, gmailToken: token },
         })
       })
-      .then((result) => {
+      .then(async (result) => {
         if (!result || cancelled) return
         if (result.error) {
-          setError((result.error as { message: string }).message)
+          // FunctionsHttpError has a `context` Response with the actual error body from the function
+          let msg = (result.error as { message: string }).message
+          try {
+            const body = await (result.error as unknown as { context: Response }).context.clone().json()
+            if (body?.error) msg = body.error
+          } catch { /* keep generic message */ }
+          setError(msg)
         } else {
           setError(null)
           setThreads((result.data as { threads?: GmailThread[] })?.threads ?? [])
