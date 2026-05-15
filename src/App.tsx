@@ -9,8 +9,9 @@ import { OfflineIndicator } from '@/components/layout/OfflineIndicator'
 import { InstallBanner } from '@/components/layout/InstallBanner'
 import { ProposalPage } from '@/components/form/ProposalPage'
 import { ProposalHistory } from '@/components/history/ProposalHistory'
+import { CustomerIntelligencePage } from '@/components/customers/CustomerIntelligencePage'
 
-type View = 'form' | 'history'
+type View = 'form' | 'history' | 'customers'
 
 export default function App() {
   const { session, user, loading, signInWithGoogle, signOut } = useAuth()
@@ -75,6 +76,8 @@ export default function App() {
       <AppShell userName={displayName} onSignOut={signOut} view={view} onViewChange={setView}>
         {view === 'form'
           ? <ProposalPage profile={effectiveProfile} />
+          : view === 'customers'
+          ? <CustomerIntelligencePage />
           : <ProposalHistory profile={effectiveProfile} />
         }
       </AppShell>
