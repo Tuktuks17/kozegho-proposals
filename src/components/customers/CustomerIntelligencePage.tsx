@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import type { Customer, Interaction, Task, TaskPriority, TaskStatus } from '@/types/database'
 import { useInteractions } from '@/hooks/useInteractions'
 import { useTasks } from '@/hooks/useTasks'
+import { useGmailThreads } from '@/hooks/useGmailThreads'
 import { Search, ArrowLeft, Building2, Mail, Globe, TrendingUp, FileText, CheckCircle, Check } from 'lucide-react'
 
 type ProposalSummary = {
@@ -79,14 +80,6 @@ function MetricBox({ label, value, sub }: { label: string; value: string; sub?: 
   )
 }
 
-function PlaceholderSection({ title, message }: { title: string; message: string }) {
-  return (
-    <div className="border border-dashed border-gray-200 rounded-lg p-5">
-      <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{title}</div>
-      <p className="text-sm text-gray-400 italic">{message}</p>
-    </div>
-  )
-}
 
 // ─── Detail Panel ────────────────────────────────────────────────────────────
 
@@ -98,6 +91,7 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
 
   const { interactions, loading: intLoading, error: intError, addInteraction } = useInteractions(customer.id)
   const { tasks, loading: taskLoading, error: taskError, addTask, updateTaskStatus } = useTasks(customer.id)
+  const { threads, loading: emailLoading, error: emailError, noToken } = useGmailThreads(customer.email)
 
   const [showForm, setShowForm] = useState(false)
   const [formType, setFormType] = useState<Interaction['type']>('note')
@@ -458,13 +452,58 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
           )}
         </div>
 
-        {/* AI Intelligence placeholder */}
+        {/* Email History */}
         <div>
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">AI Intelligence</h3>
-          <PlaceholderSection
-            title="AI Analysis"
-            message="AI analysis will appear here in the next iteration."
-          />
+          <div className="mb-3">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Email History</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Emails exchanged with {customer.email}</p>
+          </div>
+
+          {noToken && (
+            <p className="text-sm text-gray-400 text-center py-4">
+              Sign out and sign in again to view email history.
+            </p>
+          )}
+
+          {!noToken && emailLoading && (
+            <div className="flex items-center justify-center py-6">
+              <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: `${GREEN} transparent transparent transparent` }} />
+            </div>
+          )}
+
+          {!noToken && !emailLoading && emailError && (
+            <p className="text-xs text-gray-600 bg-gray-100 border border-gray-300 px-3 py-2 rounded">
+              {emailError}
+            </p>
+          )}
+
+          {!noToken && !emailLoading && !emailError && threads.length === 0 && (
+            <p className="text-sm text-gray-400 text-center py-4">No emails found with this customer.</p>
+          )}
+
+          {!noToken && !emailLoading && !emailError && threads.length > 0 && (
+            <div className="divide-y divide-gray-100">
+              {threads.map(thread => (
+                <div key={thread.threadId} className="py-3">
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <span className="text-sm text-gray-800 font-medium truncate flex-1">{thread.subject}</span>
+                    {thread.messageCount > 1 && (
+                      <span className="text-xs border border-gray-200 text-gray-400 px-2 py-0.5 rounded shrink-0 whitespace-nowrap">
+                        {thread.messageCount} messages
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs text-gray-500 truncate">{thread.from}</span>
+                    <span className="text-xs text-gray-400 shrink-0">{fmtDate(thread.date)}</span>
+                  </div>
+                  {thread.snippet && (
+                    <p className="text-xs text-gray-400 italic line-clamp-2">{thread.snippet}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
