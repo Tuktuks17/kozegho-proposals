@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, type FormEvent } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { Customer, Interaction } from '@/types/database'
+import type { Customer, Interaction, Task, TaskPriority, TaskStatus } from '@/types/database'
 import { useInteractions } from '@/hooks/useInteractions'
-import { Search, ArrowLeft, Building2, Mail, Globe, TrendingUp, FileText, CheckCircle } from 'lucide-react'
+import { useTasks } from '@/hooks/useTasks'
+import { Search, ArrowLeft, Building2, Mail, Globe, TrendingUp, FileText, CheckCircle, Check } from 'lucide-react'
 
 type ProposalSummary = {
   customer_id: string
@@ -49,6 +50,17 @@ function fmtDate(iso: string | null) {
   return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+function priorityClasses(p: TaskPriority): string {
+  if (p === 'urgent') return 'border-gray-400 text-gray-600'
+  if (p === 'high')   return 'border-gray-300 text-gray-500'
+  return 'border-gray-200 text-gray-400'
+}
+
+function isOverdue(task: Task): boolean {
+  if (!task.due_date || task.status !== 'open') return false
+  return task.due_date < new Date().toISOString().slice(0, 10)
+}
+
 function Spinner() {
   return (
     <div className="flex items-center justify-center py-20">
@@ -85,6 +97,7 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
     : 0
 
   const { interactions, loading: intLoading, error: intError, addInteraction } = useInteractions(customer.id)
+  const { tasks, loading: taskLoading, error: taskError, addTask, updateTaskStatus } = useTasks(customer.id)
 
   const [showForm, setShowForm] = useState(false)
   const [formType, setFormType] = useState<Interaction['type']>('note')
@@ -123,6 +136,35 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
     setFormError(null)
     setFormDate(new Date().toISOString().slice(0, 10))
     setFormType('note')
+  }
+
+  const [showTaskForm, setShowTaskForm] = useState(false)
+  const [taskTitle, setTaskTitle] = useState('')
+  const [taskPriority, setTaskPriority] = useState<TaskPriority>('medium')
+  const [taskDueDate, setTaskDueDate] = useState('')
+  const [taskSaving, setTaskSaving] = useState(false)
+  const [taskError2, setTaskError2] = useState<string | null>(null)
+
+  const handleTaskSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (taskTitle.trim().length < 3) { setTaskError2('Title must be at least 3 characters.'); return }
+    setTaskSaving(true)
+    setTaskError2(null)
+    const result = await addTask({ title: taskTitle.trim(), priority: taskPriority, due_date: taskDueDate || null })
+    setTaskSaving(false)
+    if (result.error) { setTaskError2(result.error) } else {
+      setShowTaskForm(false); setTaskTitle(''); setTaskPriority('medium'); setTaskDueDate('')
+    }
+  }
+
+  const cancelTaskForm = () => {
+    setShowTaskForm(false); setTaskTitle(''); setTaskError2(null)
+    setTaskPriority('medium'); setTaskDueDate('')
+  }
+
+  const handleToggleTask = async (task: Task) => {
+    if (task.status !== 'open') return
+    await updateTaskStatus(task.id, 'done' as TaskStatus)
   }
 
   return (
@@ -294,13 +336,126 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
           )}
         </div>
 
-        {/* Tasks placeholder */}
+        {/* Tasks */}
         <div>
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Tasks</h3>
-          <PlaceholderSection
-            title="Tasks"
-            message="No tasks for this customer."
-          />
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Tasks</h3>
+            <button
+              onClick={() => setShowTaskForm(f => !f)}
+              className="text-xs border border-kozegho-green text-kozegho-green bg-white px-2.5 py-1 rounded hover:bg-kozegho-green-light transition-colors"
+            >
+              + Add Task
+            </button>
+          </div>
+
+          {showTaskForm && (
+            <form onSubmit={handleTaskSubmit} className="mb-4 border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
+                <input
+                  type="text"
+                  value={taskTitle}
+                  onChange={e => setTaskTitle(e.target.value)}
+                  placeholder="Task title..."
+                  className="w-full text-sm border border-gray-200 rounded px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-[#7AB648]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Priority</label>
+                <select
+                  value={taskPriority}
+                  onChange={e => setTaskPriority(e.target.value as TaskPriority)}
+                  className="w-full text-sm border border-gray-200 rounded px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-[#7AB648]"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Due Date (optional)</label>
+                <input
+                  type="date"
+                  value={taskDueDate}
+                  onChange={e => setTaskDueDate(e.target.value)}
+                  className="text-sm border border-gray-200 rounded px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-[#7AB648]"
+                />
+              </div>
+              {taskError2 && (
+                <p className="text-xs text-gray-700 bg-gray-100 border border-gray-300 px-3 py-2 rounded">{taskError2}</p>
+              )}
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="submit"
+                  disabled={taskSaving}
+                  className="text-sm px-4 py-1.5 rounded bg-[#7AB648] text-white font-medium hover:bg-kozegho-green-dark disabled:opacity-60 transition-colors"
+                >
+                  {taskSaving ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelTaskForm}
+                  className="text-sm px-4 py-1.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
+          {taskLoading && (
+            <div className="flex items-center justify-center py-6">
+              <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: `${GREEN} transparent transparent transparent` }} />
+            </div>
+          )}
+
+          {!taskLoading && taskError && (
+            <p className="text-xs text-gray-600 bg-gray-100 border border-gray-300 px-3 py-2 rounded">
+              Failed to load tasks: {taskError}
+            </p>
+          )}
+
+          {!taskLoading && !taskError && tasks.length === 0 && (
+            <p className="text-sm text-gray-400 text-center py-4">No tasks for this customer.</p>
+          )}
+
+          {!taskLoading && !taskError && tasks.length > 0 && (
+            <div className="divide-y divide-gray-100">
+              {[...tasks]
+                .sort((a, b) => (a.status === 'open' ? -1 : 1) - (b.status === 'open' ? -1 : 1))
+                .map(task => (
+                  <div key={task.id} className={`py-3 flex items-start gap-3 ${task.status !== 'open' ? 'opacity-50' : ''}`}>
+                    <button
+                      onClick={() => handleToggleTask(task)}
+                      disabled={task.status !== 'open'}
+                      className={`mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                        task.status === 'done'
+                          ? 'bg-[#7AB648] border-[#7AB648]'
+                          : 'bg-white border-gray-300 hover:border-gray-500'
+                      }`}
+                    >
+                      {task.status === 'done' && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-sm ${task.status !== 'open' ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                          {task.title}
+                        </span>
+                        <span className={`text-xs border px-2 py-0.5 rounded capitalize ${priorityClasses(task.priority)}`}>
+                          {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                        </span>
+                      </div>
+                      {task.due_date && (
+                        <p className={`text-xs mt-0.5 ${isOverdue(task) ? 'text-gray-600 font-medium' : 'text-gray-400'}`}>
+                          Due: {fmtDate(task.due_date)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
 
         {/* AI Intelligence placeholder */}

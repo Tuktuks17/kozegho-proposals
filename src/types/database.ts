@@ -2,6 +2,24 @@ import type { PersistedProposal } from './proposal'
 
 export type InteractionType = 'note' | 'call' | 'meeting' | 'whatsapp' | 'visit' | 'other'
 
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
+export type TaskStatus = 'open' | 'done' | 'cancelled'
+
+export type Task = {
+  id: string
+  customer_id: string | null
+  created_by: string
+  assigned_to: string | null
+  title: string
+  due_date: string | null
+  priority: TaskPriority
+  status: TaskStatus
+  source: 'manual' | 'ai_extracted' | 'gmail_detected'
+  source_ref: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type Interaction = {
   id: string
   customer_id: string
@@ -90,6 +108,21 @@ export type Database = {
           ai_actions?: unknown[]
         }
         Update: Partial<Pick<Interaction, 'type' | 'content' | 'occurred_at' | 'ai_summary' | 'ai_sentiment' | 'ai_actions'>>
+      }
+      tasks: {
+        Row: Task
+        Insert: {
+          customer_id?: string | null
+          created_by: string
+          assigned_to?: string | null
+          title: string
+          due_date?: string | null
+          priority?: TaskPriority
+          status?: TaskStatus
+          source?: Task['source']
+          source_ref?: string | null
+        }
+        Update: Partial<Pick<Task, 'title' | 'due_date' | 'priority' | 'status' | 'assigned_to'>>
       }
     }
     Views: Record<string, never>
