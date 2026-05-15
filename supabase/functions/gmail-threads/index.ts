@@ -6,7 +6,10 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-type Payload = { customerEmail: string; maxResults?: number }
+// gmailToken is passed in the body by the frontend (supabase.functions.invoke
+// uses the Supabase JWT in the Authorization header, so the Gmail token must
+// travel in the request body to avoid conflicts).
+type Payload = { customerEmail: string; gmailToken: string; maxResults?: number }
 
 type ThreadSummary = {
   threadId: string
@@ -28,15 +31,6 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: CORS })
   }
 
-  const authHeader = req.headers.get('Authorization')
-  const gmailToken = authHeader?.replace('Bearer ', '').trim()
-  if (!gmailToken) {
-    return new Response(
-      JSON.stringify({ error: 'Missing Authorization header with Gmail token' }),
-      { status: 401, headers: { 'Content-Type': 'application/json', ...CORS } }
-    )
-  }
-
   let body: Payload
   try {
     body = (await req.json()) as Payload
@@ -44,6 +38,14 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ error: 'Invalid JSON body' }),
       { status: 400, headers: { 'Content-Type': 'application/json', ...CORS } }
+    )
+  }
+
+  const gmailToken = body.gmailToken?.trim()
+  if (!gmailToken) {
+    return new Response(
+      JSON.stringify({ error: 'gmailToken is required in the request body' }),
+      { status: 401, headers: { 'Content-Type': 'application/json', ...CORS } }
     )
   }
 

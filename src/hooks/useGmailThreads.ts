@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { supabase } from '@/lib/supabase'
 
 export type GmailThread = {
   threadId: string
@@ -9,38 +10,41 @@ export type GmailThread = {
   snippet: string
 }
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-threads`
-
 export function useGmailThreads(customerEmail: string) {
-  // Start loading only if a token is already present
   const [threads, setThreads] = useState<GmailThread[]>([])
   const [loading, setLoading] = useState(() => !!sessionStorage.getItem('kp:gmail_token'))
   const [error, setError] = useState<string | null>(null)
+  const [noToken, setNoToken] = useState(!sessionStorage.getItem('kp:gmail_token'))
   const [refreshKey, setRefreshKey] = useState(0)
 
-  const noToken = !sessionStorage.getItem('kp:gmail_token')
-
   useEffect(() => {
-    const token = sessionStorage.getItem('kp:gmail_token')
-    if (!token) return  // noToken flag handles this state in the component
-
     let cancelled = false
-    fetch(FUNCTION_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ customerEmail }),
-    })
-      .then(async (res) => {
-        if (cancelled) return
-        const data = await res.json()
-        if (!res.ok) {
-          setError(data.error || `Error ${res.status}`)
+
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (cancelled) return null
+        // Prefer the live provider_token from the current session; fall back to
+        // the token cached in sessionStorage from the last SIGNED_IN event.
+        const token = session?.provider_token || sessionStorage.getItem('kp:gmail_token')
+        if (!token) {
+          setNoToken(true)
+          setLoading(false)
+          return null
+        }
+        setNoToken(false)
+        // Pass the Gmail token in the body — supabase.functions.invoke handles
+        // Supabase auth automatically via its own Authorization header.
+        return supabase.functions.invoke('gmail-threads', {
+          body: { customerEmail, gmailToken: token },
+        })
+      })
+      .then((result) => {
+        if (!result || cancelled) return
+        if (result.error) {
+          setError((result.error as { message: string }).message)
         } else {
           setError(null)
-          setThreads(data.threads ?? [])
+          setThreads((result.data as { threads?: GmailThread[] })?.threads ?? [])
         }
         setLoading(false)
       })
