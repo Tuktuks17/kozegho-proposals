@@ -32,10 +32,10 @@ function computeTemperature(lastDate: string | null): CustomerMetrics['temperatu
 
 function temperatureLabel(t: CustomerMetrics['temperature']) {
   switch (t) {
-    case 'hot':  return { emoji: '🔥', label: 'Hot',         color: '#ef4444' }
-    case 'warm': return { emoji: '🟡', label: 'Warm',        color: '#f59e0b' }
-    case 'cold': return { emoji: '❄️', label: 'Cold',        color: '#60a5fa' }
-    default:     return { emoji: '—',  label: 'No activity', color: '#9ca3af' }
+    case 'hot':  return { label: 'Hot',         borderClass: 'border-kozegho-green', textClass: 'text-kozegho-green' }
+    case 'warm': return { label: 'Warm',        borderClass: 'border-gray-400',       textClass: 'text-gray-500'      }
+    case 'cold': return { label: 'Cold',        borderClass: 'border-gray-300',       textClass: 'text-gray-400'      }
+    default:     return { label: 'No activity', borderClass: 'border-gray-200',       textClass: 'text-gray-400'      }
   }
 }
 
@@ -101,11 +101,8 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
             <p className="text-sm text-gray-500 truncate">{customer.name}</p>
           )}
         </div>
-        <span
-          className="text-xs font-medium px-2.5 py-1 rounded-full"
-          style={{ background: `${temp.color}20`, color: temp.color }}
-        >
-          {temp.emoji} {temp.label}
+        <span className={`text-xs font-bold px-3 py-1 rounded border uppercase tracking-wide ${temp.borderClass} ${temp.textClass}`}>
+          {temp.label}
         </span>
       </div>
 
@@ -200,11 +197,8 @@ function CustomerCard({ customer, onClick }: { customer: CustomerWithMetrics; on
             <div className="text-sm text-gray-500 truncate">{customer.name}</div>
           )}
         </div>
-        <span
-          className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap"
-          style={{ background: `${temp.color}20`, color: temp.color }}
-        >
-          {temp.emoji} {temp.label}
+        <span className={`text-xs font-medium px-2 py-0.5 rounded border shrink-0 whitespace-nowrap ${temp.borderClass} ${temp.textClass}`}>
+          {temp.label}
         </span>
       </div>
 
@@ -337,10 +331,15 @@ export function CustomerIntelligencePage() {
           <p className="text-sm text-gray-500 mt-0.5">Customer intelligence and commercial relationships</p>
         </div>
         {!loading && (
-          <div className="flex items-center gap-3 text-sm">
-            <span className="flex items-center gap-1 text-red-500 font-medium">🔥 {stats.hot}</span>
-            <span className="flex items-center gap-1 text-amber-500 font-medium">🟡 {stats.warm}</span>
-            <span className="flex items-center gap-1 text-blue-400 font-medium">❄️ {stats.cold}</span>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="font-bold text-kozegho-green">Hot</span>
+            <span className="text-gray-600">{stats.hot}</span>
+            <span className="text-gray-300">·</span>
+            <span className="font-medium text-gray-500">Warm</span>
+            <span className="text-gray-600">{stats.warm}</span>
+            <span className="text-gray-300">·</span>
+            <span className="text-gray-400">Cold</span>
+            <span className="text-gray-600">{stats.cold}</span>
           </div>
         )}
       </div>
@@ -361,7 +360,7 @@ export function CustomerIntelligencePage() {
       {loading && <Spinner />}
 
       {!loading && error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+        <div className="bg-gray-100 border border-gray-300 text-gray-700 rounded-lg px-4 py-3 text-sm">
           {error}
         </div>
       )}
