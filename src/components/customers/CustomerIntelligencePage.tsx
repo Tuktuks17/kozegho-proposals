@@ -364,7 +364,7 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
           )}
 
           {!intLoading && !intError && interactions.length > 0 && (
-            <div className="divide-y divide-gray-100">
+            <div className="max-h-64 overflow-y-auto divide-y divide-gray-100">
               {interactions.map(item => (
                 <div key={item.id} className="py-3">
                   <div className="flex items-center gap-2 mb-1">
@@ -465,7 +465,7 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
           )}
 
           {!taskLoading && !taskError && tasks.length > 0 && (
-            <div className="divide-y divide-gray-100">
+            <div className="max-h-48 overflow-y-auto divide-y divide-gray-100">
               {[...tasks]
                 .sort((a, b) => (a.status === 'open' ? -1 : 1) - (b.status === 'open' ? -1 : 1))
                 .map(task => (
@@ -523,7 +523,7 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
           )}
 
           {!propLoading && !propError && proposals.length > 0 && (
-            <div className="divide-y divide-gray-100">
+            <div className="max-h-72 overflow-y-auto divide-y divide-gray-100">
               {proposals.map(proposal => {
                 const currentOutcome: ProposalOutcome = (proposal.outcome as ProposalOutcome) ?? 'open'
                 const isUpdating = updatingOutcomes.has(proposal.id)

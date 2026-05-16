@@ -90,7 +90,8 @@ Deno.serve(async (req) => {
     emailCount, daysSinceLastActivity,
   } = body
 
-  console.log('[analyze-relationship] customer:', customerName, '| proposals:', proposalCount, '| interactions:', interactionCount, '| emails:', emailCount, '| days:', daysSinceLastActivity)
+  console.log('[analyze-relationship] body received:', JSON.stringify(body))
+  console.log('[analyze-relationship] customerName:', customerName, '| proposalCount:', proposalCount, '| interactionCount:', interactionCount, '| emailCount:', emailCount, '| days:', daysSinceLastActivity)
 
   // Insufficient data — return a baseline result without calling Gemini
   if (proposalCount === 0 && interactionCount === 0 && (emailCount ?? 0) === 0) {
@@ -151,28 +152,52 @@ Analyse this relationship and respond ONLY with a valid JSON object. No markdown
   const geminiData = await resp.json()
   let rawText: string = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
 
-  let result: AnalysisResult
-  try {
-    // Strip markdown code blocks
-    rawText = rawText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
-    // Extract only the JSON object — take everything between first { and last }
-    const jsonStart = rawText.indexOf('{')
-    const jsonEnd = rawText.lastIndexOf('}')
-    if (jsonStart === -1 || jsonEnd === -1) throw new Error('No JSON object found in Gemini response')
-    rawText = rawText.slice(jsonStart, jsonEnd + 1)
-    result = JSON.parse(rawText) as AnalysisResult
-    if (typeof result.score !== 'number') throw new Error('missing score')
-    result.score = Math.max(0, Math.min(100, Math.round(result.score)))
-    if (!Array.isArray(result.suggestions)) result.suggestions = []
-    if (!Array.isArray(result.risk_flags)) result.risk_flags = []
-    result.opportunity = result.opportunity ?? null
-  } catch {
-    console.log('[analyze-relationship] JSON parse failed. Raw:', rawText.slice(0, 300))
+  console.log('[analyze-relationship] raw text length:', rawText.length)
+  console.log('[analyze-relationship] raw text preview:', rawText.substring(0, 500))
+
+  // Strip markdown code blocks (multiple possible formats)
+  rawText = rawText
+    .replace(/```json\s*/gi, '')
+    .replace(/```typescript\s*/gi, '')
+    .replace(/```\s*/gi, '')
+    .trim()
+
+  // Extract only the JSON object — everything between first { and last }
+  const jsonStart = rawText.indexOf('{')
+  const jsonEnd = rawText.lastIndexOf('}')
+
+  if (jsonStart === -1 || jsonEnd === -1 || jsonStart >= jsonEnd) {
+    console.error('[analyze-relationship] No valid JSON found. Raw:', rawText)
     return new Response(
-      JSON.stringify({ error: 'Failed to parse AI response. Try again.', raw: rawText }),
-      { status: 502, headers: { 'Content-Type': 'application/json', ...CORS } }
+      JSON.stringify({ error: 'no_json', raw: rawText.substring(0, 200) }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...CORS } }
     )
   }
+
+  rawText = rawText.slice(jsonStart, jsonEnd + 1)
+
+  let result: AnalysisResult
+  try {
+    result = JSON.parse(rawText) as AnalysisResult
+  } catch (parseError) {
+    console.error('[analyze-relationship] JSON.parse failed:', String(parseError), '| Raw:', rawText.substring(0, 300))
+    return new Response(
+      JSON.stringify({ error: 'parse_failed', raw: rawText.substring(0, 200) }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...CORS } }
+    )
+  }
+
+  if (typeof result.score !== 'number') {
+    console.error('[analyze-relationship] Missing score field. Result:', JSON.stringify(result))
+    return new Response(
+      JSON.stringify({ error: 'missing_score', raw: rawText.substring(0, 200) }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...CORS } }
+    )
+  }
+  result.score = Math.max(0, Math.min(100, Math.round(result.score)))
+  if (!Array.isArray(result.suggestions)) result.suggestions = []
+  if (!Array.isArray(result.risk_flags)) result.risk_flags = []
+  result.opportunity = result.opportunity ?? null
 
   await upsertScore(customerId, result)
 
