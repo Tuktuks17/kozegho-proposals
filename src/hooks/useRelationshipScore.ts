@@ -16,6 +16,7 @@ export function useRelationshipScore(customerId: string) {
   const [analyzing, setAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [isOutdated, setIsOutdated] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -96,11 +97,16 @@ export function useRelationshipScore(customerId: string) {
         risk_flags: Array.isArray(result.risk_flags) ? result.risk_flags : [],
         last_analyzed: new Date().toISOString(),
       })
+      setIsOutdated(false)
       setRefreshKey(k => k + 1)
     }
 
     return { error: null }
   }, [])
 
-  return { score, loading, analyzing, error, analyzeRelationship }
+  const invalidateScore = useCallback(() => {
+    setIsOutdated(true)
+  }, [])
+
+  return { score, loading, analyzing, error, analyzeRelationship, isOutdated, invalidateScore }
 }

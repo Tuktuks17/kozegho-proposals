@@ -210,6 +210,7 @@ export function IntelligencePage({ onNavigateToCustomer }: Props) {
                       <div key={customer.id} className="flex items-center gap-3 px-4 py-3">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-800 truncate">{customer.company}</p>
+                          <p className="text-xs text-gray-400 truncate">{customer.email}</p>
                           <p className="text-xs text-gray-400">
                             Last {lastActivityType}: {fmtDate(lastActivityDate)}
                           </p>
@@ -463,10 +464,10 @@ function DailyBriefingPanel({ briefing, analyzing, error, lastGenerated, onGener
           {/* Row 4 — Urgent actions */}
           <div className="space-y-2">
             <p className="text-xs text-gray-400 uppercase tracking-wider">Urgent actions</p>
-            <ol className="space-y-1.5">
+            <ol className="divide-y divide-gray-50">
               {briefing.urgent.map((action, i) => (
-                <li key={i} className="flex gap-2 text-sm text-gray-700">
-                  <span className="flex-shrink-0 text-kozegho-green font-medium">{i + 1}.</span>
+                <li key={i} className="flex gap-2 text-sm text-gray-700 py-2 first:pt-0 last:pb-0">
+                  <span className="flex-shrink-0 text-kozegho-green font-semibold">{i + 1}.</span>
                   <span>{action}</span>
                 </li>
               ))}

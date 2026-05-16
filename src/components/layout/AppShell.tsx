@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { LogOut, ClipboardList, FilePlus, Users, TrendingUp } from 'lucide-react'
 import { logoUrl } from '@/services/datasheets'
+import { useAlertCount } from '@/hooks/useAlertCount'
 
 type View = 'form' | 'history' | 'customers' | 'intelligence'
 
@@ -13,6 +14,8 @@ type Props = {
 }
 
 export function AppShell({ children, userName, onSignOut, view, onViewChange }: Props) {
+  const { count: alertCount } = useAlertCount()
+
   return (
     <div className="min-h-screen flex flex-col bg-kozegho-grey">
       <header className="sticky top-0 z-40 bg-white border-b border-border shadow-sm">
@@ -52,6 +55,13 @@ export function AppShell({ children, userName, onSignOut, view, onViewChange }: 
               >
                 <TrendingUp className="w-4 h-4" />
                 <span className="hidden sm:block">Intelligence</span>
+                {alertCount > 0 && (
+                  <span className={`text-xs min-w-4 h-4 rounded-full flex items-center justify-center px-1 leading-none ${
+                    view === 'intelligence' ? 'bg-white text-kozegho-green' : 'bg-kozegho-green text-white'
+                  }`}>
+                    {alertCount}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => onViewChange('history')}

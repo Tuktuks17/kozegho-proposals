@@ -118,7 +118,7 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
   const { tasks, loading: taskLoading, error: taskError, addTask, updateTaskStatus } = useTasks(customer.id)
   const { proposals, loading: propLoading, error: propError, updateOutcome } = useCustomerProposals(customer.id)
   const { threads, loading: emailLoading, error: emailError, noToken } = useGmailThreads(customer.email)
-  const { score: aiScore, loading: aiLoading, analyzing, error: aiError, analyzeRelationship } = useRelationshipScore(customer.id)
+  const { score: aiScore, loading: aiLoading, analyzing, error: aiError, analyzeRelationship, isOutdated, invalidateScore } = useRelationshipScore(customer.id)
 
   // Metrics derived from proposals with outcome (updates when user clicks Open/Accepted/Rejected)
   const totalPipeline = proposals.reduce((sum, p) => sum + p.total, 0)
@@ -140,6 +140,7 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
     setUpdatingOutcomes(s => new Set(s).add(proposal.id))
     await updateOutcome(proposal.id, outcome)
     setUpdatingOutcomes(s => { const n = new Set(s); n.delete(proposal.id); return n })
+    invalidateScore()
   }
 
   const [showForm, setShowForm] = useState(false)
@@ -166,6 +167,7 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
     if (result.error) {
       setFormError(result.error)
     } else {
+      invalidateScore()
       setShowForm(false)
       setFormContent('')
       setFormDate(new Date().toISOString().slice(0, 10))
@@ -670,7 +672,14 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
           )}
 
           {!analyzing && aiScore && (
-            <AiScoreCard score={aiScore} />
+            <>
+              <AiScoreCard score={aiScore} />
+              {isOutdated && (
+                <div className="border border-gray-200 bg-gray-50 text-gray-500 text-xs p-2 rounded mt-2">
+                  Data changed — click Analyse to refresh
+                </div>
+              )}
+            </>
           )}
         </div>
 
