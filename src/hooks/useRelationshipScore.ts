@@ -39,23 +39,32 @@ export function useRelationshipScore(customerId: string) {
     setAnalyzing(true)
     setError(null)
 
+    // Pre-compute all fields the Edge Function needs so the prompt has full context
+    const acceptedProposals = payload.proposals.filter(p => p.outcome === 'accepted')
+    const rejectedProposals = payload.proposals.filter(p => p.outcome === 'rejected')
+    const openProposals = payload.proposals.filter(p => !p.outcome || p.outcome === 'open')
+    const allActivityDates = [
+      ...payload.proposals.map(p => p.created_at),
+      ...payload.interactions.map(i => i.occurred_at),
+    ].sort().reverse()
+    const daysSinceLastActivity = allActivityDates[0]
+      ? Math.floor((Date.now() - new Date(allActivityDates[0]).getTime()) / (1000 * 60 * 60 * 24))
+      : 999
+
     const { data, error: fnError } = await supabase.functions.invoke('analyze-relationship', {
       body: {
         customerId: payload.customer.id,
         customerName: payload.customer.company,
-        proposals: payload.proposals.map(p => ({
-          reference: p.reference,
-          subject: p.subject,
-          total: p.total,
-          outcome: p.outcome,
-          created_at: p.created_at,
-        })),
-        interactions: payload.interactions.map(i => ({
-          type: i.type,
-          content: i.content,
-          occurred_at: i.occurred_at,
-        })),
+        proposalCount: payload.proposals.length,
+        pipelineTotal: payload.proposals.reduce((s, p) => s + p.total, 0),
+        revenueTotal: acceptedProposals.reduce((s, p) => s + p.total, 0),
+        acceptedCount: acceptedProposals.length,
+        rejectedCount: rejectedProposals.length,
+        openCount: openProposals.length,
+        interactionCount: payload.interactions.length,
+        interactionTypes: [...new Set(payload.interactions.map(i => i.type))].join(', ') || 'none',
         emailCount: payload.emailCount,
+        daysSinceLastActivity,
       },
     })
 

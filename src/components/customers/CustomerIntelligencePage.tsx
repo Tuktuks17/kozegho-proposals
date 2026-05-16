@@ -75,6 +75,21 @@ function isOverdue(task: Task): boolean {
   return task.due_date < new Date().toISOString().slice(0, 10)
 }
 
+const COUNTRY_NAMES: Record<string, string> = {
+  PT: 'Portugal', DE: 'Germany', ES: 'Spain', FR: 'France',
+  GB: 'United Kingdom', NL: 'Netherlands', BE: 'Belgium',
+  IT: 'Italy', PL: 'Poland', US: 'United States', BR: 'Brazil',
+  CH: 'Switzerland', AT: 'Austria', SE: 'Sweden', DK: 'Denmark',
+  NO: 'Norway', FI: 'Finland', IE: 'Ireland', LU: 'Luxembourg',
+  CZ: 'Czech Republic', HU: 'Hungary', RO: 'Romania', SK: 'Slovakia',
+  HR: 'Croatia', SI: 'Slovenia', BG: 'Bulgaria', GR: 'Greece',
+  TR: 'Turkey', ZA: 'South Africa', MA: 'Morocco', AE: 'UAE',
+}
+
+function getCountryName(code: string): string {
+  return COUNTRY_NAMES[code?.toUpperCase()] ?? code
+}
+
 function Spinner() {
   return (
     <div className="flex items-center justify-center py-20">
@@ -98,15 +113,20 @@ function MetricBox({ label, value, sub }: { label: string; value: string; sub?: 
 
 function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; onBack: () => void }) {
   const temp = temperatureLabel(customer.temperature)
-  const convRate = customer.proposalCount > 0
-    ? Math.round((customer.exportedCount / customer.proposalCount) * 100)
-    : 0
 
   const { interactions, loading: intLoading, error: intError, addInteraction } = useInteractions(customer.id)
   const { tasks, loading: taskLoading, error: taskError, addTask, updateTaskStatus } = useTasks(customer.id)
   const { proposals, loading: propLoading, error: propError, updateOutcome } = useCustomerProposals(customer.id)
   const { threads, loading: emailLoading, error: emailError, noToken } = useGmailThreads(customer.email)
   const { score: aiScore, loading: aiLoading, analyzing, error: aiError, analyzeRelationship } = useRelationshipScore(customer.id)
+
+  // Metrics derived from proposals with outcome (updates when user clicks Open/Accepted/Rejected)
+  const totalPipeline = proposals.reduce((sum, p) => sum + p.total, 0)
+  const totalRevenue = proposals.filter(p => p.outcome === 'accepted').reduce((sum, p) => sum + p.total, 0)
+  const acceptedCount = proposals.filter(p => p.outcome === 'accepted').length
+  const rejectedCount = proposals.filter(p => p.outcome === 'rejected').length
+  const decidedCount = acceptedCount + rejectedCount
+  const convRate = decidedCount > 0 ? Math.round((acceptedCount / decidedCount) * 100) : 0
 
   const [userEmail, setUserEmail] = useState('')
   const [updatingOutcomes, setUpdatingOutcomes] = useState<Set<string>>(new Set())
@@ -222,7 +242,7 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
           </div>
           <div className="flex items-center gap-2 text-gray-600">
             <Globe className="w-4 h-4 text-gray-400 shrink-0" />
-            <span>{customer.country || '—'}</span>
+            <span>{getCountryName(customer.country) || '—'}</span>
           </div>
           <div className="flex items-center gap-2 text-gray-600">
             <Building2 className="w-4 h-4 text-gray-400 shrink-0" />
@@ -236,16 +256,17 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <MetricBox
               label="Total Revenue"
-              value={`${fmtMoney(customer.totalRevenue)} €`}
+              value={`${fmtMoney(totalRevenue)} €`}
             />
             <MetricBox
-              label="Proposals"
-              value={String(customer.proposalCount)}
-              sub={`${customer.exportedCount} exported`}
+              label="Pipeline"
+              value={`${fmtMoney(totalPipeline)} €`}
+              sub={`${proposals.length} proposal${proposals.length !== 1 ? 's' : ''}`}
             />
             <MetricBox
               label="Conversion Rate"
               value={`${convRate}%`}
+              sub={`${acceptedCount} accepted · ${rejectedCount} rejected`}
             />
             <MetricBox
               label="Last Proposal"
@@ -575,34 +596,39 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
           )}
 
           {!noToken && !emailLoading && !emailError && threads.length > 0 && (
-            <div className="divide-y divide-gray-100">
-              {threads.map(thread => {
-                const isSent = userEmail && thread.from.includes(userEmail)
-                return (
-                  <div key={thread.threadId} className="py-3">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <span className={`text-xs shrink-0 ${isSent ? 'text-gray-400' : 'text-kozegho-green font-medium'}`}>
-                          {isSent ? 'Sent' : 'Received'}
-                        </span>
-                        <span className="text-sm text-gray-800 font-medium truncate">{thread.subject}</span>
+            <div className="relative">
+              <div className="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                {threads.map(thread => {
+                  const isSent = userEmail && thread.from.includes(userEmail)
+                  return (
+                    <div key={thread.threadId} className="py-3">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className={`text-xs shrink-0 ${isSent ? 'text-gray-400' : 'text-kozegho-green font-medium'}`}>
+                            {isSent ? 'Sent' : 'Received'}
+                          </span>
+                          <span className="text-sm text-gray-800 font-medium truncate">{thread.subject}</span>
+                        </div>
+                        {thread.messageCount > 1 && (
+                          <span className="text-xs border border-gray-200 text-gray-400 px-2 py-0.5 rounded shrink-0 whitespace-nowrap">
+                            {thread.messageCount} messages
+                          </span>
+                        )}
                       </div>
-                      {thread.messageCount > 1 && (
-                        <span className="text-xs border border-gray-200 text-gray-400 px-2 py-0.5 rounded shrink-0 whitespace-nowrap">
-                          {thread.messageCount} messages
-                        </span>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs text-gray-500 truncate">{thread.from}</span>
+                        <span className="text-xs text-gray-400 shrink-0">{fmtDateTime(thread.date)}</span>
+                      </div>
+                      {thread.snippet && (
+                        <p className="text-xs text-gray-400 italic line-clamp-2">{thread.snippet}</p>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs text-gray-500 truncate">{thread.from}</span>
-                      <span className="text-xs text-gray-400 shrink-0">{fmtDateTime(thread.date)}</span>
-                    </div>
-                    {thread.snippet && (
-                      <p className="text-xs text-gray-400 italic line-clamp-2">{thread.snippet}</p>
-                    )}
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
+              {threads.length > 4 && (
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent" />
+              )}
             </div>
           )}
         </div>

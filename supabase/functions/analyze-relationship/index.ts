@@ -11,15 +11,19 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-type ProposalInput = { reference: string; subject: string; total: number; outcome?: string | null; created_at: string }
-type InteractionInput = { type: string; content: string; occurred_at: string }
-
 type Payload = {
   customerId: string
   customerName: string
-  proposals: ProposalInput[]
-  interactions: InteractionInput[]
+  proposalCount: number
+  pipelineTotal: number
+  revenueTotal: number
+  acceptedCount: number
+  rejectedCount: number
+  openCount: number
+  interactionCount: number
+  interactionTypes: string
   emailCount: number
+  daysSinceLastActivity: number
 }
 
 type AnalysisResult = {
@@ -78,16 +82,18 @@ Deno.serve(async (req) => {
     )
   }
 
-  const { customerId, customerName, emailCount } = body
-  // Guard: ensure proposals and interactions are arrays even if the caller sends null/undefined
-  const proposals: ProposalInput[] = Array.isArray(body.proposals) ? body.proposals : []
-  const interactions: InteractionInput[] = Array.isArray(body.interactions) ? body.interactions : []
-  const emailCnt: number = typeof emailCount === 'number' ? emailCount : 0
+  const {
+    customerId, customerName,
+    proposalCount, pipelineTotal, revenueTotal,
+    acceptedCount, rejectedCount, openCount,
+    interactionCount, interactionTypes,
+    emailCount, daysSinceLastActivity,
+  } = body
 
-  console.log('[analyze-relationship] customer:', customerName, '| proposals:', proposals.length, '| interactions:', interactions.length, '| emails:', emailCnt)
+  console.log('[analyze-relationship] customer:', customerName, '| proposals:', proposalCount, '| interactions:', interactionCount, '| emails:', emailCount, '| days:', daysSinceLastActivity)
 
   // Insufficient data — return a baseline result without calling Gemini
-  if (proposals.length === 0 && interactions.length === 0 && emailCnt === 0) {
+  if (proposalCount === 0 && interactionCount === 0 && (emailCount ?? 0) === 0) {
     const fallback: AnalysisResult = {
       score: 0,
       temperature: 'cold',
@@ -96,7 +102,7 @@ Deno.serve(async (req) => {
       suggestions: [
         'Create a commercial proposal to initiate the relationship.',
         'Log a first interaction to start tracking engagement.',
-        'Research the customer\'s industry to identify relevant Kozegho products.',
+        "Research the customer's industry to identify relevant Kozegho products.",
       ],
       risk_flags: ['No engagement data recorded.'],
     }
@@ -106,35 +112,23 @@ Deno.serve(async (req) => {
     })
   }
 
-  // Build prompt context
-  const totalValue = proposals.reduce((s, p) => s + (p.total ?? 0), 0)
-  const accepted = proposals.filter(p => p.outcome === 'accepted').length
-  const rejected = proposals.filter(p => p.outcome === 'rejected').length
-  const openCount = proposals.filter(p => !p.outcome || p.outcome === 'open').length
-  const interactionTypes = [...new Set(interactions.map(i => i.type))].join(', ') || 'none'
-  const allDates = [
-    ...proposals.map(p => p.created_at),
-    ...interactions.map(i => i.occurred_at),
-  ].sort().reverse()
-  const lastDate = allDates[0] ? new Date(allDates[0]).toDateString() : 'unknown'
+  const prompt = `You are an elite B2B sales strategist with 20 years of experience in industrial equipment sales across Europe. You are analysing a commercial relationship for Kozegho, a Portuguese manufacturer of water treatment and industrial process equipment (polymer preparation systems, mixers, dosing systems, tanks, controllers).
 
-  const prompt = `You are a senior sales analyst for Kozegho, a Portuguese manufacturer of water treatment equipment.
-Analyse the commercial relationship with this customer and respond ONLY in valid JSON with no markdown and no code blocks.
-Customer: ${customerName}
-Proposals sent: ${proposals.length} (total value: €${totalValue.toFixed(2)}), outcomes: ${accepted} accepted / ${rejected} rejected / ${openCount} open
-Interactions logged: ${interactions.length} (types: ${interactionTypes})
-Emails exchanged: ${emailCnt}
-Most recent activity: ${lastDate}
+Your role is to act as a proactive commercial advisor — not just describe what happened, but prescribe what should happen next.
 
-Respond with exactly this JSON structure (no other text before or after):
-{
-  "score": <integer 0-100 based on engagement, conversion rate, and recency>,
-  "temperature": <"hot" | "warm" | "cold">,
-  "analysis": "<2-3 sentences, professional British English, specific to this customer's actual data>",
-  "opportunity": <"<specific opportunity if clearly detected>" | null>,
-  "suggestions": ["<concrete action 1>", "<concrete action 2>", "<concrete action 3>"],
-  "risk_flags": ["<risk 1>"]
-}`
+CUSTOMER DATA:
+- Company: ${customerName}
+- Proposals sent: ${proposalCount} (total pipeline: €${(pipelineTotal ?? 0).toFixed(2)})
+- Accepted: ${acceptedCount} proposals (€${(revenueTotal ?? 0).toFixed(2)})
+- Rejected: ${rejectedCount} proposals
+- Open/pending: ${openCount} proposals
+- Logged interactions: ${interactionCount} (${interactionTypes || 'none'})
+- Emails exchanged: ${emailCount ?? 0}
+- Days since last activity: ${daysSinceLastActivity ?? 'unknown'}
+
+Analyse this relationship and respond ONLY with a valid JSON object. No markdown, no code blocks, no explanations outside the JSON.
+
+{"score":<integer 0-100 based on: engagement frequency 30%, conversion rate 30%, recency 20%, revenue potential 20%>,"temperature":<"hot" if score>=70, "warm" if score>=40, "cold" if score<40>,"analysis":"<2-3 sentences of sharp, specific commercial analysis — mention actual numbers, identify the pattern, name the opportunity or risk>","opportunity":"<one specific, time-bound commercial opportunity OR null if none detected>","suggestions":["<specific action 1 — who does what, when, how>","<specific action 2 — tied to the data above>","<specific action 3 — proactive, not reactive>"],"risk_flags":["<specific risk if any, else empty array>"]}`
 
   const resp = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
     method: 'POST',
@@ -155,19 +149,25 @@ Respond with exactly this JSON structure (no other text before or after):
   }
 
   const geminiData = await resp.json()
-  const rawText: string = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? ''
+  let rawText: string = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
 
   let result: AnalysisResult
   try {
-    const clean = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
-    result = JSON.parse(clean) as AnalysisResult
+    // Strip markdown code blocks
+    rawText = rawText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
+    // Extract only the JSON object — take everything between first { and last }
+    const jsonStart = rawText.indexOf('{')
+    const jsonEnd = rawText.lastIndexOf('}')
+    if (jsonStart === -1 || jsonEnd === -1) throw new Error('No JSON object found in Gemini response')
+    rawText = rawText.slice(jsonStart, jsonEnd + 1)
+    result = JSON.parse(rawText) as AnalysisResult
     if (typeof result.score !== 'number') throw new Error('missing score')
     result.score = Math.max(0, Math.min(100, Math.round(result.score)))
     if (!Array.isArray(result.suggestions)) result.suggestions = []
     if (!Array.isArray(result.risk_flags)) result.risk_flags = []
     result.opportunity = result.opportunity ?? null
   } catch {
-    console.log('[analyze-relationship] JSON parse failed. Raw:', rawText.slice(0, 200))
+    console.log('[analyze-relationship] JSON parse failed. Raw:', rawText.slice(0, 300))
     return new Response(
       JSON.stringify({ error: 'Failed to parse AI response. Try again.', raw: rawText }),
       { status: 502, headers: { 'Content-Type': 'application/json', ...CORS } }
