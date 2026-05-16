@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
-import { LogOut, ClipboardList, FilePlus, Users } from 'lucide-react'
+import { LogOut, ClipboardList, FilePlus, Users, TrendingUp } from 'lucide-react'
 import { logoUrl } from '@/services/datasheets'
 
-type View = 'form' | 'history' | 'customers'
+type View = 'form' | 'history' | 'customers' | 'intelligence'
 
 type Props = {
   children: ReactNode
@@ -41,6 +41,17 @@ export function AppShell({ children, userName, onSignOut, view, onViewChange }: 
               >
                 <Users className="w-4 h-4" />
                 <span className="hidden sm:block">Customers</span>
+              </button>
+              <button
+                onClick={() => onViewChange('intelligence')}
+                className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md transition-colors ${
+                  view === 'intelligence'
+                    ? 'bg-kozegho-green text-white font-semibold'
+                    : 'text-kozegho-grey-text hover:text-kozegho-dark hover:bg-kozegho-grey'
+                }`}
+              >
+                <TrendingUp className="w-4 h-4" />
+                <span className="hidden sm:block">Intelligence</span>
               </button>
               <button
                 onClick={() => onViewChange('history')}

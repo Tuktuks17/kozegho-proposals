@@ -10,8 +10,9 @@ import { InstallBanner } from '@/components/layout/InstallBanner'
 import { ProposalPage } from '@/components/form/ProposalPage'
 import { ProposalHistory } from '@/components/history/ProposalHistory'
 import { CustomerIntelligencePage } from '@/components/customers/CustomerIntelligencePage'
+import { IntelligencePage } from '@/components/intelligence/IntelligencePage'
 
-type View = 'form' | 'history' | 'customers'
+type View = 'form' | 'history' | 'customers' | 'intelligence'
 
 export default function App() {
   const { session, user, loading, signInWithGoogle, signOut } = useAuth()
@@ -78,6 +79,8 @@ export default function App() {
           ? <ProposalPage profile={effectiveProfile} />
           : view === 'customers'
           ? <CustomerIntelligencePage />
+          : view === 'intelligence'
+          ? <IntelligencePage onNavigateToCustomer={() => setView('customers')} />
           : <ProposalHistory profile={effectiveProfile} />
         }
       </AppShell>
