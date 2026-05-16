@@ -3,6 +3,7 @@ import { useIntelligenceData } from '@/hooks/useIntelligenceData'
 import type { ProposalAttention } from '@/hooks/useIntelligenceData'
 import { useDailyBriefing, type BriefingResult } from '@/hooks/useDailyBriefing'
 import { useFollowUp } from '@/hooks/useFollowUp'
+import { useRole } from '@/hooks/useRole'
 
 function fmtMoney(n: number) {
   return '€ ' + new Intl.NumberFormat('en-GB', {
@@ -24,7 +25,8 @@ type Props = {
 }
 
 export function IntelligencePage({ onNavigateToCustomer }: Props) {
-  const intelligenceData = useIntelligenceData()
+  const { isManager } = useRole()
+  const intelligenceData = useIntelligenceData(isManager)
   const {
     totalPipeline,
     totalRevenue,

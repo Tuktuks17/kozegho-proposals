@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { LogOut, ClipboardList, FilePlus, Users, TrendingUp } from 'lucide-react'
 import { logoUrl } from '@/services/datasheets'
 import { useAlertCount } from '@/hooks/useAlertCount'
+import { useRole } from '@/hooks/useRole'
 
 type View = 'form' | 'history' | 'customers' | 'intelligence'
 
@@ -15,6 +16,7 @@ type Props = {
 
 export function AppShell({ children, userName, onSignOut, view, onViewChange }: Props) {
   const { count: alertCount, loading: alertLoading } = useAlertCount()
+  const { isManager } = useRole()
 
   return (
     <div className="min-h-screen flex flex-col bg-kozegho-grey">
@@ -45,22 +47,24 @@ export function AppShell({ children, userName, onSignOut, view, onViewChange }: 
                 <Users className="w-4 h-4" />
                 <span className="hidden sm:block">Customers</span>
               </button>
-              <button
-                onClick={() => onViewChange('intelligence')}
-                className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md transition-colors ${
-                  view === 'intelligence'
-                    ? 'bg-kozegho-green text-white font-semibold'
-                    : 'text-kozegho-grey-text hover:text-kozegho-dark hover:bg-kozegho-grey'
-                }`}
-              >
-                <TrendingUp className="w-4 h-4" />
-                <span className="hidden sm:block">Intelligence</span>
-                {alertCount > 0 && !alertLoading && view !== 'intelligence' && (
-                  <span className="absolute -top-1 -right-1 min-w-4 h-4 bg-kozegho-green text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 pointer-events-none">
-                    {alertCount > 9 ? '9+' : alertCount}
-                  </span>
-                )}
-              </button>
+              {isManager && (
+                <button
+                  onClick={() => onViewChange('intelligence')}
+                  className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md transition-colors ${
+                    view === 'intelligence'
+                      ? 'bg-kozegho-green text-white font-semibold'
+                      : 'text-kozegho-grey-text hover:text-kozegho-dark hover:bg-kozegho-grey'
+                  }`}
+                >
+                  <TrendingUp className="w-4 h-4" />
+                  <span className="hidden sm:block">Intelligence</span>
+                  {alertCount > 0 && !alertLoading && view !== 'intelligence' && (
+                    <span className="absolute -top-1 -right-1 min-w-4 h-4 bg-kozegho-green text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 pointer-events-none">
+                      {alertCount > 9 ? '9+' : alertCount}
+                    </span>
+                  )}
+                </button>
+              )}
               <button
                 onClick={() => onViewChange('history')}
                 className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md transition-colors ${

@@ -37,7 +37,7 @@ function daysSince(iso: string): number {
   return Math.floor((Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60 * 24))
 }
 
-export function useIntelligenceData(): IntelligenceData {
+export function useIntelligenceData(isManager: boolean): IntelligenceData {
   const [data, setData] = useState<Omit<IntelligenceData, 'loading' | 'error'>>({
     totalPipeline: 0,
     totalRevenue: 0,
@@ -62,9 +62,21 @@ export function useIntelligenceData(): IntelligenceData {
 
       const fourWeeksAgo = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString()
 
+      // For salesperson: add explicit created_by filter (defense-in-depth on top of RLS)
+      // For manager: no filter — relies on RLS policy that allows managers to see all records
+      let userId: string | null = null
+      if (!isManager) {
+        const { data: { user } } = await supabase.auth.getUser()
+        userId = user?.id ?? null
+      }
+
       const [customersRes, proposalsRes, interactionsRes] = await Promise.all([
-        supabase.from('customers').select('*').order('company'),
-        supabase.from('proposals').select('*').order('created_at', { ascending: false }),
+        isManager
+          ? supabase.from('customers').select('*').order('company')
+          : supabase.from('customers').select('*').order('company').eq('created_by', userId ?? ''),
+        isManager
+          ? supabase.from('proposals').select('*').order('created_at', { ascending: false })
+          : supabase.from('proposals').select('*').order('created_at', { ascending: false }).eq('created_by', userId ?? ''),
         supabase.from('interactions').select('customer_id, occurred_at').gte('occurred_at', fourWeeksAgo),
       ])
 
@@ -196,7 +208,7 @@ export function useIntelligenceData(): IntelligenceData {
 
     load()
     return () => { cancelled = true }
-  }, [])
+  }, [isManager])
 
   return { ...data, loading, error }
 }

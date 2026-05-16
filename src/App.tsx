@@ -71,16 +71,24 @@ export default function App() {
   // Use the name confirmed this session (immediately, before DB round-trip completes)
   const displayName = sessionName || profile.full_name
   const effectiveProfile = { ...profile, full_name: displayName }
+  const isManager = profile.role === 'manager'
+
+  // Prevent salesperson from accessing manager-only views
+  const safeView = (view === 'intelligence' && !isManager) ? 'form' : view
+  const handleViewChange = (v: typeof view) => {
+    if (v === 'intelligence' && !isManager) return
+    setView(v)
+  }
 
   return (
     <>
-      <AppShell userName={displayName} onSignOut={signOut} view={view} onViewChange={setView}>
-        {view === 'form'
+      <AppShell userName={displayName} onSignOut={signOut} view={safeView} onViewChange={handleViewChange}>
+        {safeView === 'form'
           ? <ProposalPage profile={effectiveProfile} />
-          : view === 'customers'
+          : safeView === 'customers'
           ? <CustomerIntelligencePage />
-          : view === 'intelligence'
-          ? <IntelligencePage onNavigateToCustomer={() => setView('customers')} />
+          : safeView === 'intelligence'
+          ? <IntelligencePage onNavigateToCustomer={() => handleViewChange('customers')} />
           : <ProposalHistory profile={effectiveProfile} />
         }
       </AppShell>
