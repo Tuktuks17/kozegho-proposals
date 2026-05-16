@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import { useIntelligenceData } from '@/hooks/useIntelligenceData'
+import type { ProposalAttention } from '@/hooks/useIntelligenceData'
 import { useDailyBriefing, type BriefingResult } from '@/hooks/useDailyBriefing'
+import { useFollowUp } from '@/hooks/useFollowUp'
 
 function fmtMoney(n: number) {
   return '€ ' + new Intl.NumberFormat('en-GB', {
@@ -45,12 +48,35 @@ export function IntelligencePage({ onNavigateToCustomer }: Props) {
     generateBriefing,
   } = useDailyBriefing()
 
+  const followUp = useFollowUp()
+  const [selectedItem, setSelectedItem] = useState<ProposalAttention | null>(null)
+
   function handleGenerate() {
     void generateBriefing({
       metrics: { totalPipeline, totalRevenue, openCount, acceptedCount, rejectedCount, conversionRate },
       attentionItems: proposalsNeedingAttention,
       coldRiskItems: coldRiskCustomers,
     })
+  }
+
+  function handleFollowUp(item: ProposalAttention) {
+    setSelectedItem(item)
+    void followUp.generateDraft({
+      customerName: item.customer.company,
+      customerEmail: item.customer.email,
+      proposalReference: item.proposal.reference,
+      proposalSubject: item.proposal.subject,
+      proposalTotal: item.proposal.total,
+      proposalCreatedAt: item.proposal.created_at,
+      daysOpen: item.daysOpen,
+      salespersonName: item.proposal.salesperson_name,
+      interactionHistory: '',
+    })
+  }
+
+  function handleCloseModal() {
+    setSelectedItem(null)
+    followUp.reset()
   }
 
   return (
@@ -120,7 +146,8 @@ export function IntelligencePage({ onNavigateToCustomer }: Props) {
             ) : (
               <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
                 <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
-                  {proposalsNeedingAttention.slice(0, 8).map(({ proposal, customer, daysOpen, urgency }) => {
+                  {proposalsNeedingAttention.slice(0, 8).map((item) => {
+                    const { proposal, customer, daysOpen, urgency } = item
                     const urgencyBar =
                       urgency === 'critical' ? 'bg-gray-700' :
                       urgency === 'high'     ? 'bg-gray-400' :
@@ -145,7 +172,7 @@ export function IntelligencePage({ onNavigateToCustomer }: Props) {
                           {daysOpen} days
                         </p>
                         <button
-                          onClick={() => onNavigateToCustomer(customer.id)}
+                          onClick={() => handleFollowUp(item)}
                           className="flex-shrink-0 border border-kozegho-green text-kozegho-green text-xs px-3 py-1 rounded hover:bg-kozegho-green hover:text-white transition-colors"
                         >
                           Follow up
@@ -213,9 +240,148 @@ export function IntelligencePage({ onNavigateToCustomer }: Props) {
           </p>
         </>
       )}
+
+      {/* Follow-up modal — key forces remount when draft arrives so editState initialises correctly */}
+      {selectedItem && (
+        <FollowUpModal
+          key={followUp.draft?.subject ?? 'generating'}
+          item={selectedItem}
+          draft={followUp.draft}
+          generating={followUp.generating}
+          sending={followUp.sending}
+          sent={followUp.sent}
+          error={followUp.error}
+          onSend={(to, subject, body) => void followUp.sendEmail(to, subject, body)}
+          onClose={handleCloseModal}
+          onRetry={() => handleFollowUp(selectedItem)}
+        />
+      )}
     </div>
   )
 }
+
+// ─── Follow-up modal ───────────────────────────────────────────────────────────
+
+type FollowUpModalProps = {
+  item: ProposalAttention
+  draft: { subject: string; body: string } | null
+  generating: boolean
+  sending: boolean
+  sent: boolean
+  error: string | null
+  onSend: (to: string, subject: string, body: string) => void
+  onClose: () => void
+  onRetry: () => void
+}
+
+function FollowUpModal({ item, draft, generating, sending, sent, error, onSend, onClose, onRetry }: FollowUpModalProps) {
+  // Initialised from draft on remount (key changes when draft arrives)
+  const [editSubject, setEditSubject] = useState(draft?.subject ?? '')
+  const [editBody, setEditBody] = useState(draft?.body ?? '')
+
+  const hasDraft = !generating && draft !== null && !sent
+  const hasGenerationError = !generating && draft === null && !sent && error !== null
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+      <div className="bg-white rounded-lg shadow-lg max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+
+        {/* Header — always visible */}
+        <div>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Follow-up Draft</p>
+          <p className="text-sm font-medium text-gray-700 mt-1">{item.customer.company}</p>
+          <p className="text-xs text-gray-400">{item.proposal.reference} · {fmtMoney(item.proposal.total)}</p>
+        </div>
+
+        {/* State 1: Generating */}
+        {generating && (
+          <div className="flex flex-col items-center gap-3 py-6">
+            <div className="w-5 h-5 border-2 border-kozegho-green border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-gray-400">Generating follow-up draft...</p>
+          </div>
+        )}
+
+        {/* State 2+3: Draft ready / Sending */}
+        {hasDraft && (
+          <>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Subject</label>
+                <input
+                  type="text"
+                  value={editSubject}
+                  onChange={e => setEditSubject(e.target.value)}
+                  className="w-full border border-gray-200 rounded p-2 text-sm focus:outline-none focus:border-gray-400"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Body (HTML)</label>
+                <textarea
+                  value={editBody}
+                  onChange={e => setEditBody(e.target.value)}
+                  className="w-full border border-gray-200 rounded p-2 text-sm min-h-48 focus:outline-none focus:border-gray-400 resize-y font-mono"
+                />
+              </div>
+            </div>
+            {error && <p className="text-sm text-gray-600">{error}</p>}
+            <div className="flex justify-end gap-3 pt-1">
+              <button
+                onClick={onClose}
+                disabled={sending}
+                className="border border-gray-200 text-gray-500 px-4 py-2 rounded text-sm hover:border-gray-300 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => onSend(item.customer.email, editSubject, editBody)}
+                disabled={sending}
+                className="bg-kozegho-green text-white px-4 py-2 rounded text-sm hover:bg-kozegho-green-dark transition-colors disabled:opacity-60"
+              >
+                {sending ? 'Sending...' : 'Send Email'}
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* State 4: Sent */}
+        {sent && (
+          <div className="flex flex-col items-center gap-4 py-4">
+            <p className="text-sm text-kozegho-green">Follow-up sent successfully.</p>
+            <button
+              onClick={onClose}
+              className="border border-gray-200 text-gray-500 px-4 py-2 rounded text-sm hover:border-gray-300 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        )}
+
+        {/* State 5: Generation error (no draft available) */}
+        {hasGenerationError && (
+          <div className="flex flex-col items-center gap-4 py-4">
+            <p className="text-sm text-gray-600">{error}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="border border-gray-200 text-gray-500 px-4 py-2 rounded text-sm hover:border-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onRetry}
+                className="bg-kozegho-green text-white px-4 py-2 rounded text-sm hover:bg-kozegho-green-dark transition-colors"
+              >
+                Try again
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Daily Briefing panel ──────────────────────────────────────────────────────
 
 type BriefingPanelProps = {
   briefing: BriefingResult | null
