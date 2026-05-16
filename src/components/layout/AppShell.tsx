@@ -14,7 +14,7 @@ type Props = {
 }
 
 export function AppShell({ children, userName, onSignOut, view, onViewChange }: Props) {
-  const { count: alertCount } = useAlertCount()
+  const { count: alertCount, loading: alertLoading } = useAlertCount()
 
   return (
     <div className="min-h-screen flex flex-col bg-kozegho-grey">
@@ -47,7 +47,7 @@ export function AppShell({ children, userName, onSignOut, view, onViewChange }: 
               </button>
               <button
                 onClick={() => onViewChange('intelligence')}
-                className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md transition-colors ${
+                className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md transition-colors ${
                   view === 'intelligence'
                     ? 'bg-kozegho-green text-white font-semibold'
                     : 'text-kozegho-grey-text hover:text-kozegho-dark hover:bg-kozegho-grey'
@@ -55,11 +55,9 @@ export function AppShell({ children, userName, onSignOut, view, onViewChange }: 
               >
                 <TrendingUp className="w-4 h-4" />
                 <span className="hidden sm:block">Intelligence</span>
-                {alertCount > 0 && (
-                  <span className={`text-xs min-w-4 h-4 rounded-full flex items-center justify-center px-1 leading-none ${
-                    view === 'intelligence' ? 'bg-white text-kozegho-green' : 'bg-kozegho-green text-white'
-                  }`}>
-                    {alertCount}
+                {alertCount > 0 && !alertLoading && view !== 'intelligence' && (
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 bg-kozegho-green text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 pointer-events-none">
+                    {alertCount > 9 ? '9+' : alertCount}
                   </span>
                 )}
               </button>

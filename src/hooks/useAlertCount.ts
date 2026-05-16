@@ -9,7 +9,7 @@ export function useAlertCount() {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
     supabase
       .from('proposals')
-      .select('*', { count: 'exact', head: true })
+      .select('id', { count: 'exact', head: true })
       .or('outcome.is.null,outcome.eq.open')
       .lt('created_at', sevenDaysAgo)
       .then(({ count: c }) => {

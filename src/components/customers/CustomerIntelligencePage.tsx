@@ -675,8 +675,8 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
             <>
               <AiScoreCard score={aiScore} />
               {isOutdated && (
-                <div className="border border-gray-200 bg-gray-50 text-gray-500 text-xs p-2 rounded mt-2">
-                  Data changed — click Analyse to refresh
+                <div className="mt-2 px-3 py-2 bg-gray-50 border border-gray-100 rounded text-xs text-gray-400">
+                  Activity recorded since last analysis. Click Analyse to refresh.
                 </div>
               )}
             </>
