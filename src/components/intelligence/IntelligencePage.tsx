@@ -1,7 +1,8 @@
 import { useIntelligenceData } from '@/hooks/useIntelligenceData'
+import { useDailyBriefing, type BriefingResult } from '@/hooks/useDailyBriefing'
 
 function fmtMoney(n: number) {
-  return '€ ' + new Intl.NumberFormat('en-GB', {
+  return '€ ' + new Intl.NumberFormat('en-GB', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(n)
@@ -11,11 +12,16 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+function fmtTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+}
+
 type Props = {
   onNavigateToCustomer: (customerId: string) => void
 }
 
 export function IntelligencePage({ onNavigateToCustomer }: Props) {
+  const intelligenceData = useIntelligenceData()
   const {
     totalPipeline,
     totalRevenue,
@@ -29,7 +35,23 @@ export function IntelligencePage({ onNavigateToCustomer }: Props) {
     coldRiskCustomers,
     loading,
     error,
-  } = useIntelligenceData()
+  } = intelligenceData
+
+  const {
+    briefing,
+    analyzing,
+    error: briefingError,
+    lastGenerated,
+    generateBriefing,
+  } = useDailyBriefing()
+
+  function handleGenerate() {
+    void generateBriefing({
+      metrics: { totalPipeline, totalRevenue, openCount, acceptedCount, rejectedCount, conversionRate },
+      attentionItems: proposalsNeedingAttention,
+      coldRiskItems: coldRiskCustomers,
+    })
+  }
 
   return (
     <div className="space-y-8">
@@ -40,12 +62,15 @@ export function IntelligencePage({ onNavigateToCustomer }: Props) {
         <p className="text-sm text-gray-400 mt-1">Commercial overview and strategic priorities</p>
       </div>
 
-      {/* Daily Briefing placeholder */}
-      <div className="border border-dashed border-gray-200 rounded-lg p-6 text-center">
-        <p className="text-gray-300 text-sm">
-          Daily Briefing — Coming soon. AI will generate your 9:00 AM priorities automatically.
-        </p>
-      </div>
+      {/* Daily Briefing */}
+      <DailyBriefingPanel
+        briefing={briefing}
+        analyzing={analyzing}
+        error={briefingError}
+        lastGenerated={lastGenerated}
+        onGenerate={handleGenerate}
+        onRefresh={handleGenerate}
+      />
 
       {/* Metrics grid */}
       {loading ? (
@@ -187,6 +212,117 @@ export function IntelligencePage({ onNavigateToCustomer }: Props) {
             {totalProposals} total proposals across {totalCustomers} customers
           </p>
         </>
+      )}
+    </div>
+  )
+}
+
+type BriefingPanelProps = {
+  briefing: BriefingResult | null
+  analyzing: boolean
+  error: string | null
+  lastGenerated: string | null
+  onGenerate: () => void
+  onRefresh: () => void
+}
+
+function DailyBriefingPanel({ briefing, analyzing, error, lastGenerated, onGenerate, onRefresh }: BriefingPanelProps) {
+  const momentumClasses: Record<string, string> = {
+    strong:   'border-kozegho-green text-kozegho-green',
+    building: 'border-gray-400 text-gray-500',
+    brief:    'border-gray-300 text-gray-400',
+    declining:'border-gray-500 text-gray-600',
+  }
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-lg p-6">
+
+      {/* Loading state */}
+      {analyzing && (
+        <div className="flex flex-col items-center gap-3 py-2">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider self-start">Daily Briefing</p>
+          <div className="flex flex-col items-center gap-3 w-full pt-4">
+            <div className="w-5 h-5 border-2 border-kozegho-green border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-gray-400">Analysing your portfolio...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!analyzing && !briefing && (
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider self-start">Daily Briefing</p>
+          <p className="text-sm text-gray-400 text-center">Generate your AI-powered commercial briefing for today.</p>
+          {error && <p className="text-sm text-gray-400 text-center">Failed to generate briefing. Try again.</p>}
+          <button
+            onClick={onGenerate}
+            className="bg-kozegho-green text-white text-sm px-4 py-2 rounded hover:bg-kozegho-green-dark transition-colors"
+          >
+            Generate Briefing
+          </button>
+        </div>
+      )}
+
+      {/* Briefing state */}
+      {!analyzing && briefing && (
+        <div className="space-y-4">
+
+          {/* Row 1 — Header */}
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Daily Briefing</p>
+            {lastGenerated && (
+              <p className="text-xs text-gray-300">Generated at {fmtTime(lastGenerated)}</p>
+            )}
+            <button
+              onClick={onRefresh}
+              className="text-xs border border-gray-200 text-gray-400 px-2 py-0.5 rounded hover:border-gray-300 hover:text-gray-500 transition-colors"
+            >
+              Refresh
+            </button>
+          </div>
+
+          {/* Row 2 — Headline */}
+          <div className="pb-3 border-b border-gray-50">
+            <p className="text-sm text-gray-700 font-medium">{briefing.headline}</p>
+          </div>
+
+          {/* Row 3 — Momentum */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400">Momentum:</span>
+            <span className={`border rounded px-2 py-0.5 text-xs ${momentumClasses[briefing.momentum] ?? 'border-gray-300 text-gray-400'}`}>
+              {briefing.momentum.charAt(0).toUpperCase() + briefing.momentum.slice(1)}
+            </span>
+          </div>
+
+          {/* Row 4 — Urgent actions */}
+          <div className="space-y-2">
+            <p className="text-xs text-gray-400 uppercase tracking-wider">Urgent actions</p>
+            <ol className="space-y-1.5">
+              {briefing.urgent.map((action, i) => (
+                <li key={i} className="flex gap-2 text-sm text-gray-700">
+                  <span className="flex-shrink-0 text-kozegho-green font-medium">{i + 1}.</span>
+                  <span>{action}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          {/* Row 5 — Opportunity + Risk */}
+          <div className="grid grid-cols-2 gap-4 pt-1">
+            <div className="space-y-1">
+              <p className="text-xs text-gray-400">Opportunity</p>
+              <p className="text-sm text-gray-600">{briefing.opportunity}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-gray-400">Risk</p>
+              <p className="text-sm text-gray-600">{briefing.risk}</p>
+            </div>
+          </div>
+
+          {error && (
+            <p className="text-sm text-gray-400">Failed to generate briefing. Try again.</p>
+          )}
+        </div>
       )}
     </div>
   )
