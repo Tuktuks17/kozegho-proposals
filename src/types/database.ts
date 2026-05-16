@@ -48,6 +48,7 @@ export type Profile = {
   id: string
   full_name: string
   email: string
+  role: 'manager' | 'salesperson'
   created_at: string
 }
 
@@ -93,8 +94,8 @@ export type Database = {
     Tables: {
       profiles: {
         Row: Profile
-        Insert: { id: string; full_name?: string; email?: string }
-        Update: { full_name?: string; email?: string }
+        Insert: { id: string; full_name?: string; email?: string; role?: 'manager' | 'salesperson' }
+        Update: { full_name?: string; email?: string; role?: 'manager' | 'salesperson' }
       }
       customers: {
         Row: Customer
