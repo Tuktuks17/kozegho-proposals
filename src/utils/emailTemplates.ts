@@ -24,9 +24,10 @@ type EmailParams = {
 
 const GREEN = '#7AB648'
 const DARK = '#333333'
-const BORDER = '#E0E0E0'
+const BORDER = '#E5E5E5'
 const INTRO_BG = '#F4F9EE'
 const TOTAL_BG = '#EDF7E0'
+const LOGO_URL = 'https://yrlnvtiuonrjkvdoievj.supabase.co/storage/v1/object/public/logos/kozegho-logo.png'
 
 function fmtDate(iso: string | null | undefined, language: string): string {
   if (!iso) return ''
@@ -118,14 +119,15 @@ function itemsTable(items: ProposalItem[], language: string, totalOverride?: num
 function termsGrid(params: EmailParams, language: string): string {
   const lbl = PROPOSAL_LABELS[language as keyof typeof PROPOSAL_LABELS] ?? PROPOSAL_LABELS.EN
 
-  // Each cell: 3px green left bar (narrow <td>) + content <td>
+  // Each cell: 3px green left bar (dedicated narrow <td>) + content <td>
+  // width="3" HTML attr + min-width:3px prevent collapse in Outlook; no border-collapse on inner table
   const cell = (label: string, value: string) => `
-    <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">
+    <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;">
       <tr>
-        <td style="width:3px;background-color:${GREEN};">&nbsp;</td>
-        <td style="padding:10px 12px;">
-          <div style="font-size:10px;font-weight:700;color:${GREEN};text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;">${label}</div>
-          <div style="font-size:13px;color:${DARK};">${value || '&#8212;'}</div>
+        <td width="3" style="width:3px;min-width:3px;background-color:${GREEN};padding:0;font-size:0;line-height:0;">&nbsp;</td>
+        <td style="padding:10px 14px;vertical-align:top;">
+          <div style="font-size:10px;font-weight:700;color:${GREEN};text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">${label}</div>
+          <div style="font-size:13px;color:${DARK};font-family:Arial,Helvetica,sans-serif;">${value || '&#8212;'}</div>
         </td>
       </tr>
     </table>`
@@ -192,16 +194,19 @@ export function buildEmailBody(language: string, params: EmailParams): string {
 <!-- ═══ OUTER CARD ═══════════════════════════════════════════════════════════ -->
 <table width="680" cellpadding="0" cellspacing="0" style="max-width:680px;width:100%;background-color:#ffffff;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px #CCCCCC;">
 
-  <!-- ── 1. GREEN HEADER BAND: logo/tagline left | reference right ───────── -->
+  <!-- ── 1. GREEN HEADER BAND: logo left | divider | reference right ──────── -->
   <tr>
     <td style="background-color:${GREEN};padding:0;">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <!-- Wordmark + tagline in white (Option C: no white logo asset available) -->
+          <!-- Logo (Option B: filter:brightness(0) invert(1) — white logo asset unavailable) -->
           <td style="padding:20px 28px;vertical-align:middle;">
-            <div style="font-size:28px;font-weight:700;color:#ffffff;font-family:Arial,Helvetica,sans-serif;letter-spacing:1px;line-height:1;">Kozegho</div>
-            <div style="font-size:11px;color:#D5E8C6;margin-top:4px;font-family:Arial,Helvetica,sans-serif;">${lbl.companyTagline}</div>
+            <img src="${LOGO_URL}" alt="Kozegho" width="180" height="58"
+                 style="display:block;border:0;outline:none;text-decoration:none;max-width:180px;height:auto;filter:brightness(0) invert(1);" />
+            <div style="font-size:11px;color:#D5E8C6;margin-top:6px;font-family:Arial,Helvetica,sans-serif;">${lbl.companyTagline}</div>
           </td>
+          <!-- Vertical divider line -->
+          <td width="1" style="width:1px;background-color:#9CC676;padding:0;font-size:0;line-height:0;">&nbsp;</td>
           <!-- Reference block: white text right-aligned -->
           <td style="padding:20px 28px;vertical-align:middle;text-align:right;">
             <div style="font-size:11px;color:#D5E8C6;font-family:Arial,Helvetica,sans-serif;">${lbl.reference}</div>
@@ -281,6 +286,7 @@ export function buildEmailBody(language: string, params: EmailParams): string {
       <!-- ── 7. ATTACHMENTS LINE ───────────────────────────────────────────── -->
       ${params.datasheetCount > 0 ? `
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+        <tr><td style="height:1px;background-color:#E5E5E5;font-size:0;line-height:0;padding-bottom:16px;">&nbsp;</td></tr>
         <tr>
           <td style="font-size:13px;color:#555555;font-family:Arial,Helvetica,sans-serif;">
             <span style="margin-right:4px;">📎</span>${datasheetLine}
