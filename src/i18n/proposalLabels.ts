@@ -37,6 +37,9 @@ export type DocumentLabels = {
   defaultPaymentTerms: string
   defaultWarranty: string
   fallbackIntroduction: string
+  companyTagline: string
+  datasheetsAttachedSingular: string
+  datasheetsAttachedPlural: string
 }
 
 export const PROPOSAL_LABELS: Record<ProposalLanguage, DocumentLabels> = {
@@ -76,7 +79,10 @@ export const PROPOSAL_LABELS: Record<ProposalLanguage, DocumentLabels> = {
     defaultDeliveryTerms: 'DAP — Destino acordado com o cliente',
     defaultPaymentTerms: '30 dias após entrega',
     defaultWarranty: '24 meses',
-    fallbackIntroduction: 'Na sequência do interesse manifestado, temos o prazer de vos apresentar a nossa proposta comercial para os produtos Kozegho indicados. A Kozegho é especialista em sistemas de preparação e doseamento para tratamento de águas e processos industriais, oferecendo equipamentos de elevada qualidade e fiabilidade. Ficamos ao vosso dispor para qualquer esclarecimento adicional.'
+    fallbackIntroduction: 'Na sequência do interesse manifestado, temos o prazer de vos apresentar a nossa proposta comercial para os produtos Kozegho indicados. A Kozegho é especialista em sistemas de preparação e doseamento para tratamento de águas e processos industriais, oferecendo equipamentos de elevada qualidade e fiabilidade. Ficamos ao vosso dispor para qualquer esclarecimento adicional.',
+    companyTagline: 'Kozegho dosing systems',
+    datasheetsAttachedSingular: '1 ficha técnica em anexo',
+    datasheetsAttachedPlural: '{n} fichas técnicas em anexo',
   },
   ES: {
     commercialProposal: 'Propuesta Comercial',
@@ -114,7 +120,10 @@ export const PROPOSAL_LABELS: Record<ProposalLanguage, DocumentLabels> = {
     defaultDeliveryTerms: 'DAP — destino acordado con el cliente',
     defaultPaymentTerms: '30 días tras entrega',
     defaultWarranty: '24 meses',
-    fallbackIntroduction: 'En respuesta a su interés, tenemos el placer de presentarles nuestra propuesta comercial para los productos Kozegho indicados. Kozegho es especialista en sistemas de preparación y dosificación para tratamiento de aguas y procesos industriales. Quedamos a su disposición para cualquier aclaración adicional.'
+    fallbackIntroduction: 'En respuesta a su interés, tenemos el placer de presentarles nuestra propuesta comercial para los productos Kozegho indicados. Kozegho es especialista en sistemas de preparación y dosificación para tratamiento de aguas y procesos industriales. Quedamos a su disposición para cualquier aclaración adicional.',
+    companyTagline: 'Kozegho dosing systems',
+    datasheetsAttachedSingular: '1 hoja técnica adjunta',
+    datasheetsAttachedPlural: '{n} hojas técnicas adjuntas',
   },
   FR: {
     commercialProposal: 'Proposition Commerciale',
@@ -152,7 +161,10 @@ export const PROPOSAL_LABELS: Record<ProposalLanguage, DocumentLabels> = {
     defaultDeliveryTerms: 'DAP — destination convenue avec le client',
     defaultPaymentTerms: '30 jours après livraison',
     defaultWarranty: '24 mois',
-    fallbackIntroduction: "Suite à votre intérêt, nous avons le plaisir de vous soumettre notre proposition commerciale pour les produits Kozegho indiqués. Kozegho est spécialiste des systèmes de préparation et de dosage pour le traitement de l'eau et les procédés industriels. Nous restons à votre disposition pour tout renseignement complémentaire."
+    fallbackIntroduction: "Suite à votre intérêt, nous avons le plaisir de vous soumettre notre proposition commerciale pour les produits Kozegho indiqués. Kozegho est spécialiste des systèmes de préparation et de dosage pour le traitement de l'eau et les procédés industriels. Nous restons à votre disposition pour tout renseignement complémentaire.",
+    companyTagline: 'Kozegho dosing systems',
+    datasheetsAttachedSingular: '1 fiche technique en pièce jointe',
+    datasheetsAttachedPlural: '{n} fiches techniques en pièce jointe',
   },
   EN: {
     commercialProposal: 'Commercial Proposal',
@@ -190,6 +202,9 @@ export const PROPOSAL_LABELS: Record<ProposalLanguage, DocumentLabels> = {
     defaultDeliveryTerms: 'DAP — agreed destination with client',
     defaultPaymentTerms: '30 days after delivery',
     defaultWarranty: '24 months',
-    fallbackIntroduction: 'Following your interest in our products, we are pleased to present our commercial proposal for the Kozegho products indicated herein. Kozegho specialises in preparation and dosing systems for water treatment and industrial processes, offering high-quality and reliable equipment. We remain at your disposal for any further information.'
+    fallbackIntroduction: 'Following your interest in our products, we are pleased to present our commercial proposal for the Kozegho products indicated herein. Kozegho specialises in preparation and dosing systems for water treatment and industrial processes, offering high-quality and reliable equipment. We remain at your disposal for any further information.',
+    companyTagline: 'Kozegho dosing systems',
+    datasheetsAttachedSingular: '1 datasheet attached',
+    datasheetsAttachedPlural: '{n} datasheets attached',
   }
 }
