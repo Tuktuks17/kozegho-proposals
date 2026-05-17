@@ -62,11 +62,16 @@ export function ExportModal({ proposal, customer, onClose }: Props) {
     }))
     .filter((d) => !!d.path)
 
+  // Deduplicate by path — same product twice should only send one datasheet PDF
+  const uniqueDatasheetPaths = Array.from(
+    new Map(datasheetPaths.map(d => [d.path, d])).values()
+  )
+
   const emailSubject = buildEmailSubject(proposal.language, proposal.reference)
   const clientName = customer.name || ''
 
-  const datasheetAttachmentNames = datasheetPaths.length > 0
-    ? datasheetPaths.map((d) => `${d.productName}_Datasheet_${proposal.language.toUpperCase()}.pdf`)
+  const datasheetAttachmentNames = uniqueDatasheetPaths.length > 0
+    ? uniqueDatasheetPaths.map((d) => `${d.productName}_Datasheet_${proposal.language.toUpperCase()}.pdf`)
     : null
 
   // ── Download handlers ─────────────────────────────────────────────────────
@@ -114,7 +119,7 @@ export function ExportModal({ proposal, customer, onClose }: Props) {
         proposalNumber: proposal.reference,
         subject: proposal.subject ?? '',
         commercialName: proposal.salesperson_name ?? '',
-        datasheetCount: new Set(datasheetPaths.map(d => d.path)).size,
+        datasheetCount: uniqueDatasheetPaths.length,
         introduction: proposal.introduction,
         items: proposal.items,
         subtotal: proposal.subtotal,
@@ -128,7 +133,7 @@ export function ExportModal({ proposal, customer, onClose }: Props) {
         additionalNotes: proposal.additional_notes,
         createdAt: proposal.created_at,
       })
-      const attachments = datasheetPaths.map((d) => ({
+      const attachments = uniqueDatasheetPaths.map((d) => ({
         filename: `${d.productName}_Datasheet_${proposal.language.toUpperCase()}.pdf`,
         path: d.path,
       }))

@@ -207,8 +207,8 @@ export function buildEmailBody(language: string, params: EmailParams): string {
                  width="180" height="60"
                  style="display:block;border:0;outline:none;text-decoration:none;" />
           </td>
-          <!-- Vertical divider line -->
-          <td width="1" style="width:1px;background-color:#9CC676;padding:0;font-size:0;line-height:0;">&nbsp;</td>
+          <!-- Vertical divider: rgba ok on <td> background-color in Gmail -->
+          <td width="1" style="width:1px;background-color:rgba(255,255,255,0.4);padding:0;font-size:0;line-height:0;">&nbsp;</td>
           <!-- Reference block: white text right-aligned -->
           <td style="padding:20px 28px;vertical-align:middle;text-align:right;">
             <div style="font-size:11px;color:#D5E8C6;font-family:Arial,Helvetica,sans-serif;">${lbl.reference}</div>
@@ -285,15 +285,16 @@ export function buildEmailBody(language: string, params: EmailParams): string {
         </tr>
       </table>` : ''}
 
-      <!-- ── 7. ATTACHMENTS LINE ───────────────────────────────────────────── -->
+      <!-- ── 7. ATTACHMENTS LINE (1px divider above + text + 1px divider below) ── -->
       ${params.datasheetCount > 0 ? `
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
-        <tr><td style="height:1px;background-color:#E5E5E5;font-size:0;line-height:0;padding-bottom:16px;">&nbsp;</td></tr>
+        <tr><td style="height:1px;background-color:#E5E5E5;font-size:0;line-height:0;">&nbsp;</td></tr>
         <tr>
-          <td style="font-size:13px;color:#555555;font-family:Arial,Helvetica,sans-serif;">
+          <td style="font-size:13px;color:#555555;font-family:Arial,Helvetica,sans-serif;padding:14px 0;">
             <span style="margin-right:4px;">📎</span>${datasheetLine}
           </td>
         </tr>
+        <tr><td style="height:1px;background-color:#E5E5E5;font-size:0;line-height:0;">&nbsp;</td></tr>
       </table>` : ''}
 
       <!-- ── 8. SIGNATURE ─────────────────────────────────────────────────── -->
