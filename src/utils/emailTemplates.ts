@@ -197,7 +197,7 @@ export function buildEmailBody(language: string, params: EmailParams): string {
         <tr>
           <!-- Logo cell: narrow, just enough for the logo + small breathing room -->
           <td width="38%" style="padding:28px 32px 28px 32px;vertical-align:middle;">
-            <img src="${LOGO_URL_WHITE}" alt="" role="presentation" aria-hidden="true" width="200" style="display:block;border:0;outline:none;text-decoration:none;height:auto;pointer-events:none;-ms-interpolation-mode:bicubic;" draggable="false" />
+            <div role="presentation" aria-hidden="true" style="width:200px;height:67px;background-image:url('${LOGO_URL_WHITE}');background-repeat:no-repeat;background-position:left center;background-size:contain;line-height:0;font-size:0;">&nbsp;</div>
           </td>
           <!-- Divider cell: tight against the logo, full vertical white bar -->
           <td width="4%" style="padding:18px 0;vertical-align:middle;text-align:left;">
@@ -205,9 +205,9 @@ export function buildEmailBody(language: string, params: EmailParams): string {
           </td>
           <!-- Reference cell: takes remaining width, right-aligned content -->
           <td width="58%" style="padding:28px 32px 28px 24px;vertical-align:middle;text-align:right;">
-            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:normal;letter-spacing:0.5px;line-height:1.2;text-transform:uppercase;">${lbl.reference}</div>
-            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:600;letter-spacing:0;line-height:1.2;margin-top:4px;">${params.proposalNumber}</div>
-            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:normal;letter-spacing:0;line-height:1.2;margin-top:4px;">${dateStr}</div>
+            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:9px;font-weight:normal;letter-spacing:1px;line-height:1.2;text-transform:uppercase;">${lbl.reference}</div>
+            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:600;letter-spacing:0;line-height:1.2;margin-top:4px;">${params.proposalNumber}</div>
+            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:normal;letter-spacing:0;line-height:1.2;margin-top:4px;">${dateStr}</div>
           </td>
         </tr>
       </table>
