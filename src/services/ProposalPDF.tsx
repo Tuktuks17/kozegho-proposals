@@ -69,12 +69,17 @@ const s = StyleSheet.create({
     height: 50,
     objectFit: 'contain',
   },
-  // Thin white vertical divider between logo and reference info
+  // Divider wrapper — centered, so the white line covers ~55% of band height
+  headerDividerWrapper: {
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+    marginHorizontal: 24,
+  },
+  // White bar inside wrapper — fixed height, not full-stretch
   headerDivider: {
     width: 1,
+    height: 44,
     backgroundColor: 'rgba(255,255,255,0.4)',
-    alignSelf: 'stretch',
-    marginHorizontal: 24,
   },
   headerRight: {
     alignItems: 'flex-end',
@@ -226,15 +231,6 @@ const s = StyleSheet.create({
     flex: 1,
     gap: 10,
   },
-  termsCell: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-  },
-  termsCellBar: {
-    width: 2,
-    backgroundColor: GREEN,
-    marginRight: 8,
-  },
   termsCellContent: {
     flex: 1,
   },
@@ -307,12 +303,14 @@ const s = StyleSheet.create({
 
 function TermsCell({ label, value }: { label: string; value: string }) {
   return (
-    <View style={s.termsCell}>
-      <View style={s.termsCellBar} />
-      <View style={s.termsCellContent}>
+    <View style={s.termsCellContent}>
+      {/* Bar + label on same row — bar height matches label text only */}
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+        <View style={{ width: 2, height: 10, backgroundColor: GREEN, marginRight: 8, marginTop: 1 }} />
         <Text style={s.termsCellLabel}>{label}</Text>
-        <Text style={s.termsCellValue}>{value}</Text>
       </View>
+      {/* Value indented to align with label text (bar 2px + margin 8px = 10px) */}
+      <Text style={[s.termsCellValue, { paddingLeft: 10 }]}>{value}</Text>
     </View>
   )
 }
@@ -364,8 +362,10 @@ export function ProposalPDFDocument({
           <View style={s.headerLeft}>
             <Image src={LOGO_URL_WHITE} style={s.logoWhite} />
           </View>
-          {/* Thin white vertical divider */}
-          <View style={s.headerDivider} />
+          {/* White vertical divider — centered, covers ~55% of band height */}
+          <View style={s.headerDividerWrapper}>
+            <View style={s.headerDivider} />
+          </View>
           <View style={s.headerRight}>
             <Text style={s.headerRefLabel}>{L.reference}</Text>
             <Text style={s.headerRefValue}>{proposal.reference}</Text>
@@ -511,20 +511,16 @@ export function ProposalPDFDocument({
             <>
               <View style={s.attachmentsDivider} />
               <View style={s.attachmentsRow}>
-                <Text style={{ fontSize: 9, color: GREEN, fontFamily: 'Helvetica-Bold' }}>•</Text>
-                <Text style={s.attachmentsText}>{datasheetLine}</Text>
+                <Text style={s.attachmentsText}>📎 {datasheetLine}</Text>
               </View>
               <View style={s.attachmentsDivider} />
             </>
           )}
 
-          {/* ── 7. SIGNATURE (no PREPARED BY label) ──────────────────────── */}
+          {/* ── 7. SIGNATURE (no PREPARED BY label, no VAT disclaimer) ──────── */}
           <View style={s.signatureBlock}>
             <Text style={s.signatureName}>{proposal.salesperson_name}</Text>
           </View>
-
-          {/* VAT note */}
-          <Text style={s.vatNote}>{L.vatNote}</Text>
 
         </View>
 
