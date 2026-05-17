@@ -7,7 +7,7 @@ import { useTasks } from '@/hooks/useTasks'
 import { useGmailThreads } from '@/hooks/useGmailThreads'
 import { useCustomerProposals, type ProposalOutcome } from '@/hooks/useCustomerProposals'
 import { useRelationshipScore } from '@/hooks/useRelationshipScore'
-import { Search, ArrowLeft, Building2, Mail, Globe, TrendingUp, FileText, CheckCircle, Check } from 'lucide-react'
+import { Search, ArrowLeft, Mail, Globe, TrendingUp, FileText, CheckCircle, Check } from 'lucide-react'
 
 type ProposalSummary = {
   customer_id: string
@@ -100,10 +100,10 @@ function Spinner() {
 
 function MetricBox({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="bg-gray-50 rounded-lg p-3 text-center">
-      <div className="text-xs text-gray-500 mb-1">{label}</div>
-      <div className="text-base font-bold text-gray-800">{value}</div>
-      {sub && <div className="text-xs text-gray-400 mt-0.5">{sub}</div>}
+    <div className="bg-[var(--kz-surface-soft)] rounded-[var(--kz-radius-input)] border border-[var(--kz-border)] p-3 text-center">
+      <div className="text-xs text-[var(--kz-text-secondary)] mb-1">{label}</div>
+      <div className="text-base font-bold text-[var(--kz-text)]">{value}</div>
+      {sub && <div className="text-xs text-[var(--kz-text-muted)] mt-0.5">{sub}</div>}
     </div>
   )
 }
@@ -213,31 +213,31 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-[var(--kz-surface)] rounded-[var(--kz-radius-card)] shadow-[var(--kz-shadow-card)] border border-[var(--kz-border)] overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+      <div className="px-6 py-4 border-b border-[var(--kz-border)] flex items-center gap-3">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+          className="flex items-center gap-1.5 text-sm text-[var(--kz-text-secondary)] hover:text-[var(--kz-text)] transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back</span>
         </button>
-        <div className="w-px h-4 bg-gray-200" />
+        <div className="w-px h-4 bg-[var(--kz-border)]" />
         <div className="flex-1 min-w-0">
-          <h2 className="font-bold text-gray-900 truncate">{customer.company}</h2>
+          <h2 className="font-bold text-[var(--kz-text)] truncate">{customer.company}</h2>
           {customer.name && customer.name !== customer.company && (
-            <p className="text-sm text-gray-500 truncate">{customer.name}</p>
+            <p className="text-sm text-[var(--kz-text-secondary)] truncate">{customer.name}</p>
           )}
         </div>
-        <span className={`text-xs font-bold px-3 py-1 rounded border uppercase tracking-wide ${temp.borderClass} ${temp.textClass}`}>
+        <span className={`text-xs font-bold px-3 py-1 rounded-[var(--kz-radius-pill)] border uppercase tracking-wide ${temp.borderClass} ${temp.textClass}`}>
           {temp.label}
         </span>
       </div>
 
       <div className="p-6 space-y-6">
         {/* Contact info */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <div className="flex items-center gap-2 text-gray-600">
             <Mail className="w-4 h-4 text-gray-400 shrink-0" />
             <span className="truncate">{customer.email}</span>
@@ -245,10 +245,6 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
           <div className="flex items-center gap-2 text-gray-600">
             <Globe className="w-4 h-4 text-gray-400 shrink-0" />
             <span>{getCountryName(customer.country) || '—'}</span>
-          </div>
-          <div className="flex items-center gap-2 text-gray-600">
-            <Building2 className="w-4 h-4 text-gray-400 shrink-0" />
-            <span className="truncate">{customer.company}</span>
           </div>
         </div>
 
@@ -767,47 +763,47 @@ function CustomerCard({ customer, onClick }: { customer: CustomerWithMetrics; on
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all p-4 group"
+      className="w-full text-left bg-[var(--kz-surface)] rounded-[var(--kz-radius-card)] border border-[var(--kz-border)] shadow-[var(--kz-shadow-card-soft)] hover:shadow-[var(--kz-shadow-card)] hover:border-[var(--kz-border-strong)] transition-all p-5 group"
     >
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="min-w-0">
-          <div className="font-semibold text-gray-900 truncate group-hover:text-[#7AB648] transition-colors">
+          <div className="font-semibold text-[var(--kz-text)] truncate group-hover:text-[var(--kz-green)] transition-colors">
             {customer.company}
           </div>
           {customer.name && customer.name !== customer.company && (
-            <div className="text-sm text-gray-500 truncate">{customer.name}</div>
+            <div className="text-sm text-[var(--kz-text-secondary)] truncate">{customer.name}</div>
           )}
         </div>
-        <span className={`text-xs font-medium px-2 py-0.5 rounded border shrink-0 whitespace-nowrap ${temp.borderClass} ${temp.textClass}`}>
+        <span className={`text-[11px] font-medium uppercase tracking-wide px-2.5 py-0.5 rounded-[var(--kz-radius-pill)] border shrink-0 whitespace-nowrap ${temp.borderClass} ${temp.textClass}`}>
           {temp.label}
         </span>
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-xs">
         <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-1 text-gray-400">
+          <div className="flex items-center gap-1 text-[var(--kz-text-secondary)]">
             <TrendingUp className="w-3 h-3" />
             <span>Revenue</span>
           </div>
-          <span className="font-semibold text-gray-700">{fmtMoney(customer.totalRevenue)} €</span>
+          <span className="font-semibold text-[var(--kz-text)]">{fmtMoney(customer.totalRevenue)} €</span>
         </div>
         <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-1 text-gray-400">
+          <div className="flex items-center gap-1 text-[var(--kz-text-secondary)]">
             <FileText className="w-3 h-3" />
             <span>Proposals</span>
           </div>
-          <span className="font-semibold text-gray-700">{customer.proposalCount}</span>
+          <span className="font-semibold text-[var(--kz-text)]">{customer.proposalCount}</span>
         </div>
         <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-1 text-gray-400">
+          <div className="flex items-center gap-1 text-[var(--kz-text-secondary)]">
             <CheckCircle className="w-3 h-3" />
             <span>Exported</span>
           </div>
-          <span className="font-semibold text-gray-700">{customer.exportedCount}</span>
+          <span className="font-semibold text-[var(--kz-text)]">{customer.exportedCount}</span>
         </div>
       </div>
 
-      <div className="mt-3 text-xs text-gray-400">
+      <div className="mt-3 text-xs text-[var(--kz-text-muted)]">
         Last proposal: {fmtDate(customer.lastProposalDate)}
       </div>
     </button>
@@ -922,32 +918,32 @@ export function CustomerIntelligencePage({ autoSelectCustomerId, onAutoSelectDon
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Customers</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Customer intelligence and commercial relationships</p>
+          <h1 className="text-[28px] font-semibold text-[var(--kz-text-on-dark)]">Customers</h1>
+          <p className="text-sm text-[var(--kz-text-on-dark-muted)] mt-1">Customer intelligence and commercial relationships</p>
         </div>
         {!loading && (
           <div className="flex items-center gap-2 text-xs">
-            <span className="font-bold text-kozegho-green">Hot</span>
-            <span className="text-gray-600">{stats.hot}</span>
-            <span className="text-gray-300">·</span>
-            <span className="font-medium text-gray-500">Warm</span>
-            <span className="text-gray-600">{stats.warm}</span>
-            <span className="text-gray-300">·</span>
-            <span className="text-gray-400">Cold</span>
-            <span className="text-gray-600">{stats.cold}</span>
+            <span className="font-semibold text-[var(--kz-green)]">Hot</span>
+            <span className="text-[var(--kz-text-on-dark-muted)]">{stats.hot}</span>
+            <span className="text-[var(--kz-text-on-dark-muted)] opacity-40">·</span>
+            <span className="font-medium text-[var(--kz-text-on-dark-muted)]">Warm</span>
+            <span className="text-[var(--kz-text-on-dark-muted)]">{stats.warm}</span>
+            <span className="text-[var(--kz-text-on-dark-muted)] opacity-40">·</span>
+            <span className="text-[var(--kz-text-on-dark-muted)]">Cold</span>
+            <span className="text-[var(--kz-text-on-dark-muted)]">{stats.cold}</span>
           </div>
         )}
       </div>
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--kz-text-on-dark-muted)]" />
         <input
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search by name or company..."
-          className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#7AB648] focus:border-transparent placeholder:text-gray-400"
+          className="w-full pl-9 pr-4 h-12 text-sm border border-[var(--kz-border-dark)] rounded-[var(--kz-radius-input)] bg-[var(--kz-bg-elevated)] text-white placeholder:text-[var(--kz-text-on-dark-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--kz-green-ring)] focus:border-[var(--kz-green)]"
         />
       </div>
 
@@ -961,7 +957,7 @@ export function CustomerIntelligencePage({ autoSelectCustomerId, onAutoSelectDon
       )}
 
       {!loading && !error && filtered.length === 0 && (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-[var(--kz-text-on-dark-muted)]">
           {search ? (
             <p className="text-sm">No results found for &ldquo;{search}&rdquo;.</p>
           ) : (

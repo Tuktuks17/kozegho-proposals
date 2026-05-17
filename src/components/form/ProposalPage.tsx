@@ -33,18 +33,18 @@ export function ProposalPage({ profile }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-2xl font-display font-bold text-kozegho-dark">New Proposal</h1>
-        <p className="text-sm text-kozegho-grey-text mt-0.5">Fill in the details below to create a commercial proposal.</p>
+        <h1 className="text-[28px] font-semibold text-[var(--kz-text-on-dark)]">New Proposal</h1>
+        <p className="text-sm text-[var(--kz-text-on-dark-muted)] mt-1">Fill in the details below to create a commercial proposal.</p>
       </div>
 
       {draftBanner && (
-        <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-md px-4 py-3">
-          <p className="text-sm text-amber-800">You have an unsaved draft. Resume where you left off?</p>
-          <div className="flex gap-2 ml-4 shrink-0">
-            <button onClick={resumeDraft} className="text-sm font-semibold text-kozegho-green hover:text-kozegho-green-dark">Resume</button>
-            <button onClick={discardDraft} className="text-sm text-kozegho-grey-text hover:text-kozegho-dark">Discard</button>
+        <div className="flex items-center justify-between bg-[var(--kz-green-soft)] border border-[var(--kz-green)]/30 rounded-[var(--kz-radius-card)] px-4 py-3">
+          <p className="text-sm text-[var(--kz-text)]">You have an unsaved draft. Resume where you left off?</p>
+          <div className="flex gap-3 ml-4 shrink-0">
+            <button onClick={resumeDraft} className="text-sm font-semibold text-[var(--kz-green)] hover:text-[var(--kz-green-hover)] transition-colors">Resume</button>
+            <button onClick={discardDraft} className="text-sm text-[var(--kz-text-secondary)] hover:text-[var(--kz-text)] transition-colors">Discard</button>
           </div>
         </div>
       )}

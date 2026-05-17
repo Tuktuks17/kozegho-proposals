@@ -79,14 +79,17 @@ export function ProposalHistory({ profile }: Props) {
 
   return (
     <>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-5">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-display font-bold text-kozegho-dark">Proposal History</h1>
-            <p className="text-sm text-kozegho-grey-text mt-0.5">Your last 100 proposals, most recent first.</p>
+            <h1 className="text-[28px] font-semibold text-[var(--kz-text-on-dark)]">Proposal History</h1>
+            <p className="text-sm text-[var(--kz-text-on-dark-muted)] mt-1">Your last 100 proposals, most recent first.</p>
           </div>
-          <button onClick={load} disabled={loading}
-            className="flex items-center gap-1.5 text-sm text-kozegho-grey-text hover:text-kozegho-dark transition-colors disabled:opacity-50">
+          <button
+            onClick={load}
+            disabled={loading}
+            className="flex items-center gap-1.5 text-sm text-[var(--kz-text-on-dark-muted)] hover:text-[var(--kz-text-on-dark)] transition-colors disabled:opacity-50"
+          >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
@@ -94,60 +97,62 @@ export function ProposalHistory({ profile }: Props) {
 
         {loading && (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 animate-spin text-kozegho-green" />
+            <Loader2 className="w-6 h-6 animate-spin text-[var(--kz-green)]" />
           </div>
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md px-4 py-3 text-sm text-red-700">{error}</div>
+          <div className="bg-red-50 border border-red-200 rounded-[var(--kz-radius-card)] px-4 py-3 text-sm text-red-700">{error}</div>
         )}
 
         {!loading && !error && rows.length === 0 && (
-          <div className="text-center py-16 text-kozegho-grey-text text-sm">No proposals yet.</div>
+          <div className="text-center py-16 text-[var(--kz-text-on-dark-muted)] text-sm">No proposals yet.</div>
         )}
 
         {!loading && rows.length > 0 && (
-          <div className="bg-white rounded-lg shadow-card overflow-hidden">
+          <div className="bg-[var(--kz-surface)] rounded-[var(--kz-radius-card)] border border-[var(--kz-border)] shadow-[var(--kz-shadow-card)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="bg-kozegho-grey border-b border-border">
-                    <th className="text-left px-4 py-3 font-semibold text-kozegho-dark whitespace-nowrap">Reference</th>
-                    <th className="text-left px-4 py-3 font-semibold text-kozegho-dark whitespace-nowrap">Client</th>
-                    <th className="text-left px-4 py-3 font-semibold text-kozegho-dark hidden md:table-cell">Subject</th>
-                    <th className="text-left px-4 py-3 font-semibold text-kozegho-dark whitespace-nowrap">Date</th>
-                    <th className="text-right px-4 py-3 font-semibold text-kozegho-dark whitespace-nowrap">Total (€)</th>
-                    <th className="text-left px-4 py-3 font-semibold text-kozegho-dark">Status</th>
+                  <tr className="border-b border-[var(--kz-border)]">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--kz-text-secondary)] uppercase tracking-wide whitespace-nowrap">Reference</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--kz-text-secondary)] uppercase tracking-wide whitespace-nowrap">Client</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--kz-text-secondary)] uppercase tracking-wide hidden md:table-cell">Subject</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--kz-text-secondary)] uppercase tracking-wide whitespace-nowrap">Date</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-[var(--kz-text-secondary)] uppercase tracking-wide whitespace-nowrap">Total (€)</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--kz-text-secondary)] uppercase tracking-wide">Status</th>
                     <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((row, i) => (
-                    <tr key={row.id}
-                      className={`border-b border-border last:border-0 ${i % 2 === 0 ? 'bg-white' : 'bg-kozegho-grey/40'}`}>
+                  {rows.map((row) => (
+                    <tr
+                      key={row.id}
+                      className="border-b border-[var(--kz-border)] last:border-0 hover:bg-[var(--kz-surface-hover)] transition-colors"
+                    >
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="font-bold text-kozegho-green">{row.reference}</span>
+                        <span className="font-medium text-[var(--kz-green)]">{row.reference}</span>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="font-medium text-kozegho-dark">{row.customer_company}</div>
-                        {row.customer_name && <div className="text-xs text-kozegho-grey-text">{row.customer_name}</div>}
+                        <div className="font-medium text-[var(--kz-text)]">{row.customer_company}</div>
+                        {row.customer_name && <div className="text-xs text-[var(--kz-text-secondary)]">{row.customer_name}</div>}
                       </td>
-                      <td className="px-4 py-3 text-kozegho-grey-text hidden md:table-cell max-w-xs truncate">
+                      <td className="px-4 py-3 text-[var(--kz-text-secondary)] hidden md:table-cell max-w-xs truncate">
                         {row.subject}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-kozegho-grey-text">
+                      <td className="px-4 py-3 whitespace-nowrap text-[var(--kz-text-secondary)]">
                         {fmtDate(row.created_at)}
                       </td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap font-medium text-kozegho-dark">
+                      <td className="px-4 py-3 text-right whitespace-nowrap font-medium text-[var(--kz-text)]">
                         {fmtMoney(row.total)}
                       </td>
                       <td className="px-4 py-3">
                         {row.email_sent_at ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-kozegho-green bg-kozegho-green-light px-2 py-0.5 rounded-full">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-[var(--kz-green-soft)] text-[var(--kz-green)] border border-[var(--kz-green)]/30 px-2.5 py-0.5 rounded-[var(--kz-radius-pill)] uppercase tracking-wide">
                             <CheckCircle className="w-3 h-3" />Sent
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-kozegho-grey-text bg-kozegho-grey px-2 py-0.5 rounded-full">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-[var(--kz-surface-hover)] text-[var(--kz-text-secondary)] border border-[var(--kz-border)] px-2.5 py-0.5 rounded-[var(--kz-radius-pill)]">
                             Draft
                           </span>
                         )}
@@ -156,7 +161,7 @@ export function ProposalHistory({ profile }: Props) {
                         <button
                           onClick={() => openExport(row)}
                           disabled={opening === row.id}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-white bg-kozegho-green hover:bg-kozegho-green-dark px-3 py-1.5 rounded transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-1 text-[13px] font-medium border border-[var(--kz-green)] text-[var(--kz-green)] hover:bg-[var(--kz-green-soft)] px-3 py-1.5 rounded-[var(--kz-radius-button)] transition-colors disabled:opacity-50"
                         >
                           {opening === row.id
                             ? <Loader2 className="w-3 h-3 animate-spin" />

@@ -15,77 +15,82 @@ type Props = {
 }
 
 export function AppShell({ children, userName, onSignOut, view, onViewChange }: Props) {
-  const { count: alertCount, loading: alertLoading } = useAlertCount()
+  // Keep hook alive — badge data is still fetched, just not displayed
+  useAlertCount()
   const { isManager } = useRole()
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header
-        className="sticky top-0 z-40"
-        style={{ background: 'rgba(11,11,13,0.95)', borderBottom: '1px solid rgba(122,182,72,0.08)', backdropFilter: 'blur(8px)' }}
-      >
+    <div className="kz-grid-bg min-h-screen flex flex-col">
+      {/* White header */}
+      <header className="sticky top-0 z-40 bg-white border-b border-[var(--kz-border)]">
+        {/* Green accent bar across top */}
+        <div className="h-[3px] bg-[var(--kz-green)]" />
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img src={logoUrl()} alt="Kozegho" className="h-8 object-contain" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+          <div className="flex items-center gap-5">
+            <img
+              src={logoUrl()}
+              alt="Kozegho"
+              className="h-8 object-contain"
+              onError={(e) => { e.currentTarget.style.display = 'none' }}
+            />
             <nav className="flex items-center gap-1">
               <button
                 onClick={() => onViewChange('form')}
-                className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md transition-colors ${
+                className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full transition-colors font-medium ${
                   view === 'form'
-                    ? 'bg-kozegho-green text-white font-semibold'
-                    : 'text-kozegho-grey-text hover:text-kozegho-dark hover:bg-kozegho-grey'
+                    ? 'bg-[var(--kz-green)] text-white'
+                    : 'text-[var(--kz-text)] hover:bg-[var(--kz-surface-hover)]'
                 }`}
               >
-                <FilePlus className="w-4 h-4" />
+                <FilePlus className={`w-4 h-4 ${view === 'form' ? 'text-white' : 'text-[var(--kz-text-secondary)]'}`} />
                 <span className="hidden sm:block">New Proposal</span>
               </button>
+
               <button
                 onClick={() => onViewChange('customers')}
-                className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md transition-colors ${
+                className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full transition-colors font-medium ${
                   view === 'customers'
-                    ? 'bg-kozegho-green text-white font-semibold'
-                    : 'text-kozegho-grey-text hover:text-kozegho-dark hover:bg-kozegho-grey'
+                    ? 'bg-[var(--kz-green)] text-white'
+                    : 'text-[var(--kz-text)] hover:bg-[var(--kz-surface-hover)]'
                 }`}
               >
-                <Users className="w-4 h-4" />
+                <Users className={`w-4 h-4 ${view === 'customers' ? 'text-white' : 'text-[var(--kz-text-secondary)]'}`} />
                 <span className="hidden sm:block">Customers</span>
               </button>
+
               {isManager && (
                 <button
                   onClick={() => onViewChange('intelligence')}
-                  className={`relative flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md transition-colors ${
+                  className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full transition-colors font-medium ${
                     view === 'intelligence'
-                      ? 'bg-kozegho-green text-white font-semibold'
-                      : 'text-kozegho-grey-text hover:text-kozegho-dark hover:bg-kozegho-grey'
+                      ? 'bg-[var(--kz-green)] text-white'
+                      : 'text-[var(--kz-text)] hover:bg-[var(--kz-surface-hover)]'
                   }`}
                 >
-                  <TrendingUp className="w-4 h-4" />
+                  <TrendingUp className={`w-4 h-4 ${view === 'intelligence' ? 'text-white' : 'text-[var(--kz-text-secondary)]'}`} />
                   <span className="hidden sm:block">Intelligence</span>
-                  {alertCount > 0 && !alertLoading && view !== 'intelligence' && (
-                    <span className="absolute -top-1 -right-1 min-w-5 h-5 bg-kozegho-green text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 pointer-events-none">
-                      {alertCount}
-                    </span>
-                  )}
                 </button>
               )}
+
               <button
                 onClick={() => onViewChange('history')}
-                className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md transition-colors ${
+                className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full transition-colors font-medium ${
                   view === 'history'
-                    ? 'bg-kozegho-green text-white font-semibold'
-                    : 'text-kozegho-grey-text hover:text-kozegho-dark hover:bg-kozegho-grey'
+                    ? 'bg-[var(--kz-green)] text-white'
+                    : 'text-[var(--kz-text)] hover:bg-[var(--kz-surface-hover)]'
                 }`}
               >
-                <ClipboardList className="w-4 h-4" />
+                <ClipboardList className={`w-4 h-4 ${view === 'history' ? 'text-white' : 'text-[var(--kz-text-secondary)]'}`} />
                 <span className="hidden sm:block">History</span>
               </button>
             </nav>
           </div>
+
           <div className="flex items-center gap-3">
-            <span className="text-sm text-kozegho-grey-text hidden sm:block">{userName}</span>
+            <span className="text-sm text-[var(--kz-text)] hidden sm:block">{userName}</span>
             <button
               onClick={onSignOut}
-              className="flex items-center gap-1.5 text-sm text-kozegho-grey-text hover:text-kozegho-dark transition-colors"
+              className="flex items-center gap-1.5 text-sm text-[var(--kz-text-secondary)] hover:text-[var(--kz-text)] transition-colors"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:block">Sign out</span>
@@ -93,7 +98,8 @@ export function AppShell({ children, userName, onSignOut, view, onViewChange }: 
           </div>
         </div>
       </header>
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
+
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
         {children}
       </main>
     </div>
