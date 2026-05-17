@@ -205,9 +205,9 @@ export function buildEmailBody(language: string, params: EmailParams): string {
           </td>
           <!-- Reference cell: takes remaining width, right-aligned content -->
           <td width="58%" style="padding:28px 32px 28px 24px;vertical-align:middle;text-align:right;">
-            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:normal;letter-spacing:0;line-height:1.2;">${lbl.reference}</div>
-            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;letter-spacing:0;line-height:1.2;margin-top:2px;">${params.proposalNumber}</div>
-            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:normal;letter-spacing:0;line-height:1.2;margin-top:6px;">${dateStr}</div>
+            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:normal;letter-spacing:0;line-height:1.2;">${lbl.reference}</div>
+            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:700;letter-spacing:0;line-height:1.2;margin-top:2px;">${params.proposalNumber}</div>
+            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:normal;letter-spacing:0;line-height:1.2;margin-top:6px;">${dateStr}</div>
           </td>
         </tr>
       </table>
