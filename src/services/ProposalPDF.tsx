@@ -4,10 +4,11 @@ import type { Customer, ProposalLine, ProposalLineOption } from '@/types/databas
 import { PROPOSAL_LABELS } from '@/i18n/proposalLabels'
 
 const GREEN = '#7AB648'
-const DARK = '#1A1A1A'
-const BORDER = '#E5E7E2'
+const DARK = '#333333'
+const BORDER = '#E0E0E0'
 const WHITE = '#FFFFFF'
 const INTRO_BG = '#F4F9EE'
+const TOTAL_BG = '#EDF7E0'
 const FOOTER_TEXT = '#F0F0F0'
 
 const LOCALE_MAP: Record<string, string> = {
@@ -45,69 +46,66 @@ const s = StyleSheet.create({
     fontFamily: 'Helvetica',
     fontSize: 9.5,
     color: DARK,
-    // No top/horizontal padding — header is full-bleed; content adds its own
+    paddingTop: 28,
+    paddingHorizontal: 40,
     paddingBottom: 56,
   },
 
-  // ── Top green header band (full-bleed) ──────────────────────────────────────
-  headerBand: {
-    backgroundColor: GREEN,
-    paddingVertical: 14,
-    paddingHorizontal: 40,
+  // ── Header (white background — logo on left, reference on right) ─────────────
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 22,
+    alignItems: 'flex-start',
+    marginBottom: 6,
   },
   headerLeft: {
     flexDirection: 'column',
-    gap: 3,
+    gap: 2,
   },
   logo: {
-    width: 140,
-    height: 40,
+    width: 155,
+    height: 52,
     objectFit: 'contain',
     objectPositionX: 0,
     objectPositionY: 'center',
   },
   logoFallback: {
-    fontSize: 22,
+    fontSize: 20,
     fontFamily: 'Helvetica-Bold',
-    color: WHITE,
-    letterSpacing: 2,
+    color: GREEN,
   },
   tagline: {
     fontSize: 7.5,
-    color: 'rgba(255,255,255,0.75)',
-    letterSpacing: 0.5,
+    color: '#888888',
     marginTop: 2,
   },
   headerRight: {
     flexDirection: 'column',
     alignItems: 'flex-end',
+    paddingTop: 4,
     gap: 2,
   },
   headerRefLabel: {
-    fontSize: 7.5,
-    color: 'rgba(255,255,255,0.7)',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    fontSize: 8,
+    color: '#888888',
   },
   headerRefValue: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: 'Helvetica-Bold',
-    color: WHITE,
-    letterSpacing: 0.5,
+    color: DARK,
+    letterSpacing: 0.3,
   },
   headerDate: {
     fontSize: 8,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 2,
+    color: '#666666',
+    marginTop: 1,
   },
 
-  // ── Content padding wrapper ──────────────────────────────────────────────────
-  content: {
-    paddingHorizontal: 40,
+  // ── Green divider line ───────────────────────────────────────────────────────
+  greenLine: {
+    height: 2,
+    backgroundColor: GREEN,
+    marginBottom: 12,
   },
 
   // ── Subject block ────────────────────────────────────────────────────────────
@@ -132,7 +130,7 @@ const s = StyleSheet.create({
     borderLeftColor: GREEN,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   introText: {
     fontSize: 9,
@@ -143,9 +141,9 @@ const s = StyleSheet.create({
 
   // ── Items table ──────────────────────────────────────────────────────────────
   table: {
-    marginBottom: 14,
     borderWidth: 1,
     borderColor: BORDER,
+    marginBottom: 14,
   },
   tableHeaderRow: {
     flexDirection: 'row',
@@ -157,59 +155,57 @@ const s = StyleSheet.create({
     borderBottomColor: BORDER,
   },
   th: {
-    paddingVertical: 6,
-    paddingHorizontal: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 5,
     fontSize: 8,
     fontFamily: 'Helvetica-Bold',
     color: WHITE,
   },
   td: {
-    paddingVertical: 6,
-    paddingHorizontal: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 5,
     fontSize: 8.5,
     color: DARK,
   },
   tdBold: {
-    paddingVertical: 6,
-    paddingHorizontal: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 5,
     fontSize: 8.5,
     fontFamily: 'Helvetica-Bold',
     color: DARK,
   },
-  // Column flex weights
+  // Column flex weights (out of 100)
   cDesc:    { flex: 33 },
   cQty:     { flex: 6 },
   cPrice:   { flex: 15 },
   cOptions: { flex: 29 },
   cValue:   { flex: 17 },
 
-  // ── TOTAL row ────────────────────────────────────────────────────────────────
+  // ── TOTAL row (light green bg, moderate font — matches reference) ─────────────
   totalRow: {
     flexDirection: 'row',
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    backgroundColor: WHITE,
-    borderTopWidth: 1.5,
-    borderTopColor: GREEN,
+    backgroundColor: TOTAL_BG,
+    paddingVertical: 6,
+    paddingHorizontal: 5,
     alignItems: 'center',
+    borderBottomWidth: 0,
   },
   totalLabelText: {
     flex: 76,
     textAlign: 'right',
-    fontSize: 7.5,
-    color: '#888888',
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    paddingRight: 12,
+    fontSize: 8.5,
     fontFamily: 'Helvetica-Bold',
+    color: DARK,
+    textTransform: 'uppercase',
+    paddingRight: 8,
   },
   totalValueText: {
     flex: 24,
     textAlign: 'right',
-    fontSize: 15,
+    fontSize: 11,
     fontFamily: 'Helvetica-Bold',
     color: GREEN,
-    paddingRight: 6,
+    paddingRight: 5,
   },
 
   // ── Terms ────────────────────────────────────────────────────────────────────
@@ -228,8 +224,8 @@ const s = StyleSheet.create({
   },
   termsGrid: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 14,
+    gap: 16,
+    marginBottom: 12,
   },
   termsCol: {
     flex: 1,
@@ -238,7 +234,6 @@ const s = StyleSheet.create({
   termsCell: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    gap: 0,
   },
   termsCellBar: {
     width: 2,
@@ -265,18 +260,18 @@ const s = StyleSheet.create({
   attachmentsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
     marginBottom: 12,
   },
   attachmentsText: {
     fontSize: 8.5,
-    color: '#666666',
+    color: '#555555',
   },
 
   // ── Signature ────────────────────────────────────────────────────────────────
   signatureBlock: {
     marginTop: 4,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   signatureLabel: {
     fontSize: 7.5,
@@ -293,7 +288,7 @@ const s = StyleSheet.create({
   vatNote: {
     fontSize: 7.5,
     color: '#999999',
-    marginTop: 6,
+    marginTop: 4,
   },
 
   // ── Footer (fixed, full-bleed) ───────────────────────────────────────────────
@@ -303,7 +298,7 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: GREEN,
-    paddingVertical: 7,
+    paddingVertical: 8,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -370,13 +365,13 @@ export function ProposalPDFDocument({
     <Document>
       <Page size="A4" style={s.page}>
 
-        {/* ── 1. TOP GREEN BAND (full-bleed) ─────────────────────────────────── */}
-        <View style={s.headerBand}>
+        {/* ── 1. HEADER (white bg — logo left, reference right) ──────────────── */}
+        <View style={s.header}>
           <View style={s.headerLeft}>
             {logoDataUrl ? (
               <Image src={logoDataUrl} style={s.logo} />
             ) : (
-              <Text style={s.logoFallback}>KOZEGHO</Text>
+              <Text style={s.logoFallback}>Kozegho</Text>
             )}
             <Text style={s.tagline}>{L.companyTagline}</Text>
           </View>
@@ -387,166 +382,171 @@ export function ProposalPDFDocument({
           </View>
         </View>
 
-        {/* ── CONTENT AREA (with horizontal padding) ─────────────────────────── */}
-        <View style={s.content}>
+        {/* ── GREEN DIVIDER LINE ────────────────────────────────────────────── */}
+        <View style={s.greenLine} />
 
-          {/* ── 2. SUBJECT + GREEN UNDERLINE ─────────────────────────────────── */}
-          <View>
-            <Text style={s.subjectText}>{proposal.subject}</Text>
-            <View style={s.subjectUnderline} />
-          </View>
-
-          {/* ── 3. INTRODUCTION BLOCK ────────────────────────────────────────── */}
-          {!!proposal.introduction && (
-            <View style={s.introBlock}>
-              <Text style={s.introText}>{proposal.introduction}</Text>
-            </View>
-          )}
-
-          {/* ── 4. ITEMS TABLE ───────────────────────────────────────────────── */}
-          <View style={s.table}>
-            {/* Header row */}
-            <View style={s.tableHeaderRow}>
-              <Text style={[s.th, s.cDesc]}>{L.description}</Text>
-              <Text style={[s.th, s.cQty, { textAlign: 'center' }]}>{L.qtyShort}</Text>
-              <Text style={[s.th, s.cPrice, { textAlign: 'right' }]}>
-                {L.unitPrice} (€)
-              </Text>
-              <Text style={[s.th, s.cOptions]}>{L.options}</Text>
-              <Text style={[s.th, s.cValue, { textAlign: 'right' }]}>
-                {L.lineTotal} (€)
-              </Text>
-            </View>
-
-            {/* Data rows */}
-            {lines.map((line) => {
-              const opts = lineOptions.filter((o) => o.proposal_line_id === line.id)
-              const optsTotal = opts.reduce((s, o) => s + (o.price_eur ?? 0), 0)
-              const lineValue = line.line_total + optsTotal
-              const baseUnitPrice = line.unit_price - optsTotal
-
-              return (
-                <View key={line.id} style={s.tableRow} wrap={false}>
-                  {/* Description: product name bold + description muted */}
-                  <View style={[s.td, s.cDesc]}>
-                    <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 8.5 }}>
-                      {line.product_name}
-                    </Text>
-                    {line.description && line.description !== line.product_name && (
-                      <Text style={{ fontSize: 8, color: '#666666', marginTop: 2 }}>
-                        {line.description}
-                      </Text>
-                    )}
-                  </View>
-
-                  <Text style={[s.td, s.cQty, { textAlign: 'center' }]}>
-                    {line.quantity}
-                  </Text>
-                  <Text style={[s.td, s.cPrice, { textAlign: 'right' }]}>
-                    {fmtCurrency(baseUnitPrice, language)}
-                  </Text>
-
-                  {/* Options as bullet list */}
-                  <View style={[s.td, s.cOptions]}>
-                    {opts.length === 0 ? (
-                      <Text style={{ color: '#AAAAAA' }}>—</Text>
-                    ) : (
-                      opts.map((opt, j) => (
-                        <View
-                          key={opt.id}
-                          style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: j === 0 ? 0 : 3 }}
-                        >
-                          <Text style={{ color: GREEN, fontSize: 8, marginRight: 4, lineHeight: 1.3 }}>•</Text>
-                          <Text style={{ fontSize: 8, color: '#444444', flex: 1, lineHeight: 1.3 }}>
-                            {opt.option_label}
-                          </Text>
-                        </View>
-                      ))
-                    )}
-                  </View>
-
-                  <Text style={[s.tdBold, s.cValue, { textAlign: 'right' }]}>
-                    {fmtCurrency(lineValue, language)}
-                  </Text>
-                </View>
-              )
-            })}
-
-            {/* TOTAL row */}
-            <View style={s.totalRow}>
-              <Text style={s.totalLabelText}>{L.total}</Text>
-              <Text style={s.totalValueText}>
-                {fmtCurrency(total, language)} €
-              </Text>
-            </View>
-          </View>
-
-          {/* ── 5. TERMS AND CONDITIONS ──────────────────────────────────────── */}
-          <View style={s.sectionDivider} />
-          <Text style={s.sectionTitle}>{L.termsAndConditions}</Text>
-          <View style={s.termsGrid}>
-            {/* Left column */}
-            <View style={s.termsCol}>
-              <TermsCell
-                label={L.validUntil}
-                value={fmtDateShort(proposal.validity_date, language)}
-              />
-              {proposal.delivery_weeks ? (
-                <TermsCell
-                  label={L.deliveryTime}
-                  value={`${proposal.delivery_weeks} ${L.weeks}`}
-                />
-              ) : null}
-              <TermsCell
-                label={L.deliveryTerms}
-                value={proposal.delivery_terms || L.defaultDeliveryTerms}
-              />
-            </View>
-            {/* Right column */}
-            <View style={s.termsCol}>
-              <TermsCell
-                label={L.packaging}
-                value={packagingLabel}
-              />
-              <TermsCell
-                label={L.paymentTerms}
-                value={proposal.payment_terms || L.defaultPaymentTerms}
-              />
-              <TermsCell
-                label={L.warranty}
-                value={proposal.warranty || L.defaultWarranty}
-              />
-            </View>
-          </View>
-
-          {/* ── ADDITIONAL NOTES ──────────────────────────────────────────────── */}
-          {!!proposal.additional_notes?.trim() && (
-            <Text style={{ fontSize: 8.5, color: '#555555', marginBottom: 10 }}>
-              <Text style={{ fontFamily: 'Helvetica-Bold' }}>{L.additionalNotes}: </Text>
-              {proposal.additional_notes}
-            </Text>
-          )}
-
-          {/* ── 6. ATTACHMENTS LINE ───────────────────────────────────────────── */}
-          {datasheetCount > 0 && (
-            <View style={s.attachmentsRow}>
-              <Text style={{ fontSize: 9, color: GREEN }}>⊕</Text>
-              <Text style={s.attachmentsText}>{datasheetLine}</Text>
-            </View>
-          )}
-
-          {/* ── 7. SIGNATURE ─────────────────────────────────────────────────── */}
-          <View style={s.signatureBlock}>
-            <Text style={s.signatureLabel}>{L.preparedBy}</Text>
-            <Text style={s.signatureName}>{proposal.salesperson_name}</Text>
-          </View>
-
-          {/* VAT note */}
-          <Text style={s.vatNote}>{L.vatNote}</Text>
-
+        {/* ── 2. SUBJECT + GREEN UNDERLINE ──────────────────────────────────── */}
+        <View>
+          <Text style={s.subjectText}>{proposal.subject}</Text>
+          <View style={s.subjectUnderline} />
         </View>
 
-        {/* ── 8. BOTTOM GREEN FOOTER (fixed, full-bleed) ─────────────────────── */}
+        {/* ── 3. INTRODUCTION BLOCK ─────────────────────────────────────────── */}
+        {!!proposal.introduction && (
+          <View style={s.introBlock}>
+            <Text style={s.introText}>{proposal.introduction}</Text>
+          </View>
+        )}
+
+        {/* ── 4. ITEMS TABLE ────────────────────────────────────────────────── */}
+        <View style={s.table}>
+          {/* Header row */}
+          <View style={s.tableHeaderRow}>
+            <Text style={[s.th, s.cDesc]}>{L.description}</Text>
+            <Text style={[s.th, s.cQty, { textAlign: 'center' }]}>{L.qtyShort}</Text>
+            <Text style={[s.th, s.cPrice, { textAlign: 'right' }]}>
+              {L.unitPrice} (€)
+            </Text>
+            <Text style={[s.th, s.cOptions]}>{L.options}</Text>
+            <Text style={[s.th, s.cValue, { textAlign: 'right' }]}>
+              {L.lineTotal} (€)
+            </Text>
+          </View>
+
+          {/* Data rows */}
+          {lines.map((line) => {
+            const opts = lineOptions.filter((o) => o.proposal_line_id === line.id)
+            const optsTotal = opts.reduce((s, o) => s + (o.price_eur ?? 0), 0)
+            const lineValue = line.line_total + optsTotal
+            const baseUnitPrice = line.unit_price - optsTotal
+
+            return (
+              <View key={line.id} style={s.tableRow} wrap={false}>
+                {/* Description: family name bold + variant below in muted */}
+                <View style={[s.td, s.cDesc]}>
+                  <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 8.5 }}>
+                    {line.product_name}
+                  </Text>
+                  {line.description && line.description !== line.product_name && (
+                    <Text style={{ fontSize: 8, color: '#666666', marginTop: 2 }}>
+                      {line.description}
+                    </Text>
+                  )}
+                </View>
+
+                <Text style={[s.td, s.cQty, { textAlign: 'center' }]}>
+                  {line.quantity}
+                </Text>
+                <Text style={[s.td, s.cPrice, { textAlign: 'right' }]}>
+                  {fmtCurrency(baseUnitPrice, language)}
+                </Text>
+
+                {/* Options as bullet list — one line per option */}
+                <View style={[s.td, s.cOptions]}>
+                  {opts.length === 0 ? (
+                    <Text style={{ color: '#AAAAAA' }}>—</Text>
+                  ) : (
+                    opts.map((opt, j) => (
+                      <View
+                        key={opt.id}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'flex-start',
+                          marginTop: j === 0 ? 0 : 3,
+                        }}
+                      >
+                        <Text style={{ color: GREEN, fontSize: 8, marginRight: 4, lineHeight: 1.3 }}>
+                          •
+                        </Text>
+                        <Text style={{ fontSize: 8, color: '#444444', flex: 1, lineHeight: 1.3 }}>
+                          {opt.option_label}
+                        </Text>
+                      </View>
+                    ))
+                  )}
+                </View>
+
+                <Text style={[s.tdBold, s.cValue, { textAlign: 'right' }]}>
+                  {fmtCurrency(lineValue, language)}
+                </Text>
+              </View>
+            )
+          })}
+
+          {/* TOTAL row — light green bg, matching reference */}
+          <View style={s.totalRow}>
+            <Text style={s.totalLabelText}>{L.total}</Text>
+            <Text style={s.totalValueText}>
+              {fmtCurrency(total, language)} €
+            </Text>
+          </View>
+        </View>
+
+        {/* ── 5. TERMS AND CONDITIONS ───────────────────────────────────────── */}
+        <View style={s.sectionDivider} />
+        <Text style={s.sectionTitle}>{L.termsAndConditions}</Text>
+        <View style={s.termsGrid}>
+          {/* Left column */}
+          <View style={s.termsCol}>
+            <TermsCell
+              label={L.validUntil}
+              value={fmtDateShort(proposal.validity_date, language)}
+            />
+            {proposal.delivery_weeks ? (
+              <TermsCell
+                label={L.deliveryTime}
+                value={`${proposal.delivery_weeks} ${L.weeks}`}
+              />
+            ) : null}
+            <TermsCell
+              label={L.deliveryTerms}
+              value={proposal.delivery_terms || L.defaultDeliveryTerms}
+            />
+          </View>
+          {/* Right column */}
+          <View style={s.termsCol}>
+            <TermsCell
+              label={L.packaging}
+              value={packagingLabel}
+            />
+            <TermsCell
+              label={L.paymentTerms}
+              value={proposal.payment_terms || L.defaultPaymentTerms}
+            />
+            <TermsCell
+              label={L.warranty}
+              value={proposal.warranty || L.defaultWarranty}
+            />
+          </View>
+        </View>
+
+        {/* ── ADDITIONAL NOTES ─────────────────────────────────────────────── */}
+        {!!proposal.additional_notes?.trim() && (
+          <Text style={{ fontSize: 8.5, color: '#555555', marginBottom: 10 }}>
+            <Text style={{ fontFamily: 'Helvetica-Bold' }}>{L.additionalNotes}: </Text>
+            {proposal.additional_notes}
+          </Text>
+        )}
+
+        {/* ── 6. ATTACHMENTS LINE ───────────────────────────────────────────── */}
+        {datasheetCount > 0 && (
+          <View style={s.attachmentsRow}>
+            {/* Bullet in Helvetica is safe; emoji glyphs are not in built-in PDF fonts */}
+            <Text style={{ fontSize: 9, color: GREEN, fontFamily: 'Helvetica-Bold' }}>•</Text>
+            <Text style={s.attachmentsText}>{datasheetLine}</Text>
+          </View>
+        )}
+
+        {/* ── 7. SIGNATURE ─────────────────────────────────────────────────── */}
+        <View style={s.signatureBlock}>
+          <Text style={s.signatureLabel}>{L.preparedBy}</Text>
+          <Text style={s.signatureName}>{proposal.salesperson_name}</Text>
+        </View>
+
+        {/* VAT note */}
+        <Text style={s.vatNote}>{L.vatNote}</Text>
+
+        {/* ── 8. BOTTOM GREEN FOOTER (fixed, full-bleed) ────────────────────── */}
         <View style={s.footer} fixed>
           <Text style={s.footerText}>
             Kozegho, Lda.{'   |   '}www.kozegho.com{'   |   '}kozegho@kozegho.com
