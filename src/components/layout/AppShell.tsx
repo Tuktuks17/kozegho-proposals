@@ -19,8 +19,11 @@ export function AppShell({ children, userName, onSignOut, view, onViewChange }: 
   const { isManager } = useRole()
 
   return (
-    <div className="min-h-screen flex flex-col bg-kozegho-grey">
-      <header className="sticky top-0 z-40 bg-white border-b border-border shadow-sm">
+    <div className="min-h-screen flex flex-col">
+      <header
+        className="sticky top-0 z-40"
+        style={{ background: 'rgba(11,11,13,0.95)', borderBottom: '1px solid rgba(122,182,72,0.08)', backdropFilter: 'blur(8px)' }}
+      >
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img src={logoUrl()} alt="Kozegho" className="h-8 object-contain" onError={(e) => { e.currentTarget.style.display = 'none' }} />
@@ -59,8 +62,8 @@ export function AppShell({ children, userName, onSignOut, view, onViewChange }: 
                   <TrendingUp className="w-4 h-4" />
                   <span className="hidden sm:block">Intelligence</span>
                   {alertCount > 0 && !alertLoading && view !== 'intelligence' && (
-                    <span className="absolute -top-1 -right-1 min-w-4 h-4 bg-kozegho-green text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 pointer-events-none">
-                      {alertCount > 9 ? '9+' : alertCount}
+                    <span className="absolute -top-1 -right-1 min-w-5 h-5 bg-kozegho-green text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 pointer-events-none">
+                      {alertCount}
                     </span>
                   )}
                 </button>

@@ -18,6 +18,7 @@ export default function App() {
   const { session, user, loading, signInWithGoogle, signOut } = useAuth()
   const { profile, updateName } = useProfile(user)
   const [view, setView] = useState<View>('form')
+  const [pendingCustomerId, setPendingCustomerId] = useState<string | null>(null)
 
   // Confirmed name persists within the browser session (cleared on tab close / signOut)
   const [nameConfirmed, setNameConfirmed] = useState<boolean>(
@@ -86,9 +87,9 @@ export default function App() {
         {safeView === 'form'
           ? <ProposalPage profile={effectiveProfile} />
           : safeView === 'customers'
-          ? <CustomerIntelligencePage />
+          ? <CustomerIntelligencePage autoSelectCustomerId={pendingCustomerId} onAutoSelectDone={() => setPendingCustomerId(null)} />
           : safeView === 'intelligence'
-          ? <IntelligencePage onNavigateToCustomer={() => handleViewChange('customers')} />
+          ? <IntelligencePage onNavigateToCustomer={(id) => { setPendingCustomerId(id); handleViewChange('customers') }} />
           : <ProposalHistory profile={effectiveProfile} />
         }
       </AppShell>

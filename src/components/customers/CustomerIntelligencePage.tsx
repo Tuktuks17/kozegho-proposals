@@ -816,7 +816,10 @@ function CustomerCard({ customer, onClick }: { customer: CustomerWithMetrics; on
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export function CustomerIntelligencePage() {
+export function CustomerIntelligencePage({ autoSelectCustomerId, onAutoSelectDone }: {
+  autoSelectCustomerId?: string | null
+  onAutoSelectDone?: () => void
+}) {
   const [customers, setCustomers] = useState<CustomerWithMetrics[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -883,6 +886,17 @@ export function CustomerIntelligencePage() {
 
     load()
   }, [])
+
+  useEffect(() => {
+    if (!autoSelectCustomerId || customers.length === 0) return
+    const target = customers.find(c => c.id === autoSelectCustomerId)
+    if (target) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelected(target)
+      onAutoSelectDone?.()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSelectCustomerId, customers])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
