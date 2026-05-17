@@ -27,8 +27,6 @@ const DARK = '#333333'
 const BORDER = '#E0E0E0'
 const INTRO_BG = '#F4F9EE'
 const TOTAL_BG = '#EDF7E0'
-const REF_BG = '#F0F9EA'
-const LOGO_URL = 'https://yrlnvtiuonrjkvdoievj.supabase.co/storage/v1/object/public/logos/kozegho-logo.png'
 
 function fmtDate(iso: string | null | undefined, language: string): string {
   if (!iso) return ''
@@ -64,7 +62,7 @@ function itemsTable(items: ProposalItem[], language: string, totalOverride?: num
       <th style="${thStyle}text-align:center;">${lbl.qtyShort}</th>
       <th style="${thStyle}text-align:right;">${lbl.unitPrice} (€)</th>
       <th style="${thStyle}">${lbl.options}</th>
-      <th style="${thStyle}text-align:right;">${lbl.lineTotal} (€)</th>
+      <th style="${thStyle}text-align:right;">${lbl.total} (€)</th>
     </tr>`
 
   const rows = items.map((item) => {
@@ -149,7 +147,7 @@ function termsGrid(params: EmailParams, language: string): string {
     const borderBottom = i < rows.length - 1 ? `border-bottom:1px solid ${BORDER};` : ''
     return `
       <tr>
-        <td style="width:50%;${borderBottom}border-right:1px solid ${BORDER};padding:0;vertical-align:top;">
+        <td style="width:50%;${borderBottom}padding:0;vertical-align:top;">
           ${cell(left.label, left.value)}
         </td>
         <td style="width:50%;${borderBottom}padding:0;vertical-align:top;">
@@ -159,7 +157,7 @@ function termsGrid(params: EmailParams, language: string): string {
   }).join('')
 
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid ${BORDER};">
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
       ${tableRows}
     </table>`
 }
@@ -194,24 +192,21 @@ export function buildEmailBody(language: string, params: EmailParams): string {
 <!-- ═══ OUTER CARD ═══════════════════════════════════════════════════════════ -->
 <table width="680" cellpadding="0" cellspacing="0" style="max-width:680px;width:100%;background-color:#ffffff;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px #CCCCCC;">
 
-  <!-- ── 1. WHITE HEADER: logo left | separator | reference right ─────────── -->
+  <!-- ── 1. GREEN HEADER BAND: logo/tagline left | reference right ───────── -->
   <tr>
-    <td style="background-color:#ffffff;padding:0;">
+    <td style="background-color:${GREEN};padding:0;">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <!-- Logo + tagline -->
-          <td style="padding:20px 28px;vertical-align:middle;background-color:#ffffff;">
-            <img src="${LOGO_URL}" alt="Kozegho" width="160" height="52"
-                 style="display:block;border:0;width:160px;height:52px;max-width:160px;" />
-            <div style="font-size:11px;color:#888888;margin-top:5px;font-family:Arial,Helvetica,sans-serif;">${lbl.companyTagline}</div>
+          <!-- Wordmark + tagline in white (Option C: no white logo asset available) -->
+          <td style="padding:20px 28px;vertical-align:middle;">
+            <div style="font-size:28px;font-weight:700;color:#ffffff;font-family:Arial,Helvetica,sans-serif;letter-spacing:1px;line-height:1;">Kozegho</div>
+            <div style="font-size:11px;color:#D5E8C6;margin-top:4px;font-family:Arial,Helvetica,sans-serif;">${lbl.companyTagline}</div>
           </td>
-          <!-- 1px green vertical separator -->
-          <td style="width:1px;background-color:${GREEN};">&nbsp;</td>
-          <!-- Reference block (light green tint) -->
-          <td style="padding:20px 28px;vertical-align:middle;text-align:right;background-color:${REF_BG};">
-            <div style="font-size:11px;color:#888888;font-family:Arial,Helvetica,sans-serif;">${lbl.reference}</div>
-            <div style="font-size:20px;font-weight:700;color:${DARK};margin-top:3px;font-family:Arial,Helvetica,sans-serif;">${params.proposalNumber}</div>
-            <div style="font-size:12px;color:#666666;margin-top:5px;font-family:Arial,Helvetica,sans-serif;">${dateStr}</div>
+          <!-- Reference block: white text right-aligned -->
+          <td style="padding:20px 28px;vertical-align:middle;text-align:right;">
+            <div style="font-size:11px;color:#D5E8C6;font-family:Arial,Helvetica,sans-serif;">${lbl.reference}</div>
+            <div style="font-size:20px;font-weight:700;color:#ffffff;margin-top:3px;font-family:Arial,Helvetica,sans-serif;">${params.proposalNumber}</div>
+            <div style="font-size:12px;color:#D5E8C6;margin-top:5px;font-family:Arial,Helvetica,sans-serif;">${dateStr}</div>
           </td>
         </tr>
       </table>
@@ -225,8 +220,8 @@ export function buildEmailBody(language: string, params: EmailParams): string {
 
   <!-- ── 3. SUBJECT + GREEN UNDERLINE ─────────────────────────────────────── -->
   <tr>
-    <td style="padding:24px 28px 0 28px;background-color:#ffffff;">
-      <div style="font-size:22px;font-weight:700;color:${DARK};font-family:Arial,Helvetica,sans-serif;line-height:1.2;">${params.subject}</div>
+    <td width="100%" style="width:100%;padding:24px 28px 0 28px;background-color:#ffffff;">
+      <div style="font-size:22px;font-weight:700;color:${DARK};font-family:Arial,Helvetica,sans-serif;line-height:1.2;word-wrap:break-word;overflow-wrap:break-word;white-space:normal;">${params.subject}</div>
       <div style="width:80px;height:2px;background-color:${GREEN};margin-top:6px;"></div>
     </td>
   </tr>
@@ -288,7 +283,7 @@ export function buildEmailBody(language: string, params: EmailParams): string {
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
         <tr>
           <td style="font-size:13px;color:#555555;font-family:Arial,Helvetica,sans-serif;">
-            <span style="color:${GREEN};font-weight:700;margin-right:6px;">&#10003;</span>${datasheetLine}
+            <span style="margin-right:4px;">📎</span>${datasheetLine}
           </td>
         </tr>
       </table>` : ''}
@@ -297,7 +292,6 @@ export function buildEmailBody(language: string, params: EmailParams): string {
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td style="border-top:1px solid ${BORDER};padding-top:16px;margin-top:8px;">
-            <div style="font-size:11px;color:#888888;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">${lbl.preparedBy}</div>
             <div style="font-size:15px;font-weight:700;color:${DARK};font-family:Arial,Helvetica,sans-serif;">${params.commercialName}</div>
           </td>
         </tr>
