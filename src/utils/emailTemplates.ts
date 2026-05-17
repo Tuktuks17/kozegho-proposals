@@ -196,7 +196,7 @@ export function buildEmailBody(language: string, params: EmailParams): string {
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${GREEN};border-collapse:collapse;">
         <tr>
           <!-- Logo cell: narrow, just enough for the logo + small breathing room -->
-          <td width="38%" style="padding:28px 0 28px 32px;vertical-align:middle;">
+          <td width="38%" style="padding:28px 32px 28px 32px;vertical-align:middle;">
             <img src="${LOGO_URL_WHITE}" alt="Kozegho" width="220" style="display:block;border:0;outline:none;text-decoration:none;height:auto;" />
           </td>
           <!-- Divider cell: tight against the logo, full vertical white bar -->
@@ -205,9 +205,9 @@ export function buildEmailBody(language: string, params: EmailParams): string {
           </td>
           <!-- Reference cell: takes remaining width, right-aligned content -->
           <td width="58%" style="padding:28px 32px 28px 24px;vertical-align:middle;text-align:right;">
-            <div style="color:#FFFFFF;font-family:Arial,sans-serif;font-size:14px;line-height:1.2;">${lbl.reference}</div>
-            <div style="color:#FFFFFF;font-family:Arial,sans-serif;font-size:26px;font-weight:bold;line-height:1.2;margin-top:2px;">${params.proposalNumber}</div>
-            <div style="color:#FFFFFF;font-family:Arial,sans-serif;font-size:13px;line-height:1.2;margin-top:6px;">${dateStr}</div>
+            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:normal;letter-spacing:0;line-height:1.2;">${lbl.reference}</div>
+            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:26px;font-weight:700;letter-spacing:0;line-height:1.2;margin-top:2px;">${params.proposalNumber}</div>
+            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:normal;letter-spacing:0;line-height:1.2;margin-top:6px;">${dateStr}</div>
           </td>
         </tr>
       </table>
@@ -283,7 +283,7 @@ export function buildEmailBody(language: string, params: EmailParams): string {
       ${params.datasheetCount > 0 ? `
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
         <tr>
-          <td style="padding:14px 0 14px 0;border-top:1px solid #D9D9D9;font-family:Arial,sans-serif;font-size:13px;color:#666666;">
+          <td style="padding:14px 0;border-top:1px solid #D9D9D9;border-bottom:1px solid #D9D9D9;font-family:Arial,sans-serif;font-size:13px;color:#666666;">
             📎 ${datasheetLine}
           </td>
         </tr>
