@@ -11,6 +11,7 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 
 const GREEN = '7AB648'
 const GREEN_LIGHT_DIVIDER = 'A8D17A'
+const LOGO_URL_WHITE = 'https://yrlnvtiuonrjkvdoievj.supabase.co/storage/v1/object/public/logos/kozegho-logo-white.png'
 const GREEN_INTRO_BG = 'F4F9EE'
 const GREEN_TOTAL_BG = 'EDF7E0'
 const BORDER_GRAY = 'E5E5E5'
@@ -150,8 +151,16 @@ export async function exportWord(
   const L = PROPOSAL_LABELS[proposal.language as keyof typeof PROPOSAL_LABELS] ?? PROPOSAL_LABELS.EN
   const packagingLabel = proposal.packaging_type === 'ocean' ? L.packagingOcean : L.packagingStandard
 
-  // Logo image (colored — displays on green bg in header band)
-  const logoImage = logoBytes
+  // Fetch white logo PNG for Word header (white on green — works regardless of logoBytes arg)
+  let whiteLogoBytes: ArrayBuffer | null = null
+  try {
+    const resp = await fetch(LOGO_URL_WHITE)
+    if (resp.ok) whiteLogoBytes = await resp.arrayBuffer()
+  } catch { /* fall back to text wordmark */ }
+
+  const logoImage = whiteLogoBytes
+    ? new ImageRun({ data: whiteLogoBytes, transformation: { width: 160, height: 54 }, type: 'png' })
+    : logoBytes
     ? new ImageRun({ data: logoBytes, transformation: { width: 150, height: 50 }, type: 'png' })
     : undefined
 
@@ -318,7 +327,7 @@ export async function exportWord(
             shading: { type: ShadingType.SOLID, color: GREEN_TOTAL_BG },
             width: { size: 17, type: WidthType.PERCENTAGE },
             borders: noBorders(),
-            children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `${formatCurrency(total)} €`, bold: true, color: GREEN, font: 'Calibri', size: 24 })] })],
+            children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: formatCurrency(total), bold: true, color: GREEN, font: 'Calibri', size: 24 })] })],
           }),
         ],
       }),
@@ -384,7 +393,7 @@ export async function exportWord(
           bottom: { style: BorderStyle.SINGLE, size: 8, color: BORDER_GRAY, space: 4 },
         },
         children: [
-          new TextRun({ text: `• ${datasheetLine}`, font: 'Calibri', size: 20, color: '555555' }),
+          new TextRun({ text: `📎 ${datasheetLine}`, font: 'Calibri', size: 20, color: '555555' }),
         ],
       })
     : undefined
