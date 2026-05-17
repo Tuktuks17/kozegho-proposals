@@ -121,14 +121,18 @@ function itemsTable(items: ProposalItem[], language: string, totalOverride?: num
 function termsGrid(params: EmailParams, language: string): string {
   const lbl = PROPOSAL_LABELS[language as keyof typeof PROPOSAL_LABELS] ?? PROPOSAL_LABELS.EN
 
-  // Each cell: 3px green left bar (dedicated narrow <td>) + content <td>
-  // width="3" HTML attr + min-width:3px prevent collapse in Outlook; no border-collapse on inner table
+  // Each cell: 2-row nested table — green bar only beside the label (row 1), transparent beside value (row 2)
   const cell = (label: string, value: string) => `
     <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;">
       <tr>
         <td width="3" style="width:3px;min-width:3px;background-color:${GREEN};padding:0;font-size:0;line-height:0;">&nbsp;</td>
-        <td style="padding:10px 14px;vertical-align:top;">
-          <div style="font-size:10px;font-weight:700;color:${GREEN};text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">${label}</div>
+        <td style="padding:10px 14px 2px 14px;vertical-align:top;">
+          <div style="font-size:10px;font-weight:700;color:${GREEN};text-transform:uppercase;letter-spacing:0.8px;font-family:Arial,Helvetica,sans-serif;">${label}</div>
+        </td>
+      </tr>
+      <tr>
+        <td width="3" style="width:3px;min-width:3px;padding:0;font-size:0;line-height:0;">&nbsp;</td>
+        <td style="padding:2px 14px 10px 14px;vertical-align:top;">
           <div style="font-size:13px;color:${DARK};font-family:Arial,Helvetica,sans-serif;">${value || '&#8212;'}</div>
         </td>
       </tr>
@@ -207,8 +211,14 @@ export function buildEmailBody(language: string, params: EmailParams): string {
                  width="180" height="60"
                  style="display:block;border:0;outline:none;text-decoration:none;" />
           </td>
-          <!-- Vertical divider: rgba ok on <td> background-color in Gmail -->
-          <td width="1" style="width:1px;background-color:rgba(255,255,255,0.4);padding:0;font-size:0;line-height:0;">&nbsp;</td>
+          <!-- Vertical divider: fixed-height bar centered in band (~55% of 100px band) -->
+          <td style="width:2px;padding:0;vertical-align:top;">
+            <table cellpadding="0" cellspacing="0" style="width:1px;border-collapse:collapse;">
+              <tr><td style="height:22px;font-size:0;line-height:0;">&nbsp;</td></tr>
+              <tr><td style="height:56px;width:1px;background-color:rgba(255,255,255,0.45);font-size:0;line-height:0;">&nbsp;</td></tr>
+              <tr><td style="height:22px;font-size:0;line-height:0;">&nbsp;</td></tr>
+            </table>
+          </td>
           <!-- Reference block: white text right-aligned -->
           <td style="padding:20px 28px;vertical-align:middle;text-align:right;">
             <div style="font-size:11px;color:#D5E8C6;font-family:Arial,Helvetica,sans-serif;">${lbl.reference}</div>
