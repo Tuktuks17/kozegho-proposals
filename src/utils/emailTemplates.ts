@@ -27,7 +27,9 @@ const DARK = '#333333'
 const BORDER = '#E5E5E5'
 const INTRO_BG = '#F4F9EE'
 const TOTAL_BG = '#EDF7E0'
-const LOGO_URL = 'https://yrlnvtiuonrjkvdoievj.supabase.co/storage/v1/object/public/logos/kozegho-logo.png'
+// White logo on transparent background — for use on green header band in email.
+// DO NOT use filter:brightness(0) invert(1) here — Gmail strips CSS filter.
+const LOGO_URL_WHITE = 'https://yrlnvtiuonrjkvdoievj.supabase.co/storage/v1/object/public/logos/kozegho-logo-white.png'
 
 function fmtDate(iso: string | null | undefined, language: string): string {
   if (!iso) return ''
@@ -61,9 +63,9 @@ function itemsTable(items: ProposalItem[], language: string, totalOverride?: num
     <tr>
       <th style="${thStyle}">${lbl.description}</th>
       <th style="${thStyle}text-align:center;">${lbl.qtyShort}</th>
-      <th style="${thStyle}text-align:right;">${lbl.unitPrice} (€)</th>
+      <th style="${thStyle}text-align:right;white-space:nowrap;">${lbl.unitPrice} (€)</th>
       <th style="${thStyle}">${lbl.options}</th>
-      <th style="${thStyle}text-align:right;">${lbl.total} (€)</th>
+      <th style="${thStyle}text-align:right;white-space:nowrap;">${lbl.total} (€)</th>
     </tr>`
 
   const rows = items.map((item) => {
@@ -199,11 +201,11 @@ export function buildEmailBody(language: string, params: EmailParams): string {
     <td style="background-color:${GREEN};padding:0;">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <!-- Logo (Option B: filter:brightness(0) invert(1) — white logo asset unavailable) -->
+          <!-- DO NOT add filter CSS here — Gmail strips it. Use the real white PNG. -->
           <td style="padding:20px 28px;vertical-align:middle;">
-            <img src="${LOGO_URL}" alt="Kozegho" width="180" height="58"
-                 style="display:block;border:0;outline:none;text-decoration:none;max-width:180px;height:auto;filter:brightness(0) invert(1);" />
-            <div style="font-size:11px;color:#D5E8C6;margin-top:6px;font-family:Arial,Helvetica,sans-serif;">${lbl.companyTagline}</div>
+            <img src="${LOGO_URL_WHITE}" alt="Kozegho dosing systems"
+                 width="180" height="60"
+                 style="display:block;border:0;outline:none;text-decoration:none;" />
           </td>
           <!-- Vertical divider line -->
           <td width="1" style="width:1px;background-color:#9CC676;padding:0;font-size:0;line-height:0;">&nbsp;</td>
@@ -226,7 +228,7 @@ export function buildEmailBody(language: string, params: EmailParams): string {
   <!-- ── 3. SUBJECT + GREEN UNDERLINE ─────────────────────────────────────── -->
   <tr>
     <td width="100%" style="width:100%;padding:24px 28px 0 28px;background-color:#ffffff;">
-      <div style="font-size:22px;font-weight:700;color:${DARK};font-family:Arial,Helvetica,sans-serif;line-height:1.2;word-wrap:break-word;overflow-wrap:break-word;white-space:normal;">${params.subject}</div>
+      <div style="font-size:22px;font-weight:700;color:${DARK};font-family:Arial,Helvetica,sans-serif;line-height:1.2;word-wrap:break-word;overflow-wrap:break-word;white-space:normal;text-transform:capitalize;">${params.subject}</div>
       <div style="width:80px;height:2px;background-color:${GREEN};margin-top:6px;"></div>
     </td>
   </tr>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Email Preview — EN</title>
+  <title>Email Preview — EN (Fix 5 test: 4 lines / 3 unique datasheets → should show "3 datasheets attached")</title>
 </head>
 <body style="margin:0;padding:0;background-color:#F0F0F0;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F0F0F0;padding:24px 0;">
@@ -15,12 +15,12 @@
     <td style="background-color:#7AB648;padding:0;">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <!-- Logo (Option B: CSS filter inverts to white) -->
+          <!-- DO NOT add filter CSS here — Gmail strips it. Use the real white PNG. -->
           <td style="padding:20px 28px;vertical-align:middle;">
-            <img src="https://yrlnvtiuonrjkvdoievj.supabase.co/storage/v1/object/public/logos/kozegho-logo.png"
-                 alt="Kozegho" width="180" height="58"
-                 style="display:block;border:0;outline:none;text-decoration:none;max-width:180px;height:auto;filter:brightness(0) invert(1);" />
-            <div style="font-size:11px;color:#D5E8C6;margin-top:6px;font-family:Arial,Helvetica,sans-serif;">Kozegho dosing systems</div>
+            <img src="https://yrlnvtiuonrjkvdoievj.supabase.co/storage/v1/object/public/logos/kozegho-logo-white.png"
+                 alt="Kozegho dosing systems"
+                 width="180" height="60"
+                 style="display:block;border:0;outline:none;text-decoration:none;" />
           </td>
           <!-- Vertical divider -->
           <td width="1" style="width:1px;background-color:#9CC676;padding:0;font-size:0;line-height:0;">&nbsp;</td>
@@ -38,10 +38,10 @@
   <!-- GREEN DIVIDER -->
   <tr><td style="height:2px;background-color:#7AB648;font-size:0;line-height:0;">&nbsp;</td></tr>
 
-  <!-- SUBJECT — using a long string to test wrapping (Fix 3 diagnostic) -->
+  <!-- SUBJECT (Fix 3: text-transform:capitalize on lowercase input "polymer preparation") -->
   <tr>
     <td width="100%" style="width:100%;padding:24px 28px 0 28px;background-color:#ffffff;">
-      <div style="font-size:22px;font-weight:700;color:#333333;font-family:Arial,Helvetica,sans-serif;line-height:1.2;word-wrap:break-word;overflow-wrap:break-word;white-space:normal;">Polymer Preparation and Distribution System for Industrial Water Treatment</div>
+      <div style="font-size:22px;font-weight:700;color:#333333;font-family:Arial,Helvetica,sans-serif;line-height:1.2;word-wrap:break-word;overflow-wrap:break-word;white-space:normal;text-transform:capitalize;">polymer preparation</div>
       <div style="width:80px;height:2px;background-color:#7AB648;margin-top:6px;"></div>
     </td>
   </tr>
@@ -66,7 +66,7 @@
         </tr>
       </table>
 
-      <!-- ITEMS TABLE -->
+      <!-- ITEMS TABLE (Fix 4: white-space:nowrap on Unit Price and Total headers) -->
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
         <tr><td>
           <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #E5E5E5;">
@@ -74,45 +74,48 @@
               <tr>
                 <th style="background-color:#7AB648;color:#ffffff;padding:10px 12px;text-align:left;font-size:12px;font-weight:700;border:none;">Description</th>
                 <th style="background-color:#7AB648;color:#ffffff;padding:10px 12px;text-align:center;font-size:12px;font-weight:700;border:none;">Qty.</th>
-                <th style="background-color:#7AB648;color:#ffffff;padding:10px 12px;text-align:right;font-size:12px;font-weight:700;border:none;">Unit Price (€)</th>
+                <th style="background-color:#7AB648;color:#ffffff;padding:10px 12px;text-align:right;font-size:12px;font-weight:700;border:none;white-space:nowrap;">Unit Price (€)</th>
                 <th style="background-color:#7AB648;color:#ffffff;padding:10px 12px;text-align:left;font-size:12px;font-weight:700;border:none;">Options</th>
-                <th style="background-color:#7AB648;color:#ffffff;padding:10px 12px;text-align:right;font-size:12px;font-weight:700;border:none;">Total (€)</th>
+                <th style="background-color:#7AB648;color:#ffffff;padding:10px 12px;text-align:right;font-size:12px;font-weight:700;border:none;white-space:nowrap;">Total (€)</th>
               </tr>
             </thead>
             <tbody>
+              <!-- Row 1: CS Series CS 600 (has datasheet url A) -->
               <tr>
                 <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;color:#333333;"><div style="font-weight:700;">CS Series</div><div style="color:#666666;font-size:12px;margin-top:3px;">CS 600</div></td>
                 <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;text-align:center;">1</td>
                 <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;text-align:right;">12,590.00</td>
-                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;">
-                  <div style="font-size:12px;color:#444444;line-height:1.4;padding:1px 0;"><span style="color:#7AB648;margin-right:4px;">&#8226;</span>3rd agitator &#216;550 mm (+2,490.00&nbsp;&#8364;)</div>
-                  <div style="font-size:12px;color:#444444;line-height:1.4;padding:1px 0;"><span style="color:#7AB648;margin-right:4px;">&#8226;</span>Hopper 100 L (+810.00&nbsp;&#8364;)</div>
-                </td>
-                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;text-align:right;font-weight:700;">15,890.00</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;"><div style="font-size:12px;color:#444444;line-height:1.4;"><span style="color:#7AB648;margin-right:4px;">&#8226;</span>3rd agitator &#216;550 mm (+2,490.00&nbsp;&#8364;)</div></td>
+                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;text-align:right;font-weight:700;">15,090.00</td>
               </tr>
+              <!-- Row 2: BL Series BL 300 (has datasheet url B) -->
               <tr>
-                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;color:#333333;"><div style="font-weight:700;">BL Series</div><div style="color:#666666;font-size:12px;margin-top:3px;">BL 2000</div></td>
+                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;color:#333333;"><div style="font-weight:700;">BL Series</div><div style="color:#666666;font-size:12px;margin-top:3px;">BL 300</div></td>
                 <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;text-align:center;">1</td>
                 <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;text-align:right;">8,900.00</td>
-                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;">
-                  <div style="font-size:12px;color:#444444;line-height:1.4;padding:1px 0;"><span style="color:#7AB648;margin-right:4px;">&#8226;</span>Power supply 400VAC / 3ph (+1,000.00&nbsp;&#8364;)</div>
-                  <div style="font-size:12px;color:#444444;line-height:1.4;padding:1px 0;"><span style="color:#7AB648;margin-right:4px;">&#8226;</span>Double deck (+210.00&nbsp;&#8364;)</div>
-                </td>
-                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;text-align:right;font-weight:700;">10,110.00</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;"><div style="font-size:12px;color:#444444;"><span style="color:#7AB648;margin-right:4px;">&#8226;</span>Power supply 400VAC / 3ph (+1,000.00&nbsp;&#8364;)</div></td>
+                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;text-align:right;font-weight:700;">9,900.00</td>
               </tr>
+              <!-- Row 3: AMR-S (has datasheet url C) -->
               <tr>
-                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;color:#333333;"><div style="font-weight:700;">CSL Series</div><div style="color:#666666;font-size:12px;margin-top:3px;">CSL 5600</div></td>
+                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;color:#333333;"><div style="font-weight:700;">AMR-S Series</div><div style="color:#666666;font-size:12px;margin-top:3px;">AMR-S 1260</div></td>
                 <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;text-align:center;">1</td>
-                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;text-align:right;">24,840.00</td>
-                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;">
-                  <div style="font-size:12px;color:#444444;line-height:1.4;padding:1px 0;"><span style="color:#7AB648;margin-right:4px;">&#8226;</span>Power supply 400VAC / 3ph (+1,000.00&nbsp;&#8364;)</div>
-                  <div style="font-size:12px;color:#444444;line-height:1.4;padding:1px 0;"><span style="color:#7AB648;margin-right:4px;">&#8226;</span>Drainage and discharge pipe (+410.00&nbsp;&#8364;)</div>
-                </td>
-                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;text-align:right;font-weight:700;">26,250.00</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;text-align:right;">4,200.00</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;"><span style="color:#AAAAAA;font-size:12px;">&#8212;</span></td>
+                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;text-align:right;font-weight:700;">4,200.00</td>
               </tr>
+              <!-- Row 4: CS Series CS 600 AGAIN (same datasheet url A — DUPLICATE) -->
+              <tr>
+                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;color:#333333;"><div style="font-weight:700;">CS Series</div><div style="color:#666666;font-size:12px;margin-top:3px;">CS 600</div></td>
+                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;text-align:center;">2</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;text-align:right;">12,590.00</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;"><span style="color:#AAAAAA;font-size:12px;">&#8212;</span></td>
+                <td style="padding:10px 12px;border-bottom:1px solid #E5E5E5;vertical-align:top;font-size:13px;text-align:right;font-weight:700;">25,180.00</td>
+              </tr>
+              <!-- TOTAL row — 4 lines but only 3 unique datasheets -->
               <tr>
                 <td colspan="4" style="padding:10px 12px;text-align:right;font-weight:700;font-size:12px;color:#333333;background-color:#EDF7E0;text-transform:uppercase;letter-spacing:0.5px;">TOTAL</td>
-                <td style="padding:10px 12px;text-align:right;font-weight:700;font-size:15px;color:#7AB648;background-color:#EDF7E0;white-space:nowrap;">52,250.00&nbsp;&#8364;</td>
+                <td style="padding:10px 12px;text-align:right;font-weight:700;font-size:15px;color:#7AB648;background-color:#EDF7E0;white-space:nowrap;">54,370.00&nbsp;&#8364;</td>
               </tr>
             </tbody>
           </table>
@@ -125,68 +128,35 @@
         <tr><td style="padding:16px 0 10px 0;"><div style="font-size:11px;font-weight:700;color:#555555;text-transform:uppercase;letter-spacing:1.5px;font-family:Arial,Helvetica,sans-serif;">Terms and Conditions</div></td></tr>
         <tr><td>
           <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-            <!-- Row 1 -->
             <tr>
               <td style="width:50%;border-bottom:1px solid #E5E5E5;padding:0;vertical-align:top;">
-                <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;">
-                  <tr>
-                    <td width="3" style="width:3px;min-width:3px;background-color:#7AB648;padding:0;font-size:0;line-height:0;">&nbsp;</td>
-                    <td style="padding:10px 14px;vertical-align:top;"><div style="font-size:10px;font-weight:700;color:#7AB648;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">Valid Until</div><div style="font-size:13px;color:#333333;font-family:Arial,Helvetica,sans-serif;">01 July 2026</div></td>
-                  </tr>
-                </table>
+                <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;"><tr><td width="3" style="width:3px;min-width:3px;background-color:#7AB648;padding:0;font-size:0;line-height:0;">&nbsp;</td><td style="padding:10px 14px;vertical-align:top;"><div style="font-size:10px;font-weight:700;color:#7AB648;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">Valid Until</div><div style="font-size:13px;color:#333333;font-family:Arial,Helvetica,sans-serif;">01 July 2026</div></td></tr></table>
               </td>
               <td style="width:50%;border-bottom:1px solid #E5E5E5;padding:0;vertical-align:top;">
-                <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;">
-                  <tr>
-                    <td width="3" style="width:3px;min-width:3px;background-color:#7AB648;padding:0;font-size:0;line-height:0;">&nbsp;</td>
-                    <td style="padding:10px 14px;vertical-align:top;"><div style="font-size:10px;font-weight:700;color:#7AB648;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">Packaging</div><div style="font-size:13px;color:#333333;font-family:Arial,Helvetica,sans-serif;">Standard Packaging</div></td>
-                  </tr>
-                </table>
+                <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;"><tr><td width="3" style="width:3px;min-width:3px;background-color:#7AB648;padding:0;font-size:0;line-height:0;">&nbsp;</td><td style="padding:10px 14px;vertical-align:top;"><div style="font-size:10px;font-weight:700;color:#7AB648;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">Packaging</div><div style="font-size:13px;color:#333333;font-family:Arial,Helvetica,sans-serif;">Standard Packaging</div></td></tr></table>
               </td>
             </tr>
-            <!-- Row 2 -->
             <tr>
               <td style="width:50%;border-bottom:1px solid #E5E5E5;padding:0;vertical-align:top;">
-                <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;">
-                  <tr>
-                    <td width="3" style="width:3px;min-width:3px;background-color:#7AB648;padding:0;font-size:0;line-height:0;">&nbsp;</td>
-                    <td style="padding:10px 14px;vertical-align:top;"><div style="font-size:10px;font-weight:700;color:#7AB648;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">Delivery Time</div><div style="font-size:13px;color:#333333;font-family:Arial,Helvetica,sans-serif;">13 weeks</div></td>
-                  </tr>
-                </table>
+                <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;"><tr><td width="3" style="width:3px;min-width:3px;background-color:#7AB648;padding:0;font-size:0;line-height:0;">&nbsp;</td><td style="padding:10px 14px;vertical-align:top;"><div style="font-size:10px;font-weight:700;color:#7AB648;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">Delivery Time</div><div style="font-size:13px;color:#333333;font-family:Arial,Helvetica,sans-serif;">13 weeks</div></td></tr></table>
               </td>
               <td style="width:50%;border-bottom:1px solid #E5E5E5;padding:0;vertical-align:top;">
-                <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;">
-                  <tr>
-                    <td width="3" style="width:3px;min-width:3px;background-color:#7AB648;padding:0;font-size:0;line-height:0;">&nbsp;</td>
-                    <td style="padding:10px 14px;vertical-align:top;"><div style="font-size:10px;font-weight:700;color:#7AB648;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">Payment Terms</div><div style="font-size:13px;color:#333333;font-family:Arial,Helvetica,sans-serif;">30 days after delivery</div></td>
-                  </tr>
-                </table>
+                <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;"><tr><td width="3" style="width:3px;min-width:3px;background-color:#7AB648;padding:0;font-size:0;line-height:0;">&nbsp;</td><td style="padding:10px 14px;vertical-align:top;"><div style="font-size:10px;font-weight:700;color:#7AB648;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">Payment Terms</div><div style="font-size:13px;color:#333333;font-family:Arial,Helvetica,sans-serif;">30 days after delivery</div></td></tr></table>
               </td>
             </tr>
-            <!-- Row 3 -->
             <tr>
               <td style="width:50%;padding:0;vertical-align:top;">
-                <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;">
-                  <tr>
-                    <td width="3" style="width:3px;min-width:3px;background-color:#7AB648;padding:0;font-size:0;line-height:0;">&nbsp;</td>
-                    <td style="padding:10px 14px;vertical-align:top;"><div style="font-size:10px;font-weight:700;color:#7AB648;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">Delivery Terms</div><div style="font-size:13px;color:#333333;font-family:Arial,Helvetica,sans-serif;">DAP &#8212; agreed destination with client</div></td>
-                  </tr>
-                </table>
+                <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;"><tr><td width="3" style="width:3px;min-width:3px;background-color:#7AB648;padding:0;font-size:0;line-height:0;">&nbsp;</td><td style="padding:10px 14px;vertical-align:top;"><div style="font-size:10px;font-weight:700;color:#7AB648;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">Delivery Terms</div><div style="font-size:13px;color:#333333;font-family:Arial,Helvetica,sans-serif;">DAP &#8212; agreed destination with client</div></td></tr></table>
               </td>
               <td style="width:50%;padding:0;vertical-align:top;">
-                <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;">
-                  <tr>
-                    <td width="3" style="width:3px;min-width:3px;background-color:#7AB648;padding:0;font-size:0;line-height:0;">&nbsp;</td>
-                    <td style="padding:10px 14px;vertical-align:top;"><div style="font-size:10px;font-weight:700;color:#7AB648;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">Warranty</div><div style="font-size:13px;color:#333333;font-family:Arial,Helvetica,sans-serif;">24 months</div></td>
-                  </tr>
-                </table>
+                <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;"><tr><td width="3" style="width:3px;min-width:3px;background-color:#7AB648;padding:0;font-size:0;line-height:0;">&nbsp;</td><td style="padding:10px 14px;vertical-align:top;"><div style="font-size:10px;font-weight:700;color:#7AB648;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">Warranty</div><div style="font-size:13px;color:#333333;font-family:Arial,Helvetica,sans-serif;">24 months</div></td></tr></table>
               </td>
             </tr>
           </table>
         </td></tr>
       </table>
 
-      <!-- ATTACHMENTS (with separator above) -->
+      <!-- ATTACHMENTS: Fix 5 test — 4 lines but 3 unique paths → shows "3 datasheets attached" -->
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
         <tr><td style="height:1px;background-color:#E5E5E5;font-size:0;line-height:0;padding-bottom:16px;">&nbsp;</td></tr>
         <tr>
@@ -196,7 +166,7 @@
         </tr>
       </table>
 
-      <!-- SIGNATURE -->
+      <!-- SIGNATURE (no PREPARED BY label) -->
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td style="border-top:1px solid #E5E5E5;padding-top:16px;">

@@ -114,7 +114,7 @@ export function ExportModal({ proposal, customer, onClose }: Props) {
         proposalNumber: proposal.reference,
         subject: proposal.subject ?? '',
         commercialName: proposal.salesperson_name ?? '',
-        datasheetCount: datasheetPaths.length,
+        datasheetCount: new Set(datasheetPaths.map(d => d.path)).size,
         introduction: proposal.introduction,
         items: proposal.items,
         subtotal: proposal.subtotal,

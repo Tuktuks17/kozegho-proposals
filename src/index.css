@@ -60,14 +60,14 @@
 /* ── Dark grid canvas — applied to authenticated app shell ───────────────── */
 /* Replicates both layers of LoginScreen's .kz-root + .kz-glow:             */
 /*   1) radial-gradient ellipse at 50% 40% (same as .kz-glow)              */
-/*   2) horizontal grid lines at 0.06 opacity                               */
-/*   3) vertical grid lines at 0.06 opacity                                 */
+/*   2) horizontal grid lines at 0.12 opacity                               */
+/*   3) vertical grid lines at 0.12 opacity                                 */
 .kz-grid-bg {
   background-color: #0B0B0D;
   background-image:
     radial-gradient(ellipse at 50% 40%, rgba(122,182,72,0.06) 0%, transparent 65%),
-    linear-gradient(rgba(122,182,72,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(122,182,72,0.06) 1px, transparent 1px);
+    linear-gradient(rgba(122,182,72,0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(122,182,72,0.12) 1px, transparent 1px);
   background-size: auto, 64px 64px, 64px 64px;
   background-repeat: no-repeat, repeat, repeat;
 }
