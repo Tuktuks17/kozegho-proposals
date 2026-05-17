@@ -197,7 +197,7 @@ export function buildEmailBody(language: string, params: EmailParams): string {
         <tr>
           <!-- Logo cell: narrow, just enough for the logo + small breathing room -->
           <td width="38%" style="padding:28px 32px 28px 32px;vertical-align:middle;">
-            <img src="${LOGO_URL_WHITE}" alt="Kozegho" width="220" style="display:block;border:0;outline:none;text-decoration:none;height:auto;" />
+            <img src="${LOGO_URL_WHITE}" alt="" role="presentation" width="200" height="68" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;" />
           </td>
           <!-- Divider cell: tight against the logo, full vertical white bar -->
           <td width="4%" style="padding:18px 0;vertical-align:middle;text-align:left;">
@@ -205,9 +205,9 @@ export function buildEmailBody(language: string, params: EmailParams): string {
           </td>
           <!-- Reference cell: takes remaining width, right-aligned content -->
           <td width="58%" style="padding:28px 32px 28px 24px;vertical-align:middle;text-align:right;">
-            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:normal;letter-spacing:0;line-height:1.2;">${lbl.reference}</div>
-            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:700;letter-spacing:0;line-height:1.2;margin-top:2px;">${params.proposalNumber}</div>
-            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:normal;letter-spacing:0;line-height:1.2;margin-top:6px;">${dateStr}</div>
+            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:normal;letter-spacing:0.5px;line-height:1.2;text-transform:uppercase;">${lbl.reference}</div>
+            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:600;letter-spacing:0;line-height:1.2;margin-top:4px;">${params.proposalNumber}</div>
+            <div style="color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:normal;letter-spacing:0;line-height:1.2;margin-top:4px;">${dateStr}</div>
           </td>
         </tr>
       </table>
