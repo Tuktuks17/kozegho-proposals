@@ -197,7 +197,7 @@ export function buildEmailBody(language: string, params: EmailParams): string {
         <tr>
           <!-- Logo cell: narrow, just enough for the logo + small breathing room -->
           <td width="38%" style="padding:28px 32px 28px 32px;vertical-align:middle;">
-            <img src="${LOGO_URL_WHITE}" alt="" role="presentation" width="200" height="68" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;" />
+            <img src="${LOGO_URL_WHITE}" alt="" role="presentation" aria-hidden="true" width="200" style="display:block;border:0;outline:none;text-decoration:none;height:auto;pointer-events:none;-ms-interpolation-mode:bicubic;" draggable="false" />
           </td>
           <!-- Divider cell: tight against the logo, full vertical white bar -->
           <td width="4%" style="padding:18px 0;vertical-align:middle;text-align:left;">
