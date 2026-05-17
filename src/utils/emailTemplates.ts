@@ -121,18 +121,13 @@ function itemsTable(items: ProposalItem[], language: string, totalOverride?: num
 function termsGrid(params: EmailParams, language: string): string {
   const lbl = PROPOSAL_LABELS[language as keyof typeof PROPOSAL_LABELS] ?? PROPOSAL_LABELS.EN
 
-  // Each cell: 2-row nested table — green bar only beside the label (row 1), transparent beside value (row 2)
+  // Each cell: single-row nested table — green bar spans full height of cell (label + value)
   const cell = (label: string, value: string) => `
     <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;">
       <tr>
         <td width="3" style="width:3px;min-width:3px;background-color:${GREEN};padding:0;font-size:0;line-height:0;">&nbsp;</td>
-        <td style="padding:10px 14px 2px 14px;vertical-align:top;">
-          <div style="font-size:10px;font-weight:700;color:${GREEN};text-transform:uppercase;letter-spacing:0.8px;font-family:Arial,Helvetica,sans-serif;">${label}</div>
-        </td>
-      </tr>
-      <tr>
-        <td width="3" style="width:3px;min-width:3px;padding:0;font-size:0;line-height:0;">&nbsp;</td>
-        <td style="padding:2px 14px 10px 14px;vertical-align:top;">
+        <td style="padding:10px 14px;vertical-align:top;">
+          <div style="font-size:10px;font-weight:700;color:${GREEN};text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">${label}</div>
           <div style="font-size:13px;color:${DARK};font-family:Arial,Helvetica,sans-serif;">${value || '&#8212;'}</div>
         </td>
       </tr>
@@ -211,12 +206,12 @@ export function buildEmailBody(language: string, params: EmailParams): string {
                  width="180" height="60"
                  style="display:block;border:0;outline:none;text-decoration:none;" />
           </td>
-          <!-- Vertical divider: fixed-height bar centered in band (~55% of 100px band) -->
-          <td style="width:2px;padding:0;vertical-align:top;">
+          <!-- Vertical divider: solid white, ~82% of band height, small padding each side -->
+          <td style="width:2px;padding:9px 0;vertical-align:top;background-color:${GREEN};">
             <table cellpadding="0" cellspacing="0" style="width:1px;border-collapse:collapse;">
-              <tr><td style="height:22px;font-size:0;line-height:0;">&nbsp;</td></tr>
-              <tr><td style="height:56px;width:1px;background-color:rgba(255,255,255,0.45);font-size:0;line-height:0;">&nbsp;</td></tr>
-              <tr><td style="height:22px;font-size:0;line-height:0;">&nbsp;</td></tr>
+              <tr>
+                <td height="82" style="height:82px;width:1px;background-color:#FFFFFF;font-size:0;line-height:0;">&nbsp;</td>
+              </tr>
             </table>
           </td>
           <!-- Reference block: white text right-aligned -->
@@ -295,22 +290,21 @@ export function buildEmailBody(language: string, params: EmailParams): string {
         </tr>
       </table>` : ''}
 
-      <!-- ── 7. ATTACHMENTS LINE (1px divider above + text + 1px divider below) ── -->
+      <!-- ── 7. ATTACHMENTS LINE (1px gray divider ABOVE only — no divider below) ── -->
       ${params.datasheetCount > 0 ? `
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
         <tr><td style="height:1px;background-color:#E5E5E5;font-size:0;line-height:0;">&nbsp;</td></tr>
         <tr>
-          <td style="font-size:13px;color:#555555;font-family:Arial,Helvetica,sans-serif;padding:14px 0;">
+          <td style="font-size:13px;color:#555555;font-family:Arial,Helvetica,sans-serif;padding:12px 0 0 0;">
             <span style="margin-right:4px;">📎</span>${datasheetLine}
           </td>
         </tr>
-        <tr><td style="height:1px;background-color:#E5E5E5;font-size:0;line-height:0;">&nbsp;</td></tr>
       </table>` : ''}
 
-      <!-- ── 8. SIGNATURE ─────────────────────────────────────────────────── -->
+      <!-- ── 8. SIGNATURE (no top border — single gray line already above datasheets) ── -->
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="border-top:1px solid ${BORDER};padding-top:16px;margin-top:8px;">
+          <td style="padding-top:12px;">
             <div style="font-size:15px;font-weight:700;color:${DARK};font-family:Arial,Helvetica,sans-serif;">${params.commercialName}</div>
           </td>
         </tr>
