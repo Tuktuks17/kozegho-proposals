@@ -23,9 +23,11 @@ type EmailParams = {
 }
 
 const GREEN = '#7AB648'
-const DARK = '#1C2B1C'
-const GREY_BG = '#F5F5F5'
+const DARK = '#333333'
 const BORDER = '#E0E0E0'
+const INTRO_BG = '#F4F9EE'
+const TOTAL_BG = '#EDF7E0'
+const REF_BG = '#F0F9EA'
 const LOGO_URL = 'https://yrlnvtiuonrjkvdoievj.supabase.co/storage/v1/object/public/logos/kozegho-logo.png'
 
 function fmtDate(iso: string | null | undefined, language: string): string {
@@ -44,175 +46,281 @@ function fmtMoney(value: number | undefined, language: string): string {
   return new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
 }
 
-function packagingLabel(type: PackagingType | null | undefined, language: string): string {
+function getPkgLabel(type: PackagingType | null | undefined, language: string): string {
   const lbl = PROPOSAL_LABELS[language as keyof typeof PROPOSAL_LABELS] ?? PROPOSAL_LABELS.EN
   if (!type) return lbl.packagingStandard
   return type === 'ocean' ? lbl.packagingOcean : lbl.packagingStandard
 }
 
-function itemsTable(items: ProposalItem[], language: string): string {
+// ── Items table (email-safe: tables only, inline CSS) ──────────────────────────
+
+function itemsTable(items: ProposalItem[], language: string, totalOverride?: number): string {
   const lbl = PROPOSAL_LABELS[language as keyof typeof PROPOSAL_LABELS] ?? PROPOSAL_LABELS.EN
-  const headerCells = [lbl.description, lbl.qtyShort, `${lbl.unitPrice} (€)`, lbl.options, `${lbl.total} (€)`]
+
+  const thStyle = `background-color:${GREEN};color:#ffffff;padding:10px 12px;text-align:left;font-size:12px;font-weight:700;border:none;`
   const header = `
     <tr>
-      ${headerCells.map(c => `<th style="background:${GREEN};color:#fff;padding:10px 12px;text-align:left;font-size:13px;font-weight:600;border:none;">${c}</th>`).join('')}
+      <th style="${thStyle}">${lbl.description}</th>
+      <th style="${thStyle}text-align:center;">${lbl.qtyShort}</th>
+      <th style="${thStyle}text-align:right;">${lbl.unitPrice} (€)</th>
+      <th style="${thStyle}">${lbl.options}</th>
+      <th style="${thStyle}text-align:right;">${lbl.lineTotal} (€)</th>
     </tr>`
 
-  const rows = items.map((item, i) => {
-    const bg = i % 2 === 0 ? '#fff' : '#FAFAFA'
-    const optsList = item.options.length > 0
-      ? `<ul style="margin:4px 0 0 0;padding:0 0 0 16px;font-size:12px;color:#555;">${item.options.map(o => `<li>${o.label}${o.price > 0 ? ` (+${fmtMoney(o.price, language)} €)` : ''}</li>`).join('')}</ul>`
-      : '<span style="color:#aaa;font-size:12px;">—</span>'
-    const desc = (item.description && item.description !== item.product_name)
-      ? `<div style="font-weight:700;color:${DARK};font-size:13px;">${item.product_name}</div><div style="color:#666;font-size:12px;margin-top:2px;">${item.description}</div>`
-      : `<div style="font-weight:700;color:${DARK};font-size:13px;">${item.product_name}</div>`
-    const td = (content: string, align = 'left') =>
-      `<td style="padding:10px 12px;border-bottom:1px solid ${BORDER};vertical-align:top;text-align:${align};background:${bg};">${content}</td>`
+  const rows = items.map((item) => {
+    const tdBase = `padding:10px 12px;border-bottom:1px solid ${BORDER};vertical-align:top;font-size:13px;color:${DARK};`
     const basePrice = item.unit_price - item.options.reduce((s, o) => s + o.price, 0)
+
+    // Description: product name bold + description variant below
+    const descHtml = (item.description && item.description !== item.product_name)
+      ? `<div style="font-weight:700;color:${DARK};font-size:13px;">${item.product_name}</div><div style="color:#666666;font-size:12px;margin-top:3px;">${item.description}</div>`
+      : `<div style="font-weight:700;color:${DARK};font-size:13px;">${item.product_name}</div>`
+
+    // Options: one bullet row per option (email-safe, no <ul>)
+    const optsHtml = item.options.length === 0
+      ? `<span style="color:#AAAAAA;font-size:12px;">&#8212;</span>`
+      : item.options.map(o => {
+          const priceStr = o.price > 0
+            ? ` (+${fmtMoney(o.price, language)}&nbsp;&#8364;)`
+            : o.price < 0
+            ? ` (${fmtMoney(o.price, language)}&nbsp;&#8364;)`
+            : ''
+          return `<div style="font-size:12px;color:#444444;line-height:1.4;padding:1px 0;"><span style="color:${GREEN};margin-right:4px;">&#8226;</span>${o.label}${priceStr}</div>`
+        }).join('')
+
     return `<tr>
-      ${td(desc)}
-      ${td(`<span style="font-size:13px;">${item.quantity}</span>`, 'center')}
-      ${td(`<span style="font-size:13px;">${fmtMoney(basePrice, language)}</span>`, 'right')}
-      ${td(optsList)}
-      ${td(`<span style="font-size:13px;font-weight:600;">${fmtMoney(item.line_total, language)}</span>`, 'right')}
+      <td style="${tdBase}">${descHtml}</td>
+      <td style="${tdBase}text-align:center;">${item.quantity}</td>
+      <td style="${tdBase}text-align:right;">${fmtMoney(basePrice, language)}</td>
+      <td style="${tdBase}">${optsHtml}</td>
+      <td style="${tdBase}text-align:right;font-weight:700;">${fmtMoney(item.line_total, language)}</td>
     </tr>`
   }).join('')
 
+  const displayTotal = totalOverride ?? items.reduce((s, i) => s + i.line_total, 0)
+  const totalRow = `
+    <tr>
+      <td colspan="4" style="padding:10px 12px;text-align:right;font-weight:700;font-size:12px;color:${DARK};background-color:${TOTAL_BG};text-transform:uppercase;letter-spacing:0.5px;">
+        ${lbl.total}
+      </td>
+      <td style="padding:10px 12px;text-align:right;font-weight:700;font-size:15px;color:${GREEN};background-color:${TOTAL_BG};white-space:nowrap;">
+        ${fmtMoney(displayTotal, language)}&nbsp;&#8364;
+      </td>
+    </tr>`
+
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid ${BORDER};border-radius:4px;overflow:hidden;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid ${BORDER};">
       <thead>${header}</thead>
-      <tbody>
-        ${rows}
-        <tr>
-          <td colspan="4" style="padding:12px;text-align:right;font-weight:700;font-size:14px;color:${DARK};background:${GREY_BG};border-top:2px solid ${GREEN};">
-            ${language.toUpperCase() === 'PT' ? `${lbl.total.toUpperCase()} (sem IVA)` : lbl.total.toUpperCase()}
-          </td>
-          <td style="padding:12px;text-align:right;font-weight:700;font-size:15px;color:${GREEN};background:${GREY_BG};border-top:2px solid ${GREEN};white-space:nowrap;min-width:100px;">
-            ${fmtMoney(items.reduce((s, i) => s + i.line_total, 0), language)}&nbsp;€
-          </td>
-        </tr>
-      </tbody>
+      <tbody>${rows}${totalRow}</tbody>
     </table>`
 }
 
+// ── Terms 2-column grid (email-safe: nested tables, no emoji) ──────────────────
+
 function termsGrid(params: EmailParams, language: string): string {
   const lbl = PROPOSAL_LABELS[language as keyof typeof PROPOSAL_LABELS] ?? PROPOSAL_LABELS.EN
-  const cell = (icon: string, label: string, value: string) => `
-    <td style="width:50%;padding:10px 12px;vertical-align:top;">
-      <div style="font-size:12px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${icon} ${label}</div>
-      <div style="font-size:13px;color:${DARK};">${value || '—'}</div>
-    </td>`
+
+  // Each cell: 3px green left bar (narrow <td>) + content <td>
+  const cell = (label: string, value: string) => `
+    <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">
+      <tr>
+        <td style="width:3px;background-color:${GREEN};">&nbsp;</td>
+        <td style="padding:10px 12px;">
+          <div style="font-size:10px;font-weight:700;color:${GREEN};text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;">${label}</div>
+          <div style="font-size:13px;color:${DARK};">${value || '&#8212;'}</div>
+        </td>
+      </tr>
+    </table>`
+
+  const validUntil = fmtDate(params.validUntil, language)
+  const deliveryTime = params.deliveryWeeks ? `${params.deliveryWeeks} ${lbl.weeks}` : '&#8212;'
+  const delivery = params.deliveryTerms || lbl.defaultDeliveryTerms
+  const pkg = getPkgLabel(params.packagingType, language)
+  const payment = params.paymentTerms || lbl.defaultPaymentTerms
+  const warranty = params.warranty || lbl.defaultWarranty
+
   const rows = [
-    [cell('📅', lbl.validUntil, fmtDate(params.validUntil, language)),
-     cell('📦', lbl.packaging, packagingLabel(params.packagingType, language))],
-    [cell('🕐', lbl.deliveryTime, params.deliveryWeeks ? `${params.deliveryWeeks} ${lbl.weeks}` : '—'),
-     cell('💶', lbl.paymentTerms, params.paymentTerms || lbl.defaultPaymentTerms)],
-    [cell('📍', lbl.deliveryTerms, params.deliveryTerms || lbl.defaultDeliveryTerms),
-     cell('🛡️', lbl.warranty, params.warranty || lbl.defaultWarranty)],
+    [{ label: lbl.validUntil, value: validUntil }, { label: lbl.packaging, value: pkg }],
+    [{ label: lbl.deliveryTime, value: deliveryTime }, { label: lbl.paymentTerms, value: payment }],
+    [{ label: lbl.deliveryTerms, value: delivery }, { label: lbl.warranty, value: warranty }],
   ]
+
+  const tableRows = rows.map(([left, right], i) => {
+    const borderBottom = i < rows.length - 1 ? `border-bottom:1px solid ${BORDER};` : ''
+    return `
+      <tr>
+        <td style="width:50%;${borderBottom}border-right:1px solid ${BORDER};padding:0;vertical-align:top;">
+          ${cell(left.label, left.value)}
+        </td>
+        <td style="width:50%;${borderBottom}padding:0;vertical-align:top;">
+          ${cell(right.label, right.value)}
+        </td>
+      </tr>`
+  }).join('')
+
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid ${BORDER};border-radius:4px;overflow:hidden;background:#fff;">
-      ${rows.map(([a, b]) => `<tr style="border-bottom:1px solid ${BORDER};">${a}${b}</tr>`).join('')}
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid ${BORDER};">
+      ${tableRows}
     </table>`
 }
+
+// ── Main email builder ─────────────────────────────────────────────────────────
 
 export function buildEmailBody(language: string, params: EmailParams): string {
   const lang = language.toUpperCase() as keyof typeof PROPOSAL_LABELS
   const lbl = PROPOSAL_LABELS[lang] ?? PROPOSAL_LABELS.EN
   const dateStr = fmtDate(params.createdAt ?? new Date().toISOString(), language)
 
-  const intro = params.introduction?.trim()
-    || lbl.fallbackIntroduction
-
+  const intro = params.introduction?.trim() || lbl.fallbackIntroduction
   const hasItems = params.items && params.items.length > 0
+  const hasTerms = !!(params.validUntil || params.deliveryWeeks || params.paymentTerms || params.deliveryTerms || params.warranty || params.packagingType)
+
+  const datasheetLine = params.datasheetCount === 1
+    ? lbl.datasheetsAttachedSingular
+    : lbl.datasheetsAttachedPlural.replace('{n}', String(params.datasheetCount))
 
   return `<!DOCTYPE html>
 <html lang="${lang.toLowerCase()}">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${params.subject}</title></head>
-<body style="margin:0;padding:0;background:#f0f0f0;font-family:Arial,Helvetica,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f0f0;padding:24px 0;">
-<tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${params.subject}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F0F0F0;font-family:Arial,Helvetica,sans-serif;">
 
-  <!-- HEADER -->
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F0F0F0;padding:24px 0;">
+<tr><td align="center">
+
+<!-- ═══ OUTER CARD ═══════════════════════════════════════════════════════════ -->
+<table width="680" cellpadding="0" cellspacing="0" style="max-width:680px;width:100%;background-color:#ffffff;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px #CCCCCC;">
+
+  <!-- ── 1. WHITE HEADER: logo left | separator | reference right ─────────── -->
   <tr>
-    <td style="background:${GREEN};padding:20px 28px;">
+    <td style="background-color:#ffffff;padding:0;">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="vertical-align:middle;">
-            <img src="${LOGO_URL}" alt="Kozegho" height="72" style="display:block;height:72px;max-height:72px;" />
+          <!-- Logo + tagline -->
+          <td style="padding:20px 28px;vertical-align:middle;background-color:#ffffff;">
+            <img src="${LOGO_URL}" alt="Kozegho" width="160" height="52"
+                 style="display:block;border:0;width:160px;height:52px;max-width:160px;" />
+            <div style="font-size:11px;color:#888888;margin-top:5px;font-family:Arial,Helvetica,sans-serif;">${lbl.companyTagline}</div>
           </td>
-          <td style="vertical-align:middle;text-align:right;">
-            <div style="color:#fff;font-size:12px;opacity:0.85;">${lbl.reference}</div>
-            <div style="color:#fff;font-size:15px;font-weight:700;margin-top:2px;">${params.proposalNumber}</div>
-            <div style="color:rgba(255,255,255,0.75);font-size:12px;margin-top:6px;">${dateStr}</div>
+          <!-- 1px green vertical separator -->
+          <td style="width:1px;background-color:${GREEN};">&nbsp;</td>
+          <!-- Reference block (light green tint) -->
+          <td style="padding:20px 28px;vertical-align:middle;text-align:right;background-color:${REF_BG};">
+            <div style="font-size:11px;color:#888888;font-family:Arial,Helvetica,sans-serif;">${lbl.reference}</div>
+            <div style="font-size:20px;font-weight:700;color:${DARK};margin-top:3px;font-family:Arial,Helvetica,sans-serif;">${params.proposalNumber}</div>
+            <div style="font-size:12px;color:#666666;margin-top:5px;font-family:Arial,Helvetica,sans-serif;">${dateStr}</div>
           </td>
         </tr>
       </table>
     </td>
   </tr>
 
-  <!-- SUBJECT BAR -->
+  <!-- ── 2. GREEN DIVIDER LINE ────────────────────────────────────────────── -->
   <tr>
-    <td style="background:${GREY_BG};padding:14px 28px;border-bottom:2px solid ${GREEN};">
-      <div style="font-size:16px;font-weight:700;color:${DARK};">${params.subject}</div>
+    <td style="height:2px;background-color:${GREEN};font-size:0;line-height:0;">&nbsp;</td>
+  </tr>
+
+  <!-- ── 3. SUBJECT + GREEN UNDERLINE ─────────────────────────────────────── -->
+  <tr>
+    <td style="padding:24px 28px 0 28px;background-color:#ffffff;">
+      <div style="font-size:22px;font-weight:700;color:${DARK};font-family:Arial,Helvetica,sans-serif;line-height:1.2;">${params.subject}</div>
+      <div style="width:80px;height:2px;background-color:${GREEN};margin-top:6px;"></div>
     </td>
   </tr>
 
-  <!-- BODY -->
+  <!-- ── BODY CONTENT ──────────────────────────────────────────────────────── -->
   <tr>
-    <td style="padding:24px 28px;">
+    <td style="padding:20px 28px 28px 28px;background-color:#ffffff;">
 
-      <!-- Introduction -->
-      <p style="margin:0 0 20px 0;font-size:14px;color:#333;line-height:1.7;font-style:italic;border-left:3px solid ${GREEN};padding-left:12px;">${intro}</p>
+      <!-- ── 4. INTRO BLOCK: light green bg + green left bar ──────────────── -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
+        <tr>
+          <td style="background-color:${INTRO_BG};padding:0;border-radius:4px;overflow:hidden;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="width:3px;background-color:${GREEN};">&nbsp;</td>
+                <td style="padding:14px 16px;">
+                  <p style="margin:0;font-size:14px;color:#3A3A3A;line-height:1.75;font-style:italic;font-family:Arial,Helvetica,sans-serif;">${intro}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
 
+      <!-- ── 5. ITEMS TABLE ────────────────────────────────────────────────── -->
       ${hasItems ? `
-      <!-- Products Table -->
-      <div style="margin-bottom:20px;">
-        ${itemsTable(params.items!, language)}
-      </div>` : ''}
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
+        <tr><td>${itemsTable(params.items!, language, params.total)}</td></tr>
+      </table>` : ''}
 
-      ${(params.validUntil || params.deliveryWeeks || params.paymentTerms || params.deliveryTerms || params.warranty || params.packagingType) ? `
-      <!-- Terms -->
-      <div style="margin-bottom:20px;">
-        <div style="font-size:13px;font-weight:700;color:${DARK};margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">${lbl.termsAndConditions}</div>
-        ${termsGrid(params, language)}
-      </div>` : ''}
+      <!-- ── 6. TERMS AND CONDITIONS ───────────────────────────────────────── -->
+      ${hasTerms ? `
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
+        <!-- Section divider -->
+        <tr><td style="height:1px;background-color:${BORDER};font-size:0;line-height:0;">&nbsp;</td></tr>
+        <!-- Section title -->
+        <tr>
+          <td style="padding:16px 0 10px 0;">
+            <div style="font-size:11px;font-weight:700;color:#555555;text-transform:uppercase;letter-spacing:1.5px;font-family:Arial,Helvetica,sans-serif;">${lbl.termsAndConditions}</div>
+          </td>
+        </tr>
+        <!-- Terms grid -->
+        <tr><td>${termsGrid(params, language)}</td></tr>
+      </table>` : ''}
 
+      <!-- ── ADDITIONAL NOTES ──────────────────────────────────────────────── -->
       ${params.additionalNotes ? `
-      <!-- Additional Notes -->
-      <div style="margin-bottom:20px;background:${GREY_BG};border-radius:4px;padding:12px 16px;">
-        <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:4px;">${lbl.additionalNotes}</div>
-        <div style="font-size:13px;color:#333;">${params.additionalNotes}</div>
-      </div>` : ''}
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
+        <tr>
+          <td style="background-color:#F5F5F5;border-radius:4px;padding:12px 16px;">
+            <div style="font-size:11px;font-weight:700;color:#888888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">${lbl.additionalNotes}</div>
+            <div style="font-size:13px;color:${DARK};font-family:Arial,Helvetica,sans-serif;">${params.additionalNotes}</div>
+          </td>
+        </tr>
+      </table>` : ''}
 
+      <!-- ── 7. ATTACHMENTS LINE ───────────────────────────────────────────── -->
       ${params.datasheetCount > 0 ? `
-      <!-- Attachments note -->
-      <div style="margin-bottom:20px;font-size:13px;color:#555;">
-        📎 ${language.toUpperCase() === 'PT'
-          ? `${params.datasheetCount} ficha${params.datasheetCount > 1 ? 's' : ''} técnica${params.datasheetCount > 1 ? 's' : ''} anexada${params.datasheetCount > 1 ? 's' : ''}`
-          : `${params.datasheetCount} datasheet${params.datasheetCount > 1 ? 's' : ''} attached`
-        }
-      </div>` : ''}
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+        <tr>
+          <td style="font-size:13px;color:#555555;font-family:Arial,Helvetica,sans-serif;">
+            <span style="color:${GREEN};font-weight:700;margin-right:6px;">&#10003;</span>${datasheetLine}
+          </td>
+        </tr>
+      </table>` : ''}
 
-      <!-- Signature -->
-      <div style="border-top:1px solid ${BORDER};padding-top:16px;margin-top:8px;">
-        <div style="font-size:14px;font-weight:600;color:${DARK};">${params.commercialName}</div>
-      </div>
+      <!-- ── 8. SIGNATURE ─────────────────────────────────────────────────── -->
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="border-top:1px solid ${BORDER};padding-top:16px;margin-top:8px;">
+            <div style="font-size:11px;color:#888888;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">${lbl.preparedBy}</div>
+            <div style="font-size:15px;font-weight:700;color:${DARK};font-family:Arial,Helvetica,sans-serif;">${params.commercialName}</div>
+          </td>
+        </tr>
+      </table>
 
     </td>
   </tr>
 
-  <!-- FOOTER -->
+  <!-- ── 9. BOTTOM GREEN FOOTER BAND ──────────────────────────────────────── -->
   <tr>
-    <td style="background:${GREEN};padding:14px 28px;text-align:center;">
-      <span style="color:#fff;font-size:12px;">Kozegho, Lda. &nbsp;|&nbsp; www.kozegho.com &nbsp;|&nbsp; kozegho@kozegho.com</span>
+    <td style="background-color:${GREEN};padding:14px 28px;text-align:center;">
+      <span style="color:#ffffff;font-size:12px;font-family:Arial,Helvetica,sans-serif;">
+        Kozegho, Lda.&nbsp;&nbsp;|&nbsp;&nbsp;<a href="https://www.kozegho.com" style="color:#ffffff;text-decoration:underline;font-family:Arial,Helvetica,sans-serif;">www.kozegho.com</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="mailto:kozegho@kozegho.com" style="color:#ffffff;text-decoration:underline;font-family:Arial,Helvetica,sans-serif;">kozegho@kozegho.com</a>
+      </span>
     </td>
   </tr>
 
 </table>
+<!-- ═══ END CARD ════════════════════════════════════════════════════════════ -->
+
 </td></tr>
 </table>
+
 </body>
 </html>`
 }
