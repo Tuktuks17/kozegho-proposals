@@ -121,17 +121,19 @@ function itemsTable(items: ProposalItem[], language: string, totalOverride?: num
 function termsGrid(params: EmailParams, language: string): string {
   const lbl = PROPOSAL_LABELS[language as keyof typeof PROPOSAL_LABELS] ?? PROPOSAL_LABELS.EN
 
-  // Each cell: single-row nested table — green bar spans full height of cell (label + value)
+  // Each cell: green bar + label + value in same adjacent <td> — bar spans full cell height
   const cell = (label: string, value: string) => `
-    <table cellpadding="0" cellspacing="0" width="100%" style="width:100%;">
-      <tr>
-        <td width="3" style="width:3px;min-width:3px;background-color:${GREEN};padding:0;font-size:0;line-height:0;">&nbsp;</td>
-        <td style="padding:10px 14px;vertical-align:top;">
-          <div style="font-size:10px;font-weight:700;color:${GREEN};text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif;">${label}</div>
-          <div style="font-size:13px;color:${DARK};font-family:Arial,Helvetica,sans-serif;">${value || '&#8212;'}</div>
-        </td>
-      </tr>
-    </table>`
+    <td width="50%" valign="top" style="padding:12px 24px 12px 0;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+        <tr>
+          <td width="3" style="background-color:${GREEN};width:3px;line-height:0;font-size:0;">&nbsp;</td>
+          <td style="padding-left:12px;font-family:Arial,sans-serif;">
+            <div style="color:${GREEN};font-size:12px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;line-height:1.4;">${label}</div>
+            <div style="color:${DARK};font-size:14px;line-height:1.4;margin-top:4px;">${value || '&#8212;'}</div>
+          </td>
+        </tr>
+      </table>
+    </td>`
 
   const validUntil = fmtDate(params.validUntil, language)
   const deliveryTime = params.deliveryWeeks ? `${params.deliveryWeeks} ${lbl.weeks}` : '&#8212;'
@@ -146,18 +148,11 @@ function termsGrid(params: EmailParams, language: string): string {
     [{ label: lbl.deliveryTerms, value: delivery }, { label: lbl.warranty, value: warranty }],
   ]
 
-  const tableRows = rows.map(([left, right], i) => {
-    const borderBottom = i < rows.length - 1 ? `border-bottom:1px solid ${BORDER};` : ''
-    return `
+  const tableRows = rows.map(([left, right]) => `
       <tr>
-        <td style="width:50%;${borderBottom}padding:0;vertical-align:top;">
-          ${cell(left.label, left.value)}
-        </td>
-        <td style="width:50%;${borderBottom}padding:0;vertical-align:top;">
-          ${cell(right.label, right.value)}
-        </td>
-      </tr>`
-  }).join('')
+        ${cell(left.label, left.value)}
+        ${cell(right.label, right.value)}
+      </tr>`).join('')
 
   return `
     <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
@@ -195,30 +190,24 @@ export function buildEmailBody(language: string, params: EmailParams): string {
 <!-- ═══ OUTER CARD ═══════════════════════════════════════════════════════════ -->
 <table width="680" cellpadding="0" cellspacing="0" style="max-width:680px;width:100%;background-color:#ffffff;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px #CCCCCC;">
 
-  <!-- ── 1. GREEN HEADER BAND: logo left | divider | reference right ──────── -->
+  <!-- ── 1. GREEN HEADER BAND ─────────────────────────────────────────────── -->
   <tr>
-    <td style="background-color:${GREEN};padding:0;">
-      <table width="100%" cellpadding="0" cellspacing="0">
+    <td style="padding:0;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${GREEN};border-collapse:collapse;">
         <tr>
-          <!-- DO NOT add filter CSS here — Gmail strips it. Use the real white PNG. -->
-          <td style="padding:20px 28px;vertical-align:middle;">
-            <img src="${LOGO_URL_WHITE}" alt="Kozegho dosing systems"
-                 width="180" height="60"
-                 style="display:block;border:0;outline:none;text-decoration:none;" />
+          <!-- Logo cell: narrow, just enough for the logo + small breathing room -->
+          <td width="38%" style="padding:28px 0 28px 32px;vertical-align:middle;">
+            <img src="${LOGO_URL_WHITE}" alt="Kozegho" width="220" style="display:block;border:0;outline:none;text-decoration:none;height:auto;" />
           </td>
-          <!-- Vertical divider: solid white, ~82% of band height, small padding each side -->
-          <td style="width:2px;padding:9px 0;vertical-align:top;background-color:${GREEN};">
-            <table cellpadding="0" cellspacing="0" style="width:1px;border-collapse:collapse;">
-              <tr>
-                <td height="82" style="height:82px;width:1px;background-color:#FFFFFF;font-size:0;line-height:0;">&nbsp;</td>
-              </tr>
-            </table>
+          <!-- Divider cell: tight against the logo, full vertical white bar -->
+          <td width="4%" style="padding:18px 0;vertical-align:middle;text-align:left;">
+            <div style="width:2px;height:64px;background-color:#FFFFFF;line-height:0;font-size:0;">&nbsp;</div>
           </td>
-          <!-- Reference block: white text right-aligned -->
-          <td style="padding:20px 28px;vertical-align:middle;text-align:right;">
-            <div style="font-size:11px;color:#D5E8C6;font-family:Arial,Helvetica,sans-serif;">${lbl.reference}</div>
-            <div style="font-size:20px;font-weight:700;color:#ffffff;margin-top:3px;font-family:Arial,Helvetica,sans-serif;">${params.proposalNumber}</div>
-            <div style="font-size:12px;color:#D5E8C6;margin-top:5px;font-family:Arial,Helvetica,sans-serif;">${dateStr}</div>
+          <!-- Reference cell: takes remaining width, right-aligned content -->
+          <td width="58%" style="padding:28px 32px 28px 24px;vertical-align:middle;text-align:right;">
+            <div style="color:#FFFFFF;font-family:Arial,sans-serif;font-size:14px;line-height:1.2;">${lbl.reference}</div>
+            <div style="color:#FFFFFF;font-family:Arial,sans-serif;font-size:26px;font-weight:bold;line-height:1.2;margin-top:2px;">${params.proposalNumber}</div>
+            <div style="color:#FFFFFF;font-family:Arial,sans-serif;font-size:13px;line-height:1.2;margin-top:6px;">${dateStr}</div>
           </td>
         </tr>
       </table>
@@ -290,21 +279,20 @@ export function buildEmailBody(language: string, params: EmailParams): string {
         </tr>
       </table>` : ''}
 
-      <!-- ── 7. ATTACHMENTS LINE (1px gray divider ABOVE only — no divider below) ── -->
+      <!-- ── 7. ATTACHMENTS LINE: border-top only, no border-bottom ──────────── -->
       ${params.datasheetCount > 0 ? `
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
-        <tr><td style="height:1px;background-color:#E5E5E5;font-size:0;line-height:0;">&nbsp;</td></tr>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
         <tr>
-          <td style="font-size:13px;color:#555555;font-family:Arial,Helvetica,sans-serif;padding:12px 0 0 0;">
-            <span style="margin-right:4px;">📎</span>${datasheetLine}
+          <td style="padding:14px 0 14px 0;border-top:1px solid #D9D9D9;font-family:Arial,sans-serif;font-size:13px;color:#666666;">
+            📎 ${datasheetLine}
           </td>
         </tr>
       </table>` : ''}
 
-      <!-- ── 8. SIGNATURE (no top border — single gray line already above datasheets) ── -->
+      <!-- ── 8. SIGNATURE — no border-top (single gray line is above datasheets) ── -->
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="padding-top:12px;">
+          <td style="padding-top:4px;">
             <div style="font-size:15px;font-weight:700;color:${DARK};font-family:Arial,Helvetica,sans-serif;">${params.commercialName}</div>
           </td>
         </tr>
