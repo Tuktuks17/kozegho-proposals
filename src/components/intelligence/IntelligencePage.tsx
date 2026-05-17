@@ -489,7 +489,7 @@ function MetricCard({ label, value, sub }: { label: string; value: string; sub: 
   return (
     <div className="bg-[var(--kz-surface)] rounded-[var(--kz-radius-card)] border border-[var(--kz-border)] p-4 shadow-[var(--kz-shadow-card-soft)]">
       <p className="text-xs text-[var(--kz-text-secondary)] uppercase tracking-wide font-medium">{label}</p>
-      <p className="text-[28px] font-semibold text-[var(--kz-text)] mt-1 leading-tight">{value}</p>
+      <p className="text-2xl font-semibold text-[var(--kz-text)] mt-1 leading-tight tracking-tight">{value}</p>
       <p className="text-xs text-[var(--kz-text-muted)] mt-1">{sub}</p>
     </div>
   )

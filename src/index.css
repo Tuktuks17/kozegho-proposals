@@ -58,10 +58,12 @@
 }
 
 /* ── Dark grid canvas — applied to authenticated app shell ───────────────── */
+/* Login page uses 0.04 + a radial glow overlay (rgba(122,182,72,0.06)).     */
+/* Without the glow on app pages, 0.06 here produces equivalent visibility.  */
 .kz-grid-bg {
   background-color: #0B0B0D;
   background-image:
-    linear-gradient(rgba(122,182,72,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(122,182,72,0.04) 1px, transparent 1px);
+    linear-gradient(rgba(122,182,72,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(122,182,72,0.06) 1px, transparent 1px);
   background-size: 64px 64px;
 }

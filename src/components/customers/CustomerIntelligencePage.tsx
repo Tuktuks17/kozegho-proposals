@@ -38,10 +38,10 @@ function computeTemperature(lastDate: string | null): CustomerMetrics['temperatu
 
 function temperatureLabel(t: CustomerMetrics['temperature']) {
   switch (t) {
-    case 'hot':  return { label: 'Hot',         borderClass: 'border-kozegho-green', textClass: 'text-kozegho-green' }
-    case 'warm': return { label: 'Warm',        borderClass: 'border-gray-400',       textClass: 'text-gray-500'      }
-    case 'cold': return { label: 'Cold',        borderClass: 'border-gray-300',       textClass: 'text-gray-400'      }
-    default:     return { label: 'No activity', borderClass: 'border-gray-200',       textClass: 'text-gray-400'      }
+    case 'hot':  return { label: 'Hot',         borderClass: 'border-[var(--kz-border)]', textClass: 'text-[var(--kz-text-secondary)]' }
+    case 'warm': return { label: 'Warm',        borderClass: 'border-[var(--kz-border)]', textClass: 'text-[var(--kz-text-secondary)]' }
+    case 'cold': return { label: 'Cold',        borderClass: 'border-[var(--kz-border)]', textClass: 'text-[var(--kz-text-secondary)]' }
+    default:     return { label: 'No activity', borderClass: 'border-[var(--kz-border)]', textClass: 'text-[var(--kz-text-muted)]'      }
   }
 }
 
