@@ -44,7 +44,13 @@ function fmtDate(iso: string | null | undefined, language: string): string {
 function fmtMoney(value: number | undefined, language: string): string {
   if (value == null) return ''
   const locale = language === 'PT' || language === 'ES' || language === 'FR' ? 'pt-PT' : language === 'DE' ? 'de-DE' : 'en-GB'
-  return new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
+  // pt-PT/es/fr ICU emits the thousands separator as a Unicode space (U+00A0 / U+202F / sometimes
+  // a plain U+0020). Gmail can drop `white-space:nowrap` on a <td>, so a breakable separator makes
+  // the amount (and the trailing €) wrap. Force every space to a non-breaking space so the amount
+  // never wraps regardless of client whitespace handling or which space ICU produced.
+  return new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    .format(value)
+    .replace(/\s/g, '\u00A0')
 }
 
 function getPkgLabel(type: PackagingType | null | undefined, language: string): string {

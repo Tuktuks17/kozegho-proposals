@@ -22,10 +22,16 @@
 - [x] cron pattern tested: cron.job 'embed-proposals-daily' active (0 5 * * *); test invocation via pg_net+Vault service_role_key → HTTP 200 + agent_runs trigger='cron' success row
 - NOTE: spec assumed empty DB; reality had 87 proposals (stale stats showed 0). Backfill ran for real.
 - NOTE: cron time is UTC (05:00 UTC ≈ 06:00 Lisbon summer); pg_cron has no per-job DST handling.
-## Phase 1B — Maintenance fixes             [ ] gate passed: ____
-- [ ] sender-name encoding fixed (sendEmail.ts / emailTemplates.ts only)
-- [ ] EUR line-wrap fixed
-- [ ] ProposalPDF.tsx untouched (git log --stat proof)
+## Phase 1B — Maintenance fixes             [ ] gate passed: ____ (PENDING user Gmail confirmation)
+- [x] EUR line-wrap fixed — ROOT CAUSE: pt-PT/es/fr Intl emits the thousands separator as a Unicode
+      space (U+00A0/U+202F/sometimes U+0020); Gmail can drop td white-space:nowrap so the amount wraps.
+      Fix: fmtMoney normalizes all whitespace to NBSP ( ) in src/utils/emailTemplates.ts. Verified: PT total "30 420,00" now uses c2a0, no breakable space.
+- [x] sender-name encoding — VERIFIED ALREADY CORRECT (fixed in dad7b47, RFC 2047 B-encoding). Evidence:
+      stored full_name is clean single-UTF-8; encode→decode round-trips exactly; subjects use the same
+      B-encoding (with en-dash) and render fine → the From name renders fine too. No change needed; do not churn.
+- [x] ProposalPDF.tsx untouched + sendEmail.ts untouched (only src/utils/emailTemplates.ts changed) — git stat proof
+- [ ] AWAITING: user sends a real test email from production and confirms in writing that sender name + Total row render correctly in Gmail. (Active path is client-side sendProposalEmail + buildEmailBody.)
+- NOTE: actual files are src/services/sendEmail.ts + src/utils/emailTemplates.ts (goal/CLAUDE.md say src/lib/* — path drifted; intent = the email sender + templates).
 ## Phase 2 — Follow-up Agent                [ ] gate passed: ____
 ## Phase 3 — Briefing + Client Analysis RAG [ ] gate passed: ____
 ## Phase 4 — Lead Qual + Market Intel       [ ] gate passed: ____
