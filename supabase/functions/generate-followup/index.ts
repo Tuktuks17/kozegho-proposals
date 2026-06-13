@@ -1,10 +1,8 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
-
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
+import { callClaude, parseJsonStrict } from '../_shared/claude.ts'
 
 const CORS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://kozegho-proposals.vercel.app',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
@@ -29,13 +27,6 @@ type DraftResult = {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: CORS })
-  }
-
-  if (!GEMINI_API_KEY) {
-    return new Response(
-      JSON.stringify({ error: 'GEMINI_API_KEY not configured on this Edge Function' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...CORS } }
-    )
   }
 
   let body: Payload
@@ -81,27 +72,21 @@ The email must:
 Respond with ONLY a single-line JSON object. No markdown. No code blocks. Start with { end with }.
 {"subject":"Re: Kozegho Commercial Proposal – ${proposalReference}","body":"Full email body in HTML with <p> tags only"}`
 
-  const resp = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 8192 },
-    }),
-  })
-
-  if (!resp.ok) {
-    const detail = await resp.text()
-    console.log('[generate-followup] Gemini error', resp.status, detail)
-    return new Response(JSON.stringify({ error: 'gemini_error', detail }), {
+  let rawText: string
+  try {
+    rawText = await callClaude({
+      prompt,
+      model: 'claude-sonnet-4-6',
+      maxTokens: 1000,
+      temperature: 0.4,
+    })
+  } catch (e) {
+    console.log('[generate-followup] Claude error', String(e))
+    return new Response(JSON.stringify({ error: 'anthropic_error', detail: String(e) }), {
       status: 502,
       headers: { 'Content-Type': 'application/json', ...CORS },
     })
   }
-
-  const geminiData = await resp.json()
-  let rawText: string = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
-  rawText = rawText.trim()
 
   if (rawText.startsWith('```')) {
     rawText = rawText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
@@ -120,7 +105,7 @@ Respond with ONLY a single-line JSON object. No markdown. No code blocks. Start 
 
   let result: DraftResult
   try {
-    result = JSON.parse(rawText) as DraftResult
+    result = parseJsonStrict<DraftResult>(rawText)
   } catch (parseError) {
     console.error('[generate-followup] JSON.parse failed:', String(parseError))
     return new Response(

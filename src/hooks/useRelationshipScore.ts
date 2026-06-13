@@ -77,7 +77,7 @@ export function useRelationshipScore(customerId: string) {
       try {
         const body = await (fnError as unknown as { context: Response }).context.clone().json()
         // Show raw Gemini output if parse failed — useful for diagnosing prompt issues
-        if (body?.raw) msg = `Parse failed — Gemini returned: ${(body.raw as string).substring(0, 150)}`
+        if (body?.raw) msg = `Parse failed — AI returned: ${(body.raw as string).substring(0, 150)}`
         else if (body?.error) msg = body.error
       } catch { /* keep generic message */ }
       setError(msg)

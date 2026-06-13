@@ -1,26 +1,23 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
-
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
+import { callClaude } from '../_shared/claude.ts'
 
 type Payload = {
   products: string[]
   clientCountry: string
-  language: 'PT' | 'DE' | 'ES' | 'FR' | 'EN'
+  language: 'PT' | 'ES' | 'FR' | 'EN'
   salespersonName: string
   companyName: string
 }
 
 const LANGUAGE_INSTRUCTION: Record<Payload['language'], string> = {
   PT: 'Responde em português europeu, tom profissional mas próximo.',
-  DE: 'Antworte auf Deutsch, professioneller, höflicher Ton.',
   ES: 'Responde en español (España), tono profesional y cordial.',
   FR: 'Réponds en français, ton professionnel et courtois.',
   EN: 'Reply in professional British English.'
 }
 
 const CORS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://kozegho-proposals.vercel.app',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
@@ -28,13 +25,6 @@ const CORS = {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: CORS })
-  }
-
-  if (!GEMINI_API_KEY) {
-    return new Response(
-      JSON.stringify({ error: 'GEMINI_API_KEY not configured on this Edge Function' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...CORS } }
-    )
   }
 
   try {
@@ -51,25 +41,16 @@ The introduction must: 1) Thank ${body.companyName} for the opportunity. 2) Refe
 Write exactly 3 to 4 complete sentences. Each sentence must end with a full stop. Do not truncate mid-sentence.
     `.trim()
 
-    const resp = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }
-      })
-    })
-
-    if (!resp.ok) {
-      const err = await resp.text()
-      return new Response(JSON.stringify({ error: 'gemini_error', detail: err }), {
+    let text: string
+    try {
+      text = await callClaude({ prompt, model: 'claude-sonnet-4-6', maxTokens: 600 })
+    } catch (e) {
+      return new Response(JSON.stringify({ error: 'anthropic_error', detail: String(e) }), {
         status: 502,
         headers: { 'Content-Type': 'application/json', ...CORS }
       })
     }
 
-    const data = await resp.json()
-    const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? ''
     return new Response(JSON.stringify({ introduction: text }), {
       headers: { 'Content-Type': 'application/json', ...CORS }
     })

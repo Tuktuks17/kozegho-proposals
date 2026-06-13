@@ -1,10 +1,8 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
-
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
+import { callClaude, parseJsonStrict } from '../_shared/claude.ts'
 
 const CORS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://kozegho-proposals.vercel.app',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
@@ -50,13 +48,6 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: CORS })
   }
 
-  if (!GEMINI_API_KEY) {
-    return new Response(
-      JSON.stringify({ error: 'GEMINI_API_KEY not configured on this Edge Function' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...CORS } }
-    )
-  }
-
   let body: Payload
   try {
     body = (await req.json()) as Payload
@@ -99,27 +90,21 @@ Generate a sharp, actionable daily commercial briefing. Be specific with company
 Respond with ONLY a single-line JSON object. No markdown. No code blocks. Start with { end with }.
 {"headline":"One sentence executive summary of the commercial situation","urgent":["Specific action 1 with company name and value","Specific action 2","Specific action 3"],"opportunity":"One specific opportunity to pursue this week with rationale","risk":"One critical risk to monitor with specific client name","momentum":"brief"|"building"|"strong"|"declining"}`
 
-  const resp = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.3, maxOutputTokens: 8192 },
-    }),
-  })
-
-  if (!resp.ok) {
-    const detail = await resp.text()
-    console.log('[analyze-portfolio] Gemini error', resp.status, detail)
-    return new Response(JSON.stringify({ error: 'gemini_error', detail }), {
+  let rawText: string
+  try {
+    rawText = await callClaude({
+      prompt,
+      model: 'claude-haiku-4-5-20251001',
+      maxTokens: 1200,
+      temperature: 0.3,
+    })
+  } catch (e) {
+    console.log('[analyze-portfolio] Claude error', String(e))
+    return new Response(JSON.stringify({ error: 'anthropic_error', detail: String(e) }), {
       status: 502,
       headers: { 'Content-Type': 'application/json', ...CORS },
     })
   }
-
-  const geminiData = await resp.json()
-  let rawText: string = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
-  rawText = rawText.trim()
 
   if (rawText.startsWith('```')) {
     rawText = rawText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
@@ -138,7 +123,7 @@ Respond with ONLY a single-line JSON object. No markdown. No code blocks. Start 
 
   let result: BriefingResult
   try {
-    result = JSON.parse(rawText) as BriefingResult
+    result = parseJsonStrict<BriefingResult>(rawText)
   } catch (parseError) {
     console.error('[analyze-portfolio] JSON.parse failed:', String(parseError))
     return new Response(

@@ -42,7 +42,7 @@ export function useFollowUp() {
       let msg = (fnError as { message: string }).message
       try {
         const body = await (fnError as unknown as { context: Response }).context.clone().json()
-        if (body?.raw) msg = `Parse failed — Gemini returned: ${(body.raw as string).substring(0, 150)}`
+        if (body?.raw) msg = `Parse failed — AI returned: ${(body.raw as string).substring(0, 150)}`
         else if (body?.error) msg = body.error
       } catch { /* keep generic message */ }
       setError(msg)

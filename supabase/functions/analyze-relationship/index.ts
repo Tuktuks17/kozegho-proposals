@@ -1,12 +1,11 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
+import { callClaude, parseJsonStrict } from '../_shared/claude.ts'
 
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
 
 const CORS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://kozegho-proposals.vercel.app',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
@@ -65,13 +64,6 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: CORS })
   }
 
-  if (!GEMINI_API_KEY) {
-    return new Response(
-      JSON.stringify({ error: 'GEMINI_API_KEY not configured on this Edge Function' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...CORS } }
-    )
-  }
-
   let body: Payload
   try {
     body = (await req.json()) as Payload
@@ -93,7 +85,7 @@ Deno.serve(async (req) => {
   console.log('[analyze-relationship] body received:', JSON.stringify(body))
   console.log('[analyze-relationship] customerName:', customerName, '| proposalCount:', proposalCount, '| interactionCount:', interactionCount, '| emailCount:', emailCount, '| days:', daysSinceLastActivity)
 
-  // Insufficient data — return a baseline result without calling Gemini
+  // Insufficient data — return a baseline result without calling the model
   if (proposalCount === 0 && interactionCount === 0 && (emailCount ?? 0) === 0) {
     const fallback: AnalysisResult = {
       score: 0,
@@ -133,27 +125,21 @@ No line breaks inside the JSON. Start with { and end with }.
 Example of the EXACT format required:
 {"score":75,"temperature":"warm","analysis":"Brief analysis here.","opportunity":"Specific opportunity or null","suggestions":["Action 1","Action 2","Action 3"],"risk_flags":[]}`
 
-  const resp = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 8192 },
-    }),
-  })
-
-  if (!resp.ok) {
-    const detail = await resp.text()
-    console.log('[analyze-relationship] Gemini error', resp.status, detail)
-    return new Response(JSON.stringify({ error: 'gemini_error', detail }), {
+  let rawText: string
+  try {
+    rawText = await callClaude({
+      prompt,
+      model: 'claude-sonnet-4-6',
+      maxTokens: 1200,
+      temperature: 0.4,
+    })
+  } catch (e) {
+    console.log('[analyze-relationship] Claude error', String(e))
+    return new Response(JSON.stringify({ error: 'anthropic_error', detail: String(e) }), {
       status: 502,
       headers: { 'Content-Type': 'application/json', ...CORS },
     })
   }
-
-  const geminiData = await resp.json()
-  let rawText: string = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
-  rawText = rawText.trim()
 
   // Remove any accidental markdown if present
   if (rawText.startsWith('```')) {
@@ -173,7 +159,7 @@ Example of the EXACT format required:
 
   let result: AnalysisResult
   try {
-    result = JSON.parse(rawText) as AnalysisResult
+    result = parseJsonStrict<AnalysisResult>(rawText)
   } catch (parseError) {
     console.error('[analyze-relationship] JSON.parse failed:', String(parseError))
     return new Response(
