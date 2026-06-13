@@ -22,8 +22,8 @@ Users: 2 managers + 2 salespersons. Production: kozegho-proposals.vercel.app
   and `npm run build` result. Self-reports without evidence are not acceptable.
 
 ## File-specific constraints
-- Email bugs (sender-name encoding, € line-wrap, layout) live in `src/lib/sendEmail.ts`
-  and `src/lib/emailTemplates.ts`. DO NOT TOUCH `ProposalPDF.tsx` for email issues.
+- Email bugs (sender-name encoding, € line-wrap, layout) live in `src/services/sendEmail.ts`
+  and `src/utils/emailTemplates.ts`. DO NOT TOUCH `ProposalPDF.tsx` for email issues.
 - Gmail HTML constraints: no CSS `filter`; image dimensions via HTML attributes (not inline
   style); `rgba` background-color only on `<td>`; white logo for email/PDF (green background),
   colored logo for Word (white background).
