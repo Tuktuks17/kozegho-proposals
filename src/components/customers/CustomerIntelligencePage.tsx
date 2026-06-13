@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo, type FormEvent } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { Customer, Interaction, Task, TaskPriority, TaskStatus, RelationshipScore } from '@/types/database'
+import type { Customer, Interaction, Task, TaskPriority, TaskStatus, RelationshipScore, AgentFollowUpMetadata } from '@/types/database'
 import type { PersistedProposal } from '@/types/proposal'
 import { useInteractions } from '@/hooks/useInteractions'
 import { useTasks } from '@/hooks/useTasks'
+import { useFollowUp } from '@/hooks/useFollowUp'
+import { FollowUpModal } from '@/components/intelligence/FollowUpModal'
 import { useGmailThreads } from '@/hooks/useGmailThreads'
 import { useCustomerProposals, type ProposalOutcome } from '@/hooks/useCustomerProposals'
 import { useRelationshipScore } from '@/hooks/useRelationshipScore'
@@ -130,6 +132,10 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
 
   const [userEmail, setUserEmail] = useState('')
   const [updatingOutcomes, setUpdatingOutcomes] = useState<Set<string>>(new Set())
+
+  // Agent follow-up draft review (reuses the shared FollowUpModal + Gmail send flow)
+  const followUp = useFollowUp()
+  const [agentDraftTask, setAgentDraftTask] = useState<Task | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUserEmail(data.session?.user.email ?? ''))
@@ -484,6 +490,11 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
                         <span className={`text-sm ${task.status !== 'open' ? 'line-through text-gray-400' : 'text-gray-800'}`}>
                           {task.title}
                         </span>
+                        {task.source === 'agent' && (
+                          <span className="text-xs border border-[#7AB648]/40 text-[#5a8a30] bg-[#7AB648]/10 px-2 py-0.5 rounded font-medium">
+                            Agent
+                          </span>
+                        )}
                         <span className={`text-xs border px-2 py-0.5 rounded capitalize ${priorityClasses(task.priority)}`}>
                           {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
                         </span>
@@ -493,12 +504,40 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
                           Due: {fmtDate(task.due_date)}
                         </p>
                       )}
+                      {task.source === 'agent' && task.status === 'open' && (task.metadata as AgentFollowUpMetadata | null)?.draft && (
+                        <button
+                          onClick={() => setAgentDraftTask(task)}
+                          className="mt-1.5 text-xs border border-[#7AB648]/50 text-[#5a8a30] px-2.5 py-1 rounded hover:bg-[#7AB648]/10 transition-colors"
+                        >
+                          Review follow-up
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
             </div>
           )}
         </div>
+
+        {/* Agent follow-up review modal (reuses shared FollowUpModal + Gmail send flow) */}
+        {agentDraftTask && (() => {
+          const meta = agentDraftTask.metadata as AgentFollowUpMetadata
+          return (
+            <FollowUpModal
+              key={agentDraftTask.id}
+              headerTitle={meta.customer_name || customer.company}
+              headerSubtitle={`${meta.reference} · ${meta.tier_label}`}
+              recipientEmail={meta.customer_email || customer.email}
+              draft={meta.draft}
+              generating={false}
+              sending={followUp.sending}
+              sent={followUp.sent}
+              error={followUp.error}
+              onSend={(to, subject, body) => void followUp.sendEmail(to, subject, body)}
+              onClose={() => { setAgentDraftTask(null); followUp.reset() }}
+            />
+          )
+        })()}
 
         {/* Proposals */}
         <div>

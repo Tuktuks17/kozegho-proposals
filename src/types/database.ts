@@ -25,10 +25,25 @@ export type Task = {
   due_date: string | null
   priority: TaskPriority
   status: TaskStatus
-  source: 'manual' | 'ai_extracted' | 'gmail_detected'
+  source: 'user' | 'manual' | 'ai_extracted' | 'gmail_detected' | 'agent'
   source_ref: string | null
+  metadata: Record<string, unknown> | null
   created_at: string
   updated_at: string
+}
+
+// Shape stored in tasks.metadata for agent-created follow-up tasks (source='agent').
+export type AgentFollowUpMetadata = {
+  proposal_id: string
+  reference: string
+  subject: string
+  tier: 1 | 2 | 3
+  tier_label: string
+  days_open: number
+  customer_name: string
+  customer_email: string | null
+  escalation: 'manager_alert' | null
+  draft: { subject: string; body: string }
 }
 
 export type Interaction = {

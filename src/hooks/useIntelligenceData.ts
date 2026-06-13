@@ -29,6 +29,7 @@ export type IntelligenceData = {
   totalCustomers: number
   proposalsNeedingAttention: ProposalAttention[]
   coldRiskCustomers: ColdRiskCustomer[]
+  agentFollowupCount: number
   loading: boolean
   error: string | null
 }
@@ -49,6 +50,7 @@ export function useIntelligenceData(isManager: boolean): IntelligenceData {
     totalCustomers: 0,
     proposalsNeedingAttention: [],
     coldRiskCustomers: [],
+    agentFollowupCount: 0,
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -70,7 +72,7 @@ export function useIntelligenceData(isManager: boolean): IntelligenceData {
         userId = user?.id ?? null
       }
 
-      const [customersRes, proposalsRes, interactionsRes] = await Promise.all([
+      const [customersRes, proposalsRes, interactionsRes, agentTaskRes] = await Promise.all([
         isManager
           ? supabase.from('customers').select('*').order('company')
           : supabase.from('customers').select('*').order('company').eq('created_by', userId ?? ''),
@@ -78,6 +80,8 @@ export function useIntelligenceData(isManager: boolean): IntelligenceData {
           ? supabase.from('proposals').select('*').order('created_at', { ascending: false })
           : supabase.from('proposals').select('*').order('created_at', { ascending: false }).eq('created_by', userId ?? ''),
         supabase.from('interactions').select('customer_id, occurred_at').gte('occurred_at', fourWeeksAgo),
+        // Open agent-created follow-up tasks visible to this user (RLS-scoped). Non-fatal if it errors.
+        supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('source', 'agent').eq('status', 'open'),
       ])
 
       if (cancelled) return
@@ -201,6 +205,7 @@ export function useIntelligenceData(isManager: boolean): IntelligenceData {
           totalCustomers: customers.length,
           proposalsNeedingAttention,
           coldRiskCustomers,
+          agentFollowupCount: agentTaskRes.count ?? 0,
         })
         setLoading(false)
       }

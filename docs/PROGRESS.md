@@ -32,7 +32,20 @@
 - [x] ProposalPDF.tsx untouched + sendEmail.ts untouched (only src/utils/emailTemplates.ts changed) — git stat proof
 - [ ] AWAITING: user sends a real test email from production and confirms in writing that sender name + Total row render correctly in Gmail. (Active path is client-side sendProposalEmail + buildEmailBody.)
 - NOTE: actual files are src/services/sendEmail.ts + src/utils/emailTemplates.ts (goal/CLAUDE.md say src/lib/* — path drifted; intent = the email sender + templates).
-## Phase 2 — Follow-up Agent                [ ] gate passed: ____
+## Phase 1B note: user proceeded to /goal Phase 2 (implicit accept). € fix live; Gmail render to confirm in normal use.
+## Phase 2 — Follow-up Agent                [ ] gate passed: ____ (PENDING user app validation)
+- [x] agent-followup Edge Function (prod v2): D+7/D+14/D+21 tiers; queries open proposals sent >=7d, no interaction in 5d, no open agent task; drafts via callClaudeWithUsage (claude-sonnet-4-6, max_tokens 1000); creates source='agent' task with draft in metadata; SENDS NOTHING; logs each to agent_runs (model, input/output tokens, cost_usd, duration_ms, status). Batched via `limit` (default 10) to stay under edge wall-clock.
+- [x] tasks.metadata jsonb migration applied + verified
+- [x] _shared/claude.ts: callClaudeWithUsage + claudeCostUsd added (append-only; verbatim callClaude untouched)
+- [x] cron 'agent-followup-daily' '30 6 * * 1-5' (06:30 UTC = 07:30 Lisbon summer) visible in cron.job
+- [x] manual test: created 3 agent tasks (refs 0511AGK/26, 0511CMK/26, 0511FMK/26, all D+21/urgent) + 3 agent_runs success rows (SQL shown); cost ~$0.013 for 3 drafts
+- [x] cron-path test via pg_net+Vault (trigger='cron') fired
+- [x] frontend: 'Agent' badge on source='agent' tasks (CustomerIntelligencePage); 'Review follow-up' opens shared FollowUpModal pre-filled → useFollowUp.sendEmail (existing Gmail flow, no new pipeline); Intelligence Hub shows pending agent follow-up count
+- [x] FollowUpModal extracted to shared component (src/components/intelligence/FollowUpModal.tsx); IntelligencePage uses it identically
+- [x] src/types/database.ts Task.source includes 'agent' (+ 'user'); Task.metadata added; AgentFollowUpMetadata type added
+- [x] npm run build passes (tsc + vite)
+- NOTE: 39 eligible proposals backlog (mostly old D+21 seed data); cron processes 10/day. Team reviews/dismisses.
+- NOTE: 'manager alert' (D+21) = urgent priority + visible in agent_runs (managers' RLS); tasks have no manager-see-all policy (out of scope).
 ## Phase 3 — Briefing + Client Analysis RAG [ ] gate passed: ____
 ## Phase 4 — Lead Qual + Market Intel       [ ] gate passed: ____
 ## Phase 5 — Chief of Staff + final report  [ ] gate passed: ____

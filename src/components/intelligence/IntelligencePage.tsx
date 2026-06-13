@@ -4,6 +4,7 @@ import type { ProposalAttention } from '@/hooks/useIntelligenceData'
 import { useDailyBriefing, type BriefingResult } from '@/hooks/useDailyBriefing'
 import { useFollowUp } from '@/hooks/useFollowUp'
 import { useRole } from '@/hooks/useRole'
+import { FollowUpModal } from './FollowUpModal'
 
 function fmtMoney(n: number) {
   return '€ ' + new Intl.NumberFormat('en-GB', {
@@ -38,6 +39,7 @@ export function IntelligencePage({ onNavigateToCustomer }: Props) {
     totalCustomers,
     proposalsNeedingAttention,
     coldRiskCustomers,
+    agentFollowupCount,
     loading,
     error,
   } = intelligenceData
@@ -134,13 +136,20 @@ export function IntelligencePage({ onNavigateToCustomer }: Props) {
 
           {/* Proposals needing attention */}
           <section className="space-y-3">
-            <div>
-              <p className="text-xs font-semibold text-[var(--kz-text-on-dark-muted)] uppercase tracking-wider">
-                Proposals Needing Attention
-              </p>
-              <p className="text-xs text-[var(--kz-text-on-dark-muted)] mt-0.5 opacity-70">
-                Open proposals sorted by days without response
-              </p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold text-[var(--kz-text-on-dark-muted)] uppercase tracking-wider">
+                  Proposals Needing Attention
+                </p>
+                <p className="text-xs text-[var(--kz-text-on-dark-muted)] mt-0.5 opacity-70">
+                  Open proposals sorted by days without response
+                </p>
+              </div>
+              {agentFollowupCount > 0 && (
+                <span className="flex-shrink-0 border border-[var(--kz-green)]/40 text-[var(--kz-green)] bg-[var(--kz-green-soft)] rounded-full px-2.5 py-0.5 text-xs font-medium">
+                  {agentFollowupCount} agent follow-up{agentFollowupCount !== 1 ? 's' : ''} pending
+                </span>
+              )}
             </div>
 
             {proposalsNeedingAttention.length === 0 ? (
@@ -248,7 +257,9 @@ export function IntelligencePage({ onNavigateToCustomer }: Props) {
       {selectedItem && (
         <FollowUpModal
           key={followUp.draft?.subject ?? 'generating'}
-          item={selectedItem}
+          headerTitle={selectedItem.customer.company}
+          headerSubtitle={`${selectedItem.proposal.reference} · ${fmtMoney(selectedItem.proposal.total)}`}
+          recipientEmail={selectedItem.customer.email}
           draft={followUp.draft}
           generating={followUp.generating}
           sending={followUp.sending}
@@ -259,121 +270,6 @@ export function IntelligencePage({ onNavigateToCustomer }: Props) {
           onRetry={() => handleFollowUp(selectedItem)}
         />
       )}
-    </div>
-  )
-}
-
-// ─── Follow-up modal ───────────────────────────────────────────────────────────
-
-type FollowUpModalProps = {
-  item: ProposalAttention
-  draft: { subject: string; body: string } | null
-  generating: boolean
-  sending: boolean
-  sent: boolean
-  error: string | null
-  onSend: (to: string, subject: string, body: string) => void
-  onClose: () => void
-  onRetry: () => void
-}
-
-function FollowUpModal({ item, draft, generating, sending, sent, error, onSend, onClose, onRetry }: FollowUpModalProps) {
-  const [editSubject, setEditSubject] = useState(draft?.subject ?? '')
-  const [editBody, setEditBody] = useState(draft?.body ?? '')
-
-  const hasDraft = !generating && draft !== null && !sent
-  const hasGenerationError = !generating && draft === null && !sent && error !== null
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-      <div className="bg-[var(--kz-surface)] rounded-[var(--kz-radius-card)] shadow-[var(--kz-shadow-card)] max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-
-        <div>
-          <p className="text-xs font-semibold text-[var(--kz-text-secondary)] uppercase tracking-wider">Follow-up Draft</p>
-          <p className="text-sm font-medium text-[var(--kz-text)] mt-1">{item.customer.company}</p>
-          <p className="text-xs text-[var(--kz-text-muted)]">{item.proposal.reference} · {fmtMoney(item.proposal.total)}</p>
-        </div>
-
-        {generating && (
-          <div className="flex flex-col items-center gap-3 py-6">
-            <div className="w-5 h-5 border-2 border-[var(--kz-green)] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[var(--kz-text-secondary)]">Generating follow-up draft...</p>
-          </div>
-        )}
-
-        {hasDraft && (
-          <>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs text-[var(--kz-text-secondary)] block mb-1">Subject</label>
-                <input
-                  type="text"
-                  value={editSubject}
-                  onChange={e => setEditSubject(e.target.value)}
-                  className="w-full border border-[var(--kz-border)] rounded-[var(--kz-radius-input)] p-2 text-sm text-[var(--kz-text)] focus:outline-none focus:border-[var(--kz-green)] focus:ring-2 focus:ring-[var(--kz-green-ring)]"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-[var(--kz-text-secondary)] block mb-1">Body (HTML)</label>
-                <textarea
-                  value={editBody}
-                  onChange={e => setEditBody(e.target.value)}
-                  className="w-full border border-[var(--kz-border)] rounded-[var(--kz-radius-input)] p-2 text-sm text-[var(--kz-text)] min-h-48 focus:outline-none focus:border-[var(--kz-green)] focus:ring-2 focus:ring-[var(--kz-green-ring)] resize-y font-mono"
-                />
-              </div>
-            </div>
-            {error && <p className="text-sm text-[var(--kz-text-secondary)]">{error}</p>}
-            <div className="flex justify-end gap-3 pt-1">
-              <button
-                onClick={onClose}
-                disabled={sending}
-                className="border border-[var(--kz-border)] text-[var(--kz-text-secondary)] px-4 py-2 rounded-[var(--kz-radius-button)] text-sm hover:bg-[var(--kz-surface-hover)] transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => onSend(item.customer.email, editSubject, editBody)}
-                disabled={sending}
-                className="bg-[var(--kz-green)] hover:bg-[var(--kz-green-hover)] text-white px-4 py-2 rounded-[var(--kz-radius-button)] text-sm transition-colors disabled:opacity-60"
-              >
-                {sending ? 'Sending...' : 'Send Email'}
-              </button>
-            </div>
-          </>
-        )}
-
-        {sent && (
-          <div className="flex flex-col items-center gap-4 py-4">
-            <p className="text-sm text-[var(--kz-green)]">Follow-up sent successfully.</p>
-            <button
-              onClick={onClose}
-              className="border border-[var(--kz-border)] text-[var(--kz-text-secondary)] px-4 py-2 rounded-[var(--kz-radius-button)] text-sm hover:bg-[var(--kz-surface-hover)] transition-colors"
-            >
-              Close
-            </button>
-          </div>
-        )}
-
-        {hasGenerationError && (
-          <div className="flex flex-col items-center gap-4 py-4">
-            <p className="text-sm text-[var(--kz-text-secondary)]">{error}</p>
-            <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                className="border border-[var(--kz-border)] text-[var(--kz-text-secondary)] px-4 py-2 rounded-[var(--kz-radius-button)] text-sm hover:bg-[var(--kz-surface-hover)] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={onRetry}
-                className="bg-[var(--kz-green)] hover:bg-[var(--kz-green-hover)] text-white px-4 py-2 rounded-[var(--kz-radius-button)] text-sm transition-colors"
-              >
-                Try again
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   )
 }
