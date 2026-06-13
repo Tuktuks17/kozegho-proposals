@@ -127,16 +127,18 @@ CUSTOMER DATA:
 - Emails exchanged: ${emailCount ?? 0}
 - Days since last activity: ${daysSinceLastActivity ?? 'unknown'}
 
-Analyse this relationship and respond ONLY with a valid JSON object. No markdown, no code blocks, no explanations outside the JSON.
+Respond with ONLY a JSON object on a single line. No markdown. No code blocks.
+No line breaks inside the JSON. Start with { and end with }.
 
-{"score":<integer 0-100 based on: engagement frequency 30%, conversion rate 30%, recency 20%, revenue potential 20%>,"temperature":<"hot" if score>=70, "warm" if score>=40, "cold" if score<40>,"analysis":"<2-3 sentences of sharp, specific commercial analysis — mention actual numbers, identify the pattern, name the opportunity or risk>","opportunity":"<one specific, time-bound commercial opportunity OR null if none detected>","suggestions":["<specific action 1 — who does what, when, how>","<specific action 2 — tied to the data above>","<specific action 3 — proactive, not reactive>"],"risk_flags":["<specific risk if any, else empty array>"]}`
+Example of the EXACT format required:
+{"score":75,"temperature":"warm","analysis":"Brief analysis here.","opportunity":"Specific opportunity or null","suggestions":["Action 1","Action 2","Action 3"],"risk_flags":[]}`
 
   const resp = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 1000 },
+      generationConfig: { temperature: 0.4, maxOutputTokens: 8192 },
     }),
   })
 
@@ -151,36 +153,29 @@ Analyse this relationship and respond ONLY with a valid JSON object. No markdown
 
   const geminiData = await resp.json()
   let rawText: string = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+  rawText = rawText.trim()
+
+  // Remove any accidental markdown if present
+  if (rawText.startsWith('```')) {
+    rawText = rawText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
+  }
 
   console.log('[analyze-relationship] raw text length:', rawText.length)
-  console.log('[analyze-relationship] raw text preview:', rawText.substring(0, 500))
+  console.log('[analyze-relationship] raw text preview:', rawText.substring(0, 200))
 
-  // Strip markdown code blocks (multiple possible formats)
-  rawText = rawText
-    .replace(/```json\s*/gi, '')
-    .replace(/```typescript\s*/gi, '')
-    .replace(/```\s*/gi, '')
-    .trim()
-
-  // Extract only the JSON object — everything between first { and last }
-  const jsonStart = rawText.indexOf('{')
-  const jsonEnd = rawText.lastIndexOf('}')
-
-  if (jsonStart === -1 || jsonEnd === -1 || jsonStart >= jsonEnd) {
-    console.error('[analyze-relationship] No valid JSON found. Raw:', rawText)
+  if (!rawText.startsWith('{')) {
+    console.error('[analyze-relationship] Response does not start with {:', rawText)
     return new Response(
       JSON.stringify({ error: 'no_json', raw: rawText.substring(0, 200) }),
       { status: 500, headers: { 'Content-Type': 'application/json', ...CORS } }
     )
   }
 
-  rawText = rawText.slice(jsonStart, jsonEnd + 1)
-
   let result: AnalysisResult
   try {
     result = JSON.parse(rawText) as AnalysisResult
   } catch (parseError) {
-    console.error('[analyze-relationship] JSON.parse failed:', String(parseError), '| Raw:', rawText.substring(0, 300))
+    console.error('[analyze-relationship] JSON.parse failed:', String(parseError))
     return new Response(
       JSON.stringify({ error: 'parse_failed', raw: rawText.substring(0, 200) }),
       { status: 500, headers: { 'Content-Type': 'application/json', ...CORS } }
