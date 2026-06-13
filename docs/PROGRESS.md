@@ -12,12 +12,16 @@
 - [x] frontend UI string "Gemini returned" -> "AI returned" (useRelationshipScore.ts:80, useDailyBriefing.ts:82, useFollowUp.ts:45) — grep "Gemini returned" = 0
 - [x] committed + pushed (npm run save "phase 0: migrate all AI functions to Claude API") — git main now matches production
       NOTE: response shapes frozen (keys identical); ProposalPDF.tsx untouched; GEMINI_API_KEY kept 1 week as rollback per spec.
-## Phase 1 — Foundation                     [ ] gate passed: ____
-- [ ] migration agent_foundation applied + verified via list_tables
-- [ ] extensions vector, pg_cron, pg_net enabled
-- [ ] manager RLS policies (is_manager) live + tested with both roles
-- [ ] embed-proposals deployed + backfill count > 0
-- [ ] cron pattern tested (cron.job visible + 1 successful run)
+## Phase 1 — Foundation                     [x] gate passed: 2026-06-13 (Gate Report presented)
+- [x] migration agent_foundation applied + verified via list_tables (agent_runs, proposal_embeddings, daily_briefings — all RLS on)
+- [x] extensions vector, pg_cron, pg_net enabled (verified via pg_extension)
+- [x] manager RLS policies via is_manager() SECURITY DEFINER live + two-role test PROVEN:
+      manager sees 87 proposals + 47 customers; salesperson sees only own 2. (consolidated the pre-existing inline managers_see_all_* policies onto is_manager())
+- [x] tasks.source reconciled: domain extended to {user,manual,ai_extracted,gmail_detected,agent}, default 'user', NOT NULL
+- [x] embed-proposals deployed (prod v3, gte-small 384-dim, mean_pool+normalize, batched limit to avoid WORKER_RESOURCE_LIMIT) + backfill 87/87 proposals embedded (count verified)
+- [x] cron pattern tested: cron.job 'embed-proposals-daily' active (0 5 * * *); test invocation via pg_net+Vault service_role_key → HTTP 200 + agent_runs trigger='cron' success row
+- NOTE: spec assumed empty DB; reality had 87 proposals (stale stats showed 0). Backfill ran for real.
+- NOTE: cron time is UTC (05:00 UTC ≈ 06:00 Lisbon summer); pg_cron has no per-job DST handling.
 ## Phase 1B — Maintenance fixes             [ ] gate passed: ____
 - [ ] sender-name encoding fixed (sendEmail.ts / emailTemplates.ts only)
 - [ ] EUR line-wrap fixed
