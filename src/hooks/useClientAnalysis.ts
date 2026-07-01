@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 
 export type ClientAnalysisFacts = {
@@ -28,10 +28,19 @@ export function useClientAnalysis() {
   const [data, setData] = useState<ClientAnalysis | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Session cache keyed by customerId — a repeat request for the same client returns the cached
+  // result instead of firing another (paid) analyze-client-history call.
+  const cacheRef = useRef<Record<string, ClientAnalysis>>({})
 
   const analyze = useCallback(async (customerId: string, question?: string) => {
-    setLoading(true)
     setError(null)
+    // Default (question-less) analysis is cacheable; a custom question always re-runs.
+    if (!question && cacheRef.current[customerId]) {
+      setData(cacheRef.current[customerId])
+      setLoading(false)
+      return
+    }
+    setLoading(true)
     setData(null)
     const { data: res, error: fnError } = await supabase.functions.invoke('analyze-client-history', {
       body: { customerId, question: question ?? null },
@@ -46,7 +55,11 @@ export function useClientAnalysis() {
       setError(msg)
       return
     }
-    if (res) setData(res as ClientAnalysis)
+    if (res) {
+      const result = res as ClientAnalysis
+      if (!question) cacheRef.current[customerId] = result
+      setData(result)
+    }
   }, [])
 
   const reset = useCallback(() => { setData(null); setError(null); setLoading(false) }, [])
