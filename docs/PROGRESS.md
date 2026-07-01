@@ -46,7 +46,16 @@
 - [x] npm run build passes (tsc + vite)
 - NOTE: 39 eligible proposals backlog (mostly old D+21 seed data); cron processes 10/day. Team reviews/dismisses.
 - NOTE: 'manager alert' (D+21) = urgent priority + visible in agent_runs (managers' RLS); tasks have no manager-see-all policy (out of scope).
-## Phase 3 — Briefing + Client Analysis RAG [ ] gate passed: ____
+## Phase 3 — Briefing + Client Analysis RAG [ ] gate passed: ____ (PENDING user app validation)
+- [x] agent-briefing Edge Function (prod v1, Haiku 4.5): per-profile scoped snapshot server-side (managers=full portfolio, salespersons=own book) → briefing into daily_briefings; upsert on (profile_id,briefing_date); logs agent_runs. Test: 4/4 profiles success; SQL shows 4 rows for 2026-07-01 (managers €183,870 full portfolio vs salesperson Nuno €90,130 own book — scoping proven)
+- [x] cron 'agent-briefing-daily' '0 6 * * *' (06:00 UTC = 07:00 Lisbon summer), pg_net timeout 150s
+- [x] useDailyBriefing.ts reads today's row from daily_briefings on mount (RLS briefings_own), on-demand analyze-portfolio kept as fallback; BriefingResult contract unchanged
+- [x] match_proposal_embeddings RPC (pgvector cosine, security definer) applied + used
+- [x] analyze-client-history Edge Function (prod v1, Sonnet 4.6): gte-small query embed → match RPC (similar deals from OTHER clients) + this client's proposals/outcomes/interactions → grounded synthesis; DB-derived facts block; logs agent_runs
+- [x] UI entry points: (a) deep-analysis panel on customer detail page (Deep analyse button); (b) auto-context card in proposal form SectionClient when an existing customer is picked
+- [x] useClientAnalysis hook
+- [x] ANTI-HALLUCINATION spot-check (5 customers): AI facts == SQL ground truth EXACTLY for Galp(24/0/8), Coca-Cola(9/0/0), nike(5/3/2 €94,890), Coca-Cola(5/0/0), Kozegho(4/1/2 €17,480). Facts computed in code, model told to use only them.
+- [x] npm run build passes (tsc + vite)
 ## Phase 4 — Lead Qual + Market Intel       [ ] gate passed: ____
 ## Phase 5 — Chief of Staff + final report  [ ] gate passed: ____
 (Expand phases 2-5 with task checkboxes from strategy doc §4 when each starts.)

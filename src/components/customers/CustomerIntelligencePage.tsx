@@ -9,6 +9,7 @@ import { FollowUpModal } from '@/components/intelligence/FollowUpModal'
 import { useGmailThreads } from '@/hooks/useGmailThreads'
 import { useCustomerProposals, type ProposalOutcome } from '@/hooks/useCustomerProposals'
 import { useRelationshipScore } from '@/hooks/useRelationshipScore'
+import { useClientAnalysis } from '@/hooks/useClientAnalysis'
 import { Search, ArrowLeft, Mail, Globe, TrendingUp, FileText, CheckCircle, Check } from 'lucide-react'
 
 type ProposalSummary = {
@@ -121,6 +122,7 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
   const { proposals, loading: propLoading, error: propError, updateOutcome } = useCustomerProposals(customer.id)
   const { threads, loading: emailLoading, error: emailError, noToken } = useGmailThreads(customer.email)
   const { score: aiScore, loading: aiLoading, analyzing, error: aiError, analyzeRelationship, isOutdated, invalidateScore } = useRelationshipScore(customer.id)
+  const clientAnalysis = useClientAnalysis()
 
   // Metrics derived from proposals with outcome (updates when user clicks Open/Accepted/Rejected)
   const totalPipeline = proposals.reduce((sum, p) => sum + p.total, 0)
@@ -715,6 +717,61 @@ function CustomerDetail({ customer, onBack }: { customer: CustomerWithMetrics; o
                 </div>
               )}
             </>
+          )}
+        </div>
+
+        {/* Deep Analysis — Client Analysis RAG over history + similar deals */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Deep Analysis</h3>
+            <button
+              disabled={clientAnalysis.loading}
+              onClick={() => clientAnalysis.analyze(customer.id)}
+              className="text-xs border border-kozegho-green text-kozegho-green bg-white px-2.5 py-1 rounded hover:bg-kozegho-green-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {clientAnalysis.loading ? 'Analysing...' : 'Deep analyse'}
+            </button>
+          </div>
+
+          {clientAnalysis.loading && (
+            <div className="flex items-center gap-2 py-4 justify-center">
+              <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: `${GREEN} transparent transparent transparent` }} />
+              <span className="text-sm text-gray-400">Analysing history + similar deals...</span>
+            </div>
+          )}
+
+          {clientAnalysis.error && (
+            <p className="text-xs text-gray-600 bg-gray-100 border border-gray-300 px-3 py-2 rounded">{clientAnalysis.error}</p>
+          )}
+
+          {!clientAnalysis.loading && !clientAnalysis.data && !clientAnalysis.error && (
+            <p className="text-sm text-gray-400 text-center py-4">
+              Synthesise this client's history, price patterns, and next best action.
+            </p>
+          )}
+
+          {clientAnalysis.data && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-gray-800">{clientAnalysis.data.summary}</p>
+              <p className="text-sm text-gray-600">{clientAnalysis.data.analysis}</p>
+              {clientAnalysis.data.patterns.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Patterns</div>
+                  <ul className="space-y-1">
+                    {clientAnalysis.data.patterns.map((p, i) => (
+                      <li key={i} className="text-sm text-gray-600 flex gap-2"><span className="text-kozegho-green shrink-0">•</span><span>{p}</span></li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="bg-kozegho-green-light rounded p-3">
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Next best action</div>
+                <p className="text-sm text-gray-800">{clientAnalysis.data.next_best_action}</p>
+              </div>
+              <p className="text-xs text-gray-400">
+                Grounded on {clientAnalysis.data.facts.proposalCount} proposals · {clientAnalysis.data.similarCount} similar deals referenced
+              </p>
+            </div>
           )}
         </div>
 

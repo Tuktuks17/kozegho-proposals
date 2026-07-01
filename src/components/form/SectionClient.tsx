@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Search, UserPlus } from 'lucide-react'
+import { Search, UserPlus, Sparkles } from 'lucide-react'
 import type { ProposalFormState } from '@/types/proposal'
 import type { Customer } from '@/types/database'
 import { useCustomers } from '@/hooks/useCustomers'
+import { useClientAnalysis } from '@/hooks/useClientAnalysis'
 import { COUNTRIES } from '@/data/countries'
+
+const fmtEur = (n: number) => '€' + new Intl.NumberFormat('en-GB', { maximumFractionDigits: 0 }).format(n)
 
 type Props = {
   form: ProposalFormState
@@ -17,18 +20,22 @@ export function SectionClient({ form, userId, onSetField, onCustomerCreated }: P
   const [query, setQuery] = useState('')
   const { results, loading, search, upsert } = useCustomers()
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const clientAnalysis = useClientAnalysis()
 
   useEffect(() => {
     const t = setTimeout(() => search(query), 300)
     return () => clearTimeout(t)
   }, [query, search])
 
-  const selectCustomer = (c: Customer) => {
+  const selectCustomer = (c: Customer, withContext = false) => {
     setSelectedCustomer(c)
     onSetField('customer_id', c.id)
     setQuery(c.company)
     setMode('search')
     onCustomerCreated(c)  // propagate existing customer to ProposalForm state
+    // Auto-context only for existing customers picked from search (a brand-new customer has no history).
+    if (withContext) clientAnalysis.analyze(c.id)
+    else clientAnalysis.reset()
   }
 
   const createCustomer = async () => {
@@ -71,7 +78,7 @@ export function SectionClient({ form, userId, onSetField, onCustomerCreated }: P
           {results.length > 0 && !selectedCustomer && (
             <div className="border border-border rounded-md overflow-hidden">
               {results.map((c) => (
-                <button key={c.id} onClick={() => selectCustomer(c)}
+                <button key={c.id} onClick={() => selectCustomer(c, true)}
                   className="w-full text-left px-3 py-2.5 hover:bg-kozegho-grey border-b border-border last:border-0 transition-colors">
                   <p className="text-sm font-medium text-kozegho-dark">{c.company}</p>
                   <p className="text-xs text-kozegho-grey-text">{c.name || '—'} · {c.email}</p>
@@ -85,8 +92,35 @@ export function SectionClient({ form, userId, onSetField, onCustomerCreated }: P
                 <p className="text-sm font-semibold text-kozegho-dark">{selectedCustomer.company}</p>
                 <p className="text-xs text-kozegho-grey-text">{selectedCustomer.name || '—'} · {selectedCustomer.email} · {selectedCustomer.country}</p>
               </div>
-              <button onClick={() => { setSelectedCustomer(null); onSetField('customer_id', null); setQuery('') }}
+              <button onClick={() => { setSelectedCustomer(null); onSetField('customer_id', null); setQuery(''); clientAnalysis.reset() }}
                 className="text-xs text-kozegho-grey-text hover:text-kozegho-dark ml-3 shrink-0">Change</button>
+            </div>
+          )}
+
+          {/* AI auto-context for an existing client (analyze-client-history RAG) */}
+          {selectedCustomer && (clientAnalysis.loading || clientAnalysis.data) && (
+            <div className="rounded-md border border-border bg-white p-3">
+              <p className="text-xs font-semibold text-kozegho-grey-text uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-kozegho-green" /> Client context
+              </p>
+              {clientAnalysis.loading && (
+                <p className="text-xs text-kozegho-grey-text">Analysing this client's history…</p>
+              )}
+              {clientAnalysis.data && clientAnalysis.data.facts.proposalCount > 0 && (
+                <>
+                  <p className="text-sm text-kozegho-dark">{clientAnalysis.data.summary}</p>
+                  <div className="flex flex-wrap gap-x-2 gap-y-1 mt-2 text-xs text-kozegho-grey-text">
+                    <span>{clientAnalysis.data.facts.acceptedCount} won · {clientAnalysis.data.facts.rejectedCount} lost · {clientAnalysis.data.facts.openCount} open</span>
+                    {clientAnalysis.data.facts.revenue > 0 && <span>· {fmtEur(clientAnalysis.data.facts.revenue)} won</span>}
+                    {clientAnalysis.data.facts.priceMax > 0 && (
+                      <span>· typical {fmtEur(clientAnalysis.data.facts.priceMin)}–{fmtEur(clientAnalysis.data.facts.priceMax)}</span>
+                    )}
+                  </div>
+                </>
+              )}
+              {clientAnalysis.data && clientAnalysis.data.facts.proposalCount === 0 && (
+                <p className="text-xs text-kozegho-grey-text">No prior proposals for this client yet.</p>
+              )}
             </div>
           )}
         </div>

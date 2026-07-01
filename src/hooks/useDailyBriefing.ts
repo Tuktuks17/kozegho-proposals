@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { ProposalAttention, ColdRiskCustomer } from './useIntelligenceData'
 
@@ -48,6 +48,30 @@ export function useDailyBriefing() {
   const [error, setError] = useState<string | null>(null)
 
   const lastGenerated = briefing?.generatedAt ?? null
+
+  // Read today's server-generated briefing (agent-briefing daily cron) — instant, no wait.
+  // On-demand generateBriefing() below remains the fallback if no row exists yet.
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user || cancelled) return
+      const today = new Date().toISOString().slice(0, 10)
+      // daily_briefings is not in the generated Database types — cast like the rest of the codebase.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase.from('daily_briefings') as any)
+        .select('briefing')
+        .eq('profile_id', user.id)
+        .eq('briefing_date', today)
+        .maybeSingle()
+      if (!cancelled && data?.briefing) {
+        const result = data.briefing as BriefingResult
+        setBriefing(result)
+        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(result)) } catch { /* non-fatal */ }
+      }
+    })()
+    return () => { cancelled = true }
+  }, [])
 
   const generateBriefing = useCallback(async (input: GenerateBriefingInput): Promise<{ error: string | null }> => {
     setAnalyzing(true)
