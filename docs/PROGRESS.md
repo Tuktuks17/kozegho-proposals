@@ -56,6 +56,14 @@
 - [x] useClientAnalysis hook
 - [x] ANTI-HALLUCINATION spot-check (5 customers): AI facts == SQL ground truth EXACTLY for Galp(24/0/8), Coca-Cola(9/0/0), nike(5/3/2 €94,890), Coca-Cola(5/0/0), Kozegho(4/1/2 €17,480). Facts computed in code, model told to use only them.
 - [x] npm run build passes (tsc + vite)
-## Phase 4 — Lead Qual + Market Intel       [ ] gate passed: ____
+## Phase 4 — Lead Qual + Market Intel       [ ] gate passed: ____ (PENDING user app validation)
+- [x] lead-qualification Edge Function (prod v1, Haiku 4.5): scores customers 0-100 on fit (country/catalogue/size) + engagement (interactions/outcomes/velocity); runs on customer creation ({customerId}) + weekly cron (batch, oldest-scored first); writes customers.lead_score + lead_justification + lead_scored_at; logs agent_runs. Test: 5 scored (nike 72, KuantoKusta 58, junk 42), $0.003.
+- [x] migration: customers.lead_score/justification/scored_at + market_digests table (RLS: authenticated read, service-role write)
+- [x] market-intelligence Edge Function (prod v1, Sonnet 4.6 + web_search_20250305 tool, max_uses 6): researches water-treatment PT/ES/FR/UK + competitors + tenders → digest in market_digests; logs agent_runs. Test: 7 real sourced items (EIB/Águas de Portugal, EU UWWTD, SNF competitor, UK NHS framework...), 38s, $0.20 tokens (+ per-search fee not captured).
+- [x] _shared/claude.ts: ClaudeOpts.tools + callClaudeWithUsage passes tools (append-only; callClaude untouched)
+- [x] crons: lead-qualification-weekly '0 4 * * 1', market-intelligence-weekly '0 6 * * 1' (Mon 06:00 UTC=07:00 Lisbon), both pg_net timeout 150s, in cron.job
+- [x] frontend: customer list Sort toggle (Activity | Lead priority) + ★score badge on cards (CustomerIntelligencePage); Market Intelligence cards in Intelligence Hub (useMarketDigest); lead-qual fires on customer create (useCustomers.upsert); types Customer.lead_* + MarketDigest
+- [x] npm run build passes (tsc + vite)
+- NOTE: web_search bills a per-search fee (~$10/1000) on top of tokens; logged cost_usd is token-only (underestimate, residual at weekly volume).
 ## Phase 5 — Chief of Staff + final report  [ ] gate passed: ____
 (Expand phases 2-5 with task checkboxes from strategy doc §4 when each starts.)

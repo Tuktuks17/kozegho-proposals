@@ -8,6 +8,7 @@ export type ClaudeOpts = {
   model?: string          // default: claude-sonnet-4-6
   maxTokens?: number      // default: 1024
   temperature?: number    // default: 0.7
+  tools?: unknown[]       // server tools (e.g. web_search) — used by callClaudeWithUsage only
 }
 
 export async function callClaude(opts: ClaudeOpts): Promise<string> {
@@ -78,6 +79,7 @@ export async function callClaudeWithUsage(opts: ClaudeOpts): Promise<ClaudeResul
       max_tokens: opts.maxTokens ?? 1024,
       temperature: opts.temperature ?? 0.7,
       ...(opts.system ? { system: opts.system } : {}),
+      ...(opts.tools ? { tools: opts.tools } : {}),
       messages: [{ role: 'user', content: opts.prompt }],
     }),
   })

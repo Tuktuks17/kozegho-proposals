@@ -75,6 +75,24 @@ export type Customer = {
   country: string
   created_by: string
   created_at: string
+  lead_score: number | null          // Lead Qualification Agent (0-100 commercial priority)
+  lead_justification: string | null
+  lead_scored_at: string | null
+}
+
+// Market Intelligence Agent digest (rendered as cards in the Intelligence Hub).
+export type MarketDigestItem = {
+  title: string
+  summary: string
+  category: string
+  region: string
+  source?: string
+}
+export type MarketDigest = {
+  id: string
+  digest: { items: MarketDigestItem[]; generatedAt: string }
+  period: string
+  created_at: string
 }
 
 // In-memory types used by ProposalPDF for rendering — not DB tables

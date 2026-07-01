@@ -4,6 +4,8 @@ import type { ProposalAttention } from '@/hooks/useIntelligenceData'
 import { useDailyBriefing, type BriefingResult } from '@/hooks/useDailyBriefing'
 import { useFollowUp } from '@/hooks/useFollowUp'
 import { useRole } from '@/hooks/useRole'
+import { useMarketDigest } from '@/hooks/useMarketDigest'
+import type { MarketDigestItem } from '@/types/database'
 import { FollowUpModal } from './FollowUpModal'
 
 function fmtMoney(n: number) {
@@ -246,6 +248,9 @@ export function IntelligencePage({ onNavigateToCustomer }: Props) {
             )}
           </section>
 
+          {/* Market Intelligence (market-intelligence weekly agent) */}
+          <MarketIntelligencePanel />
+
           {/* Stats footer */}
           <p className="text-xs text-[var(--kz-text-on-dark-muted)] text-center pb-2 opacity-60">
             {totalProposals} total proposals across {totalCustomers} customers
@@ -378,6 +383,47 @@ function DailyBriefingPanel({ briefing, analyzing, error, lastGenerated, onGener
         </div>
       )}
     </div>
+  )
+}
+
+// ─── Market Intelligence panel ─────────────────────────────────────────────────
+
+function MarketIntelligencePanel() {
+  const { digest, loading } = useMarketDigest()
+  const catClass: Record<string, string> = {
+    regulation: 'border-[var(--kz-green)]/40 text-[var(--kz-green)]',
+    competitor: 'border-[var(--kz-border-strong)] text-[var(--kz-text-secondary)]',
+    tender: 'border-[var(--kz-green)]/40 text-[var(--kz-green)]',
+    trend: 'border-[var(--kz-border)] text-[var(--kz-text-muted)]',
+    client: 'border-[var(--kz-border)] text-[var(--kz-text-muted)]',
+  }
+  if (loading || !digest || !digest.digest?.items?.length) return null
+  const items = digest.digest.items as MarketDigestItem[]
+  return (
+    <section className="space-y-3">
+      <div>
+        <p className="text-xs font-semibold text-[var(--kz-text-on-dark-muted)] uppercase tracking-wider">Market Intelligence</p>
+        <p className="text-xs text-[var(--kz-text-on-dark-muted)] mt-0.5 opacity-70">
+          Water-treatment sector · PT/ES/FR/UK · updated {fmtDate(digest.created_at)}
+        </p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {items.map((item, i) => (
+          <div key={i} className="bg-[var(--kz-surface)] rounded-[var(--kz-radius-card)] border border-[var(--kz-border)] shadow-[var(--kz-shadow-card-soft)] p-4">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className={`text-[10px] uppercase tracking-wide border rounded px-1.5 py-0.5 ${catClass[item.category] ?? 'border-[var(--kz-border)] text-[var(--kz-text-muted)]'}`}>{item.category}</span>
+              {item.region && <span className="text-[10px] text-[var(--kz-text-muted)]">{item.region}</span>}
+            </div>
+            <p className="text-sm font-medium text-[var(--kz-text)] leading-snug">
+              {item.source ? (
+                <a href={item.source} target="_blank" rel="noopener noreferrer" className="hover:text-[var(--kz-green)] hover:underline">{item.title}</a>
+              ) : item.title}
+            </p>
+            <p className="text-xs text-[var(--kz-text-secondary)] mt-1">{item.summary}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }
 

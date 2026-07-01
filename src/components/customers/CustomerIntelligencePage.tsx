@@ -866,9 +866,19 @@ function CustomerCard({ customer, onClick }: { customer: CustomerWithMetrics; on
             <div className="text-sm text-[var(--kz-text-secondary)] truncate">{customer.name}</div>
           )}
         </div>
-        <span className={`text-[11px] font-medium uppercase tracking-wide px-2.5 py-0.5 rounded-[var(--kz-radius-pill)] border shrink-0 whitespace-nowrap ${temp.borderClass} ${temp.textClass}`}>
-          {temp.label}
-        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {customer.lead_score != null && (
+            <span
+              className="text-[11px] font-semibold px-2 py-0.5 rounded-[var(--kz-radius-pill)] border border-[#7AB648]/50 text-[#5a8a30] bg-[#7AB648]/10 whitespace-nowrap"
+              title={customer.lead_justification ?? undefined}
+            >
+              ★ {customer.lead_score}
+            </span>
+          )}
+          <span className={`text-[11px] font-medium uppercase tracking-wide px-2.5 py-0.5 rounded-[var(--kz-radius-pill)] border whitespace-nowrap ${temp.borderClass} ${temp.textClass}`}>
+            {temp.label}
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-xs">
@@ -912,6 +922,7 @@ export function CustomerIntelligencePage({ autoSelectCustomerId, onAutoSelectDon
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState<'activity' | 'priority'>('activity')
   const [selected, setSelected] = useState<CustomerWithMetrics | null>(null)
 
   useEffect(() => {
@@ -988,12 +999,16 @@ export function CustomerIntelligencePage({ autoSelectCustomerId, onAutoSelectDon
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return customers
-    return customers.filter(c =>
+    const base = !q ? customers : customers.filter(c =>
       c.company.toLowerCase().includes(q) ||
       (c.name && c.name.toLowerCase().includes(q))
     )
-  }, [customers, search])
+    // 'activity' keeps the temperature-based order already applied to `customers`.
+    if (sortBy === 'priority') {
+      return [...base].sort((a, b) => (b.lead_score ?? -1) - (a.lead_score ?? -1))
+    }
+    return base
+  }, [customers, search, sortBy])
 
   const stats = useMemo(() => ({
     hot:  customers.filter(c => c.temperature === 'hot').length,
@@ -1038,6 +1053,25 @@ export function CustomerIntelligencePage({ autoSelectCustomerId, onAutoSelectDon
           className="w-full pl-9 pr-4 h-12 text-sm border border-[var(--kz-border-dark)] rounded-[var(--kz-radius-input)] bg-[var(--kz-bg-elevated)] text-white placeholder:text-[var(--kz-text-on-dark-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--kz-green-ring)] focus:border-[var(--kz-green)]"
         />
       </div>
+
+      {/* Sort toggle */}
+      {!loading && (
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-[var(--kz-text-on-dark-muted)]">Sort:</span>
+          <button
+            onClick={() => setSortBy('activity')}
+            className={`px-2.5 py-1 rounded-[var(--kz-radius-pill)] border transition-colors ${sortBy === 'activity' ? 'bg-[var(--kz-green)] text-white border-[var(--kz-green)]' : 'border-[var(--kz-border-dark)] text-[var(--kz-text-on-dark-muted)] hover:text-white'}`}
+          >
+            Activity
+          </button>
+          <button
+            onClick={() => setSortBy('priority')}
+            className={`px-2.5 py-1 rounded-[var(--kz-radius-pill)] border transition-colors ${sortBy === 'priority' ? 'bg-[var(--kz-green)] text-white border-[var(--kz-green)]' : 'border-[var(--kz-border-dark)] text-[var(--kz-text-on-dark-muted)] hover:text-white'}`}
+          >
+            Lead priority
+          </button>
+        </div>
+      )}
 
       {/* Body */}
       {loading && <Spinner />}

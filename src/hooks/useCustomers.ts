@@ -28,6 +28,10 @@ export function useCustomers() {
       .insert({ name: draft.name || null, company: draft.company, email: draft.email, country: draft.country || null, created_by: userId })
       .select()
       .single()
+    // Kick off lead qualification for the new customer (fire-and-forget; scores in the background).
+    if (data) {
+      supabase.functions.invoke('lead-qualification', { body: { trigger: 'user', customerId: (data as Customer).id } }).catch(() => {})
+    }
     return (data as Customer | null)
   }, [])
 
