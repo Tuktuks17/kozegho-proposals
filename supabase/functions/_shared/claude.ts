@@ -9,6 +9,7 @@ export type ClaudeOpts = {
   maxTokens?: number      // default: 1024
   temperature?: number    // default: 0.7
   tools?: unknown[]       // server tools (e.g. web_search) — used by callClaudeWithUsage only
+  effort?: string         // output_config.effort (low|medium|high|max) — adaptive-thinking models only
 }
 
 export async function callClaude(opts: ClaudeOpts): Promise<string> {
@@ -56,8 +57,13 @@ export type ClaudeResult = { text: string; model: string; usage: ClaudeUsage }
 const MODEL_PRICING: Record<string, { in: number; out: number }> = {
   'claude-haiku-4-5-20251001': { in: 1, out: 5 },
   'claude-sonnet-4-6': { in: 3, out: 15 },
+  'claude-opus-4-8': { in: 5, out: 25 },
   'claude-fable-5': { in: 10, out: 50 },
 }
+
+// Adaptive-thinking-only models reject sampling params (temperature/top_p/top_k) with a 400.
+// Used by the Chief of Staff (Fable 5 primary, Opus 4.8 fallback). Haiku/Sonnet callers unaffected.
+const NO_SAMPLING_MODELS = new Set(['claude-fable-5', 'claude-opus-4-8'])
 
 export function claudeCostUsd(model: string, usage: ClaudeUsage): number {
   const p = MODEL_PRICING[model] ?? MODEL_PRICING['claude-sonnet-4-6']
@@ -77,7 +83,8 @@ export async function callClaudeWithUsage(opts: ClaudeOpts): Promise<ClaudeResul
     body: JSON.stringify({
       model: requestedModel,
       max_tokens: opts.maxTokens ?? 1024,
-      temperature: opts.temperature ?? 0.7,
+      ...(NO_SAMPLING_MODELS.has(requestedModel) ? {} : { temperature: opts.temperature ?? 0.7 }),
+      ...(opts.effort ? { output_config: { effort: opts.effort } } : {}),
       ...(opts.system ? { system: opts.system } : {}),
       ...(opts.tools ? { tools: opts.tools } : {}),
       messages: [{ role: 'user', content: opts.prompt }],

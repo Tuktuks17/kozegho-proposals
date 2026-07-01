@@ -95,6 +95,31 @@ export type MarketDigest = {
   created_at: string
 }
 
+// Chief of Staff weekly executive digest (managers only — Fable 5 / Opus 4.8).
+export type CostGuardrail = {
+  month: string
+  total_usd: number
+  threshold_usd: number
+  status: 'ok' | 'alert'
+  message: string
+}
+export type ChiefOfStaffDigest = {
+  id: string
+  digest: {
+    headline: string
+    agents_summary: string
+    unanswered: string[]
+    cross_client_patterns: string[]
+    priorities: string[]
+    cost_guardrail: CostGuardrail
+    model: string
+    generatedAt: string
+  }
+  period: string
+  week_start: string | null
+  created_at: string
+}
+
 // In-memory types used by ProposalPDF for rendering — not DB tables
 export type ProposalLine = {
   id: string
