@@ -1,9 +1,12 @@
 import { supabase } from '@/lib/supabase'
+import { getMailCredentials } from '@/lib/mailProvider'
 
 type Attachment = {
   filename: string
   path: string // path inside 'datasheets' bucket
 }
+
+type AttachmentPart = { filename: string; base64: string }
 
 // RFC 2047 encoded-word for non-ASCII MIME headers (Subject, filenames with accents)
 function encodeMimeHeader(value: string): string {
@@ -55,16 +58,21 @@ export async function sendProposalEmail(
   attachments: Attachment[]
 ): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession()
-  const accessToken = session?.provider_token || sessionStorage.getItem('kp:gmail_token')
+  const { token: accessToken, provider } = getMailCredentials(session)
   if (!accessToken) {
-    throw new Error('Gmail token not available. Please sign out and sign in again.')
+    // Provider-aware so the Google path keeps the exact production wording
+    throw new Error(
+      provider === 'azure'
+        ? 'Microsoft token not available. Please sign out and sign in again.'
+        : 'Gmail token not available. Please sign out and sign in again.'
+    )
   }
 
   const senderName = (session?.user?.user_metadata?.full_name as string | undefined) || ''
   const senderEmail = session?.user?.email || ''
 
   // Download all attachments from Supabase Storage
-  const attachmentParts: Array<{ filename: string; base64: string }> = []
+  const attachmentParts: AttachmentPart[] = []
   for (const att of attachments) {
     const { data, error } = await supabase.storage.from('datasheets').download(att.path)
     if (error || !data) {
@@ -75,6 +83,76 @@ export async function sendProposalEmail(
     attachmentParts.push({ filename: att.filename, base64 })
   }
 
+  if (provider === 'azure') {
+    return sendViaGraph(accessToken, to, subject, htmlBody, attachmentParts)
+  }
+  return sendViaGmail(accessToken, to, subject, htmlBody, attachmentParts, senderName, senderEmail)
+}
+
+// ── Microsoft Graph (delegated /me/sendMail) ──────────────────────────────────
+// The sender is implicit (the authenticated mailbox); Graph builds the MIME for
+// us, so no manual encoding is needed. Success is HTTP 202 with an empty body.
+async function sendViaGraph(
+  accessToken: string,
+  to: string,
+  subject: string,
+  htmlBody: string,
+  attachmentParts: AttachmentPart[]
+): Promise<string> {
+  const message = {
+    subject,
+    body: { contentType: 'HTML', content: htmlBody },
+    toRecipients: [{ emailAddress: { address: to } }],
+    ...(attachmentParts.length > 0
+      ? {
+          attachments: attachmentParts.map(a => ({
+            '@odata.type': '#microsoft.graph.fileAttachment',
+            name: a.filename,
+            contentType: 'application/pdf',
+            contentBytes: a.base64,
+          })),
+        }
+      : {}),
+  }
+
+  const response = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ message, saveToSentItems: true }),
+  })
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Microsoft session expired. Please sign out and sign in again.')
+    }
+    if (response.status === 403) {
+      throw new Error('Microsoft permission denied. Please sign out and sign in again to grant email permission.')
+    }
+    if (response.status === 413) {
+      // Graph sendMail rejects requests over ~4 MB total (~3 MB of attachments)
+      throw new Error('Attachments too large for Microsoft Graph (limit ~3 MB total). Remove some datasheets and try again.')
+    }
+    const body = await response.text()
+    throw new Error(`Microsoft Graph error ${response.status}: ${body}`)
+  }
+
+  // Graph sendMail returns 202 Accepted with no message id
+  return 'graph:accepted'
+}
+
+// ── Gmail API (users/me/messages/send, raw MIME) ──────────────────────────────
+async function sendViaGmail(
+  accessToken: string,
+  to: string,
+  subject: string,
+  htmlBody: string,
+  attachmentParts: AttachmentPart[],
+  senderName: string,
+  senderEmail: string
+): Promise<string> {
   // Base64-encode the HTML body so the MIME string stays ASCII-safe
   // (Portuguese accented chars would break btoa on the full MIME)
   const htmlBase64 = await blobToBase64(new Blob([htmlBody], { type: 'text/html; charset=utf-8' }))

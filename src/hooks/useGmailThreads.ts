@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { getMailCredentials, hasCachedMailToken } from '@/lib/mailProvider'
 
 export type GmailThread = {
   threadId: string
@@ -10,11 +11,14 @@ export type GmailThread = {
   snippet: string
 }
 
+// Provider-aware: routes to gmail-threads (Google) or graph-threads (Microsoft)
+// depending on the ecosystem the user signed in with. Both functions return the
+// exact same { threads: ThreadSummary[] } shape, so consumers see no difference.
 export function useGmailThreads(customerEmail: string) {
   const [threads, setThreads] = useState<GmailThread[]>([])
-  const [loading, setLoading] = useState(() => !!sessionStorage.getItem('kp:gmail_token'))
+  const [loading, setLoading] = useState(() => hasCachedMailToken())
   const [error, setError] = useState<string | null>(null)
-  const [noToken, setNoToken] = useState(!sessionStorage.getItem('kp:gmail_token'))
+  const [noToken, setNoToken] = useState(() => !hasCachedMailToken())
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
@@ -25,15 +29,20 @@ export function useGmailThreads(customerEmail: string) {
         if (cancelled) return null
         // Prefer the live provider_token from the current session; fall back to
         // the token cached in sessionStorage from the last SIGNED_IN event.
-        const token = session?.provider_token || sessionStorage.getItem('kp:gmail_token')
+        const { token, provider } = getMailCredentials(session)
         if (!token) {
           setNoToken(true)
           setLoading(false)
           return null
         }
         setNoToken(false)
-        // Pass the Gmail token in the body — supabase.functions.invoke handles
+        // Pass the provider token in the body — supabase.functions.invoke handles
         // Supabase auth automatically via its own Authorization header.
+        if (provider === 'azure') {
+          return supabase.functions.invoke('graph-threads', {
+            body: { customerEmail, graphToken: token },
+          })
+        }
         return supabase.functions.invoke('gmail-threads', {
           body: { customerEmail, gmailToken: token },
         })

@@ -101,3 +101,47 @@
 - NOTE: claude-fable-5 is not enabled on this Anthropic org (or blocked by the 30-day-retention gate), so
   the Chief of Staff runs on claude-opus-4-8 today. The moment fable-5 access is granted, it is used
   automatically with zero code change — the fallback is transparent.
+
+## Phase F0/F1 — Dual-ecosystem mail layer (Google + Microsoft) [code done: 2026-07-07 | AWAITING Afonso: Azure portal + Supabase provider + secrets]
+- [x] src/lib/mailProvider.ts: single source of truth for mail provider/token. providerFromSession derives the
+      provider from user.identities (newest last_sign_in_at) — NOT app_metadata.provider, which records only the
+      FIRST sign-up provider and misclassifies dual-identity users. getMailCredentials pairs token+provider from
+      the SAME source (live session → identities; cached kp:mail_token → cached kp:mail_provider; legacy
+      kp:gmail_token → 'google' by definition) so a token can never be labelled with the other ecosystem.
+- [x] useAuth.ts: signInWithMicrosoft (provider 'azure', scopes 'email offline_access Mail.Send Mail.Read' →
+      provider_token IS a Graph token); SIGNED_IN caches token+providerFromSession (correct on the post-redirect
+      event, on the re-fire at every tab refocus, and on cross-tab broadcasts); signOut clears all mail keys.
+- [x] ADVERSARIAL REVIEW (4 reviewers + verify agents, 2026-07-08): 5 confirmed findings, ALL FIXED — (1+2 critical)
+      app_metadata.provider fallback misrouted dual-identity users' tokens in fresh tabs/PWA relaunches and on
+      SIGNED_IN refocus re-fires → replaced by identities-based derivation; (3) stale kp:mail_provider_intent could
+      mislabel a Google token as azure via cross-tab broadcast → intent mechanism REMOVED entirely (identities are
+      authoritative); (4) token/provider pairing from mixed sources → now paired per-source; (5) Google no-token
+      error message drifted ('Mail token…') → provider-aware, Google path byte-identical to production again.
+- NOTE (accepted risk, verify agent hit session limit): graph-threads reads one $search page (top=min(4×maxResults,
+      100)); Graph $search is relevance-ranked, so with >~60 matching messages the newest conversation could in
+      theory be missed. Fine for the 15-thread card; revisit if F6 needs exhaustive coverage.
+- [x] LoginScreen.tsx: "Continue with Microsoft" button + inline error surface (maps 'provider is not enabled'
+      to a friendly hint until Passo 7 of the guide is done). App.tsx wires both sign-ins.
+- [x] sendEmail.ts: routes by provider — Gmail raw-MIME path byte-identical (NOT touched behaviourally);
+      new sendViaGraph POST /me/sendMail (HTML body, fileAttachment base64, saveToSentItems; 401/403/413
+      mapped to the same style of user messages; 202 returns synthetic 'graph:accepted' — no caller uses the id).
+- [x] useGmailThreads.ts: provider-aware — invokes gmail-threads (google) or graph-threads (azure); hook name,
+      exported type and response shape unchanged (CustomerIntelligencePage untouched).
+- [x] graph-threads Edge Function: Microsoft twin of gmail-threads. $search="participants:<email>" (KQL — covers
+      from/to/cc, equivalent of Gmail from:X OR to:X), groups by conversationId, client-side sort (Graph forbids
+      $orderby with $search), returns identical { threads } shape. gmail-threads NOT touched.
+- [x] _shared/msgraph.ts: app-only Graph client (F0 track — central mailbox). Client-credentials token with
+      module-level cache, sendMailAppOnly (users/{mailbox}/sendMail), listMessagesAppOnly (F6 building block),
+      secret redaction in all error paths (same pattern as smtp-spike).
+- [x] graph-mail-spike Edge Function (F1): reports missing secrets by name; tests send + read separately
+      (read can lag while the Application Access Policy propagates). Deployed — returns
+      'missing secrets: MS_TENANT_ID, ...' until Passo 5 is done, by design.
+- [x] docs/guia-F0-entra-id-setup.md: extended guide in-repo — original F0 steps + Redirect URI (Supabase
+      callback), delegated permissions, Passo 7 (Supabase Auth Azure provider), Passo 8 (spike run + expected
+      JSON), updated evidence checklist. Google side already live in prod — explicitly marked "não mexer".
+- [ ] AWAITING Afonso (guia F0): app registration, secrets (Passo 5), Application Access Policy (Passo 6),
+      Supabase Azure provider (Passo 7), spike run (Passo 8), evidência.
+- NOTE: Graph delegated sendMail request limit ~4 MB total (~3 MB attachments) — sendViaGraph throws a clear
+      message at 413; upload-session support only if real datasheet payloads ever hit the limit.
+- NOTE: smtp-spike (SmarterMail/nodemailer, M0) committed as-is for reference per its header comment; superseded
+      by the Graph app-only channel as the F-track sender.

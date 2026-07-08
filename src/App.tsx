@@ -15,7 +15,7 @@ import { IntelligencePage } from '@/components/intelligence/IntelligencePage'
 type View = 'form' | 'history' | 'customers' | 'intelligence'
 
 export default function App() {
-  const { session, user, loading, signInWithGoogle, signOut } = useAuth()
+  const { session, user, loading, signInWithGoogle, signInWithMicrosoft, signOut } = useAuth()
   const { profile, updateName } = useProfile(user)
   const [view, setView] = useState<View>('form')
   const [pendingCustomerId, setPendingCustomerId] = useState<string | null>(null)
@@ -47,7 +47,7 @@ export default function App() {
   }
 
   if (!session || !user) {
-    return <LoginScreen onSignIn={signInWithGoogle} />
+    return <LoginScreen onSignInGoogle={signInWithGoogle} onSignInMicrosoft={signInWithMicrosoft} />
   }
 
   // Wait for profile to load from DB
