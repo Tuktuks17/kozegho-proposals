@@ -1,4 +1,5 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
+import { rejectUnlessRole } from '../_shared/guard.ts'
 
 // Generates gte-small (384-dim) embeddings for proposals — the vector memory for the
 // Client Analysis RAG agent. Backfills proposals missing an embedding, or refreshes one
@@ -89,6 +90,9 @@ const session = new (Supabase as unknown as { ai: { Session: new (m: string) => 
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
+
+  const denied = rejectUnlessRole(req, ['service_role'], CORS)
+  if (denied) return denied
 
   const startedAt = Date.now()
   let trigger = 'user'

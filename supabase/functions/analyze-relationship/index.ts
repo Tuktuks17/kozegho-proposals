@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { callClaude, parseJsonStrict } from '../_shared/claude.ts'
+import { rejectUnlessRole } from '../_shared/guard.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
@@ -63,6 +64,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: CORS })
   }
+
+  const denied = rejectUnlessRole(req, ['authenticated', 'service_role'], CORS)
+  if (denied) return denied
 
   let body: Payload
   try {

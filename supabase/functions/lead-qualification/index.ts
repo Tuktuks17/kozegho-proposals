@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { callClaudeWithUsage, claudeCostUsd, parseJsonStrict } from '../_shared/claude.ts'
+import { rejectUnlessRole } from '../_shared/guard.ts'
 
 // Lead Qualification Agent (Phase 4, Haiku 4.5). Scores a customer's commercial priority 0-100 on
 // FIT (country, catalogue alignment, deal size) + ENGAGEMENT (interactions, outcomes, response
@@ -58,6 +59,9 @@ async function logRun(row: Record<string, unknown>): Promise<void> {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
+
+  const denied = rejectUnlessRole(req, ['authenticated', 'service_role'], CORS)
+  if (denied) return denied
 
   let trigger = 'cron'
   let customerId: string | undefined

@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { callClaudeWithUsage, claudeCostUsd, parseJsonStrict } from '../_shared/claude.ts'
+import { rejectUnlessRole } from '../_shared/guard.ts'
 
 // Follow-up Agent (Phase 2). Daily cron. For each open proposal sent >=7 days ago with no
 // pending agent follow-up task and no interaction in the last 5 days, drafts a follow-up email
@@ -101,6 +102,9 @@ async function logRun(row: Record<string, unknown>): Promise<void> {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
+
+  const denied = rejectUnlessRole(req, ['service_role'], CORS)
+  if (denied) return denied
 
   let trigger = 'cron'
   let limit = 10

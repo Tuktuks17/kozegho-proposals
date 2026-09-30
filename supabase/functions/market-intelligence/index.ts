@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { callClaudeWithUsage, claudeCostUsd } from '../_shared/claude.ts'
+import { rejectUnlessRole } from '../_shared/guard.ts'
 
 // Market Intelligence Agent (Phase 4, Sonnet 4.6 + web_search server tool). Weekly cron.
 // Researches the water-treatment sector across PT/ES/FR/UK, competitor moves and client news,
@@ -41,6 +42,9 @@ async function logRun(row: Record<string, unknown>): Promise<void> {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
+
+  const denied = rejectUnlessRole(req, ['service_role'], CORS)
+  if (denied) return denied
 
   const startedAt = Date.now()
   let trigger = 'cron'

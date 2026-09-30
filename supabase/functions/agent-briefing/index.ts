@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { callClaudeWithUsage, claudeCostUsd, parseJsonStrict } from '../_shared/claude.ts'
+import { rejectUnlessRole } from '../_shared/guard.ts'
 
 // Daily Briefing Agent (Phase 3). Cron 06:00 UTC (07:00 Lisbon summer). For each active profile it
 // computes a scoped portfolio snapshot server-side (managers = full portfolio, salespersons = their
@@ -52,6 +53,9 @@ async function logRun(row: Record<string, unknown>): Promise<void> {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
+
+  const denied = rejectUnlessRole(req, ['service_role'], CORS)
+  if (denied) return denied
 
   let trigger = 'cron'
   let onlyProfile: string | undefined

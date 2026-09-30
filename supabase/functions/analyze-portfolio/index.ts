@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { callClaude, parseJsonStrict } from '../_shared/claude.ts'
+import { rejectUnlessRole } from '../_shared/guard.ts'
 
 const CORS = {
   'Access-Control-Allow-Origin': 'https://kozegho-proposals.vercel.app',
@@ -47,6 +48,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: CORS })
   }
+
+  const denied = rejectUnlessRole(req, ['authenticated', 'service_role'], CORS)
+  if (denied) return denied
 
   let body: Payload
   try {

@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { callClaude } from '../_shared/claude.ts'
+import { rejectUnlessRole } from '../_shared/guard.ts'
 
 type Payload = {
   products: string[]
@@ -26,6 +27,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: CORS })
   }
+
+  const denied = rejectUnlessRole(req, ['authenticated', 'service_role'], CORS)
+  if (denied) return denied
 
   try {
     const body = (await req.json()) as Payload

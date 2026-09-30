@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { callClaudeWithUsage, claudeCostUsd, parseJsonStrict } from '../_shared/claude.ts'
+import { rejectUnlessRole } from '../_shared/guard.ts'
 
 // Client Analysis Agent (Phase 3, RAG). Given a customerId (+ optional question):
 // gte-small query embedding → pgvector similarity over proposal_embeddings (similar deals from
@@ -35,6 +36,9 @@ type Similar = { metadata: { company?: string; customer?: string; outcome?: stri
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
+
+  const denied = rejectUnlessRole(req, ['authenticated', 'service_role'], CORS)
+  if (denied) return denied
   const startedAt = Date.now()
 
   let customerId = ''

@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { callClaudeWithUsage, claudeCostUsd } from '../_shared/claude.ts'
+import { rejectUnlessRole } from '../_shared/guard.ts'
 
 // Chief of Staff (Phase 5). Weekly cron, Friday 17:00 Lisbon (16:00 UTC in summer). The meta-agent:
 // reads the past week of agent_runs + pipeline metrics + daily briefings + the other agents' outputs,
@@ -80,6 +81,9 @@ async function generate(model: string, prompt: string, effort: string) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
+
+  const denied = rejectUnlessRole(req, ['service_role'], CORS)
+  if (denied) return denied
 
   const startedAt = Date.now()
   let trigger = 'cron'
