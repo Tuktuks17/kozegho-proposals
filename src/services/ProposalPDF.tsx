@@ -20,11 +20,12 @@ const LOCALE_MAP: Record<string, string> = {
 
 function fmtCurrency(amount: number, lang: string): string {
   const locale = LOCALE_MAP[lang] ?? 'pt-PT'
+  // U+202F (fr-FR group separator) is not in Helvetica's WinAnsi encoding and prints as '/'.
   return new Intl.NumberFormat(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
     useGrouping: true,
-  }).format(amount)
+  }).format(amount).replace(/\u202F/g, '\u00A0')
 }
 
 function fmtDateLong(isoDate: string | null | undefined, lang: string): string {
@@ -231,9 +232,7 @@ const s = StyleSheet.create({
     flex: 1,
     gap: 10,
   },
-  termsCellContent: {
-    flex: 1,
-  },
+  termsCellContent: {},
   termsCellLabel: {
     fontSize: 7,
     fontFamily: 'Helvetica-Bold',
@@ -335,11 +334,8 @@ export function ProposalPDFDocument({
 }: ProposalPDFProps) {
   const L = PROPOSAL_LABELS[language as keyof typeof PROPOSAL_LABELS] ?? PROPOSAL_LABELS.EN
 
-  const total = lines.reduce((sum, line) => {
-    const opts = lineOptions.filter((o) => o.proposal_line_id === line.id)
-    const optsTotal = opts.reduce((s, o) => s + (o.price_eur ?? 0), 0)
-    return sum + line.line_total + optsTotal
-  }, 0)
+  // line_total already includes option prices (unit_price = base + options), same as Word and email
+  const total = lines.reduce((sum, line) => sum + line.line_total, 0)
 
   const packagingLabel =
     proposal.packaging_type === 'ocean' ? L.packagingOcean : L.packagingStandard
@@ -408,7 +404,7 @@ export function ProposalPDFDocument({
             {lines.map((line) => {
               const opts = lineOptions.filter((o) => o.proposal_line_id === line.id)
               const optsTotal = opts.reduce((s, o) => s + (o.price_eur ?? 0), 0)
-              const lineValue = line.line_total + optsTotal
+              const lineValue = line.line_total
               const baseUnitPrice = line.unit_price - optsTotal
 
               return (
@@ -443,6 +439,7 @@ export function ProposalPDFDocument({
                           <Text style={{ color: GREEN, fontSize: 8, marginRight: 4, lineHeight: 1.3 }}>•</Text>
                           <Text style={{ fontSize: 8, color: '#444444', flex: 1, lineHeight: 1.3 }}>
                             {opt.option_label}
+                            {(opt.price_eur ?? 0) > 0 ? ` (+${fmtCurrency(opt.price_eur ?? 0, language)} €)` : ''}
                           </Text>
                         </View>
                       ))
@@ -511,7 +508,7 @@ export function ProposalPDFDocument({
             <>
               <View style={s.attachmentsDivider} />
               <View style={s.attachmentsRow}>
-                <Text style={s.attachmentsText}>📎 {datasheetLine}</Text>
+                <Text style={s.attachmentsText}>{datasheetLine}</Text>
               </View>
               <View style={s.attachmentsDivider} />
             </>
